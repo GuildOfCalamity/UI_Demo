@@ -59,6 +59,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     {
         this.InitializeComponent();
         this.VisibilityChanged += MainWindowOnVisibilityChanged;
+        //this.SizeChanged += MainWindowOnSizeChanged; // We're already using this in CreateGradientBackdrop().
         if (Microsoft.UI.Windowing.AppWindowTitleBar.IsCustomizationSupported())
         {
             this.ExtendsContentIntoTitleBar = true;
@@ -114,13 +115,41 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             if (App.ArgList.Count > 0)
             {
                 UpdateInfoBar($"Received startup argument ⇒ {App.ArgList[0]}");
+                if (App.ArgList[0].Contains("JumpList-OpenLog"))
+                {
+                    OpenDebugLog();
+                }
             }
             else
                 UpdateInfoBar($"App.ArgList.Count ⇒ {App.ArgList.Count}");
-
         }
-
         _firstVisible = true;
+    }
+
+    /// <summary>
+    /// Opens the current log file.
+    /// </summary>
+    public void OpenDebugLog()
+    {
+        string logPath = string.Empty;
+        try
+        {
+            if (App.IsPackaged)
+                logPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, $"Debug.log");
+            else
+                logPath = System.IO.Path.Combine(AppContext.BaseDirectory, $"Debug.log");
+
+            App.DebugLog($"Opening '{Path.GetFileName(logPath)}' with default viewer.");
+            ThreadPool.QueueUserWorkItem((object? o) =>
+            {
+                var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = logPath };
+                Process.Start(startInfo);
+            });
+        }
+        catch (Exception ex)
+        {
+            App.DebugLog($"OpenDebugLog: {ex.Message}");
+        }
     }
 
     #region [Events]

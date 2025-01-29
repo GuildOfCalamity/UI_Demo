@@ -18,11 +18,12 @@ using Windows.System;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.UI.ViewManagement;
 using System.Text;
+using System.IO;
 
 namespace UI_Demo;
 
 /// <summary>
-/// Provides application-specific behavior to supplement the default Application class.
+/// There's some activation and jumplist goodies included below.
 /// </summary>
 public partial class App : Application
 {
@@ -37,8 +38,8 @@ public partial class App : Application
 #endif
 
     public static Window? m_window;
-    public static int m_width { get; set; } = 850;
-    public static int m_height { get; set; } = 550;
+    public static int m_width { get; set; } = 900;
+    public static int m_height { get; set; } = 700;
     public static bool IsClosing { get; set; } = false;
     public static FrameworkElement? MainRoot { get; set; }
     public static IntPtr WindowHandle { get; set; }
@@ -128,7 +129,7 @@ public partial class App : Application
         else
         {
             //InstanceMutex.Close();
-            CloseExistingInstance2();
+            CloseExistingInstanceAlt();
         }
 
         this.InitializeComponent();
@@ -162,11 +163,17 @@ public partial class App : Application
     /// <summary>
     /// Similar to <see cref="CloseExistingInstance"/>.
     /// </summary>
-    public static void CloseExistingInstance2()
+    public static void CloseExistingInstanceAlt()
     {
+        if (Debugger.IsAttached)
+        {
+            DebugLog($"Skipping kill since debugger is attached.");
+            return;
+        }
+
         try
         {
-            int currentId = Process.GetCurrentProcess().Id; // Get the current process ID
+            int currentId = Process.GetCurrentProcess().Id; // Get the current process ID.
             Process[] processes = Process.GetProcessesByName(AppDomain.CurrentDomain.FriendlyName);
             foreach (var process in processes)
             {
@@ -176,7 +183,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            DebugLog($"CloseExistingInstance: {ex.Message}");
+            DebugLog($"CloseExistingInstanceAlt: {ex.Message}");
         }
     }
 
@@ -323,9 +330,7 @@ public partial class App : Application
 
             // Set the application icon.
             if (IsPackaged)
-            {
                 AppWin.SetIcon(System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, $"Assets/AppIcon.ico"));
-            }
             else
                 AppWin.SetIcon(System.IO.Path.Combine(AppContext.BaseDirectory, $"Assets/AppIcon.ico"));
 
@@ -357,7 +362,7 @@ public partial class App : Application
             AppWin?.MoveAndResize(new Windows.Graphics.RectInt32(Profile.WindowLeft, Profile.WindowTop, Profile.WindowWidth, Profile.WindowHeight), Microsoft.UI.Windowing.DisplayArea.Primary);
         }
 
-        InitializeJumpList();
+        InitializeJumpList(Windows.UI.StartScreen.JumpListSystemGroupKind.None);
     }
 
     public static string GetRuntimeSDK() => AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WindowsAppRuntime")).FirstOrDefault() ?? "N/A";
@@ -809,7 +814,7 @@ public partial class App : Application
     /// <summary>
     /// When user right-clicks on taskbar icon the JumpList will be rendered.
     /// </summary>
-    void InitializeJumpList()
+    void InitializeJumpList(Windows.UI.StartScreen.JumpListSystemGroupKind listKind)
     {
         if (Windows.UI.StartScreen.JumpList.IsSupported())
         {
@@ -819,41 +824,49 @@ public partial class App : Application
                 {
                     Windows.UI.StartScreen.JumpList taskbarJumpList = await Windows.UI.StartScreen.JumpList.LoadCurrentAsync();
                     taskbarJumpList.Items.Clear();
-                    taskbarJumpList.SystemGroupKind = Windows.UI.StartScreen.JumpListSystemGroupKind.None;
+                    taskbarJumpList.SystemGroupKind = listKind;
 
                     Windows.UI.StartScreen.JumpListItem scanItem = Windows.UI.StartScreen.JumpListItem.CreateWithArguments("JumpList-Scan", "Scan");
-                    scanItem.GroupName = "JumpList";
-                    scanItem.Logo = new Uri("ms-appx:///Assets/AltIcon1.png");
-                    scanItem.Description = "Invoke and scan for items.";
+                    scanItem.GroupName = "Common Functions";
+                    scanItem.Logo = new Uri($"ms-appx:///Assets/NoticeIcon.png"); // Doesn't observe the asset?
+                    scanItem.Description = "Scans for items.";
                     taskbarJumpList.Items.Add(scanItem);
-                    //taskbarJumpList.Items.Add(JumpListItem.CreateSeparator());
-
-                    Windows.UI.StartScreen.JumpListItem updateItem = Windows.UI.StartScreen.JumpListItem.CreateWithArguments("JumpList-Update", "Update");
-                    updateItem.Logo = new Uri("ms-appx:///Assets/AltIcon2.png");
-                    updateItem.GroupName = "JumpList";
-                    updateItem.Description = "Invoke and update the application.";
-                    taskbarJumpList.Items.Add(updateItem);
-                    //taskbarJumpList.Items.Add(JumpListItem.CreateSeparator());
+                    //taskbarJumpList.Items.Add(Windows.UI.StartScreen.JumpListItem.CreateSeparator());
 
                     Windows.UI.StartScreen.JumpListItem searchItem = Windows.UI.StartScreen.JumpListItem.CreateWithArguments("JumpList-Search", "Search");
-                    searchItem.Logo = new Uri("ms-appx:///Assets/AltIcon3.png");
-                    searchItem.GroupName = "JumpList";
-                    searchItem.Description = "Invoke and search for targets.";
+                    searchItem.Logo = new Uri("ms-appx:///Assets/NoticeIcon.png");// Doesn't observe the asset?
+                    searchItem.GroupName = "Common Functions";
+                    searchItem.Description = "Searches for targets.";
                     taskbarJumpList.Items.Add(searchItem);
-                    //taskbarJumpList.Items.Add(JumpListItem.CreateSeparator());
+                    //taskbarJumpList.Items.Add(Windows.UI.StartScreen.JumpListItem.CreateSeparator());
+
+                    Windows.UI.StartScreen.JumpListItem logItem = Windows.UI.StartScreen.JumpListItem.CreateWithArguments("JumpList-OpenLog", "Open Log");
+                    logItem.Logo = new Uri("ms-appx:///Assets/CautionIcon.png");// Doesn't observe the asset?
+                    logItem.GroupName = "Common Functions";
+                    logItem.Description = "Opens the debug log.";
+                    taskbarJumpList.Items.Add(logItem);
+                    //taskbarJumpList.Items.Add(Windows.UI.StartScreen.JumpListItem.CreateSeparator());
+
+                    Windows.UI.StartScreen.JumpListItem updateItem = Windows.UI.StartScreen.JumpListItem.CreateWithArguments("JumpList-Update", "Update");
+                    updateItem.Logo = new Uri("ms-appx:///Assets/WarningIcon.png");// Doesn't observe the asset?
+                    updateItem.GroupName = "Special Functions";
+                    updateItem.Description = "Updates the application.";
+                    taskbarJumpList.Items.Add(updateItem);
+                    //taskbarJumpList.Items.Add(Windows.UI.StartScreen.JumpListItem.CreateSeparator());
 
                     Windows.UI.StartScreen.JumpListItem purgeItem = Windows.UI.StartScreen.JumpListItem.CreateWithArguments("JumpList-Purge", "Purge");
-                    purgeItem.Logo = new Uri("ms-appx:///Assets/AltIcon4.png");
-                    purgeItem.GroupName = "JumpList";
-                    purgeItem.Description = "Invoke and purge outdated log files.";
+                    purgeItem.Logo = new Uri("ms-appx:///Assets/WarningIcon.png");// Doesn't observe the asset?
+                    purgeItem.GroupName = $"Special Functions";
+                    purgeItem.Description = "Purges outdated log files.";
                     taskbarJumpList.Items.Add(purgeItem);
-                    //taskbarJumpList.Items.Add(JumpListItem.CreateSeparator());
+                    //taskbarJumpList.Items.Add(Windows.UI.StartScreen.JumpListItem.CreateSeparator());
 
                     Windows.UI.StartScreen.JumpListItem resetItem = Windows.UI.StartScreen.JumpListItem.CreateWithArguments("JumpList-FactoryReset", "FactoryReset");
-                    resetItem.Logo = new Uri("ms-appx:///Assets/AltIcon5.png");
-                    resetItem.GroupName = "JumpList";
-                    resetItem.Description = "Invoke and reset configurations.";
+                    resetItem.Logo = new Uri("ms-appx:///Assets/WarningIcon.png");// Doesn't observe the asset?
+                    resetItem.GroupName = "Special Functions";
+                    resetItem.Description = "Resets all parameters.";
                     taskbarJumpList.Items.Add(resetItem);
+                    taskbarJumpList.Items.Add(Windows.UI.StartScreen.JumpListItem.CreateSeparator());
 
                     await taskbarJumpList.SaveAsync();
                 }
@@ -964,6 +977,5 @@ public partial class App : Application
             }
         }
     }
-
     #endregion
 }
