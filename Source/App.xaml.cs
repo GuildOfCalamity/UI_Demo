@@ -365,7 +365,13 @@ public partial class App : Application
         InitializeJumpList(Windows.UI.StartScreen.JumpListSystemGroupKind.None);
     }
 
-    public static string GetRuntimeSDK() => AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WindowsAppRuntime")).FirstOrDefault() ?? "N/A";
+    public static string GetAppRuntime()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine(AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WindowsAppRuntime")).FirstOrDefault() ?? "N/A");
+        sb.Append(AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WinUI")).FirstOrDefault() ?? "N/A");
+        return sb.ToString();
+    }
 
     #region [Window Helpers]
     /// <summary>

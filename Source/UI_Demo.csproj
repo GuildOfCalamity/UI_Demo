@@ -73,12 +73,18 @@
     <None Remove="Assets\AppIcon.png" />
     <None Remove="Assets\CautionIcon.png" />
     <None Remove="Assets\ErrorIcon.png" />
+    <None Remove="Assets\Exclamation1.png" />
+    <None Remove="Assets\Exclamation2.png" />
+    <None Remove="Assets\Exclamation3.png" />
+    <None Remove="Assets\Exclamation4.png" />
     <None Remove="Assets\NoticeIcon.png" />
     <None Remove="Assets\Spinner.png" />
     <None Remove="Assets\WarningIcon.png" />
     <None Remove="CompositionShadow.xaml" />
     <None Remove="Controls\AnimatedCirclesControl.xaml" />
     <None Remove="Dialogs\AboutDialog.xaml" />
+    <None Remove="Dialogs\CloseDialog.xaml" />
+    <None Remove="MainPage.xaml" />
   </ItemGroup>
 	
   <ItemGroup>
@@ -149,6 +155,18 @@
     <Content Update="Assets\ErrorIcon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Update="Assets\Exclamation1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Exclamation2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Exclamation3.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Exclamation4.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="Assets\NoticeIcon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -166,6 +184,16 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Dialogs\CloseDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="MainPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
     <Page Update="Controls\AnimatedCirclesControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -177,6 +205,11 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="Dialogs\AboutDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Dialogs\ResultsDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

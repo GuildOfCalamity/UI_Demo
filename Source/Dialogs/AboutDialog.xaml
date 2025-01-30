@@ -73,11 +73,11 @@
             </StackPanel>
             <Image
                 Grid.Column="1"
-                Height="60"
-                Margin="0,0,2,0"
+                Height="50"
+                Margin="0,1,3,0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
-                Source="ms-appx:///Assets/AppIcon.png" />
+                Source="ms-appx:///Assets/Exclamation4.png" />
         </Grid>
     </ContentDialog.Title>
     <Grid>
@@ -118,11 +118,11 @@
                 FontSize="{StaticResource FontSizeMedium}"
                 Foreground="{StaticResource SecondaryBrush}"
                 Text="Detected Runtime Assembly:" />
-            <ScrollViewer MaxHeight="170">
+            <ScrollViewer Height="40">
                 <TextBlock
-                    x:Name="tbRefs"
                     FontSize="{StaticResource FontSizeMedium}"
-                    Foreground="{StaticResource TertiaryBrush}" />
+                    Foreground="{StaticResource TertiaryBrush}"
+                    Text="{x:Bind root:App.GetAppRuntime(), Mode=OneWay}" />
             </ScrollViewer>
         </StackPanel>
         <StackPanel

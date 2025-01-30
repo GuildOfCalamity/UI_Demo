@@ -104,6 +104,13 @@
                 <GradientStop Offset="0.3" Color="#F0FF0000" />
                 <GradientStop Offset="1.0" Color="#F0FF3200" />
             </LinearGradientBrush>
+
+            <media:AcrylicBrush
+                x:Key="DialogAcrylicBrush"
+                FallbackColor="#317ad7"
+                TintColor="#317ad7"
+                TintLuminosityOpacity="0.1"
+                TintOpacity="0.2" />
             <!--#endregion-->
 
             <!--#region [Button Styler]-->

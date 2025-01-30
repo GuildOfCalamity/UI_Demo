@@ -10,6 +10,12 @@
     <None Update="App.xaml">
       <SubType>Designer</SubType>
     </None>
+    <Page Update="Dialogs\CloseDialog.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="MainPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Controls\AnimatedCirclesControl.xaml">
       <SubType>Designer</SubType>
     </Page>

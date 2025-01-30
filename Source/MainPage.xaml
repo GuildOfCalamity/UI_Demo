@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="UI_Demo.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:UI_Demo"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="Transparent"
+    mc:Ignorable="d">
+
+    <Grid
+        x:Name="host"
+        Background="#00111111"
+        PointerPressed="HostGridOnPointerPressed">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="600" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.Resources>
+            <MenuFlyout
+                x:Name="TitlebarMenuFlyout"
+                x:FieldModifier="public"
+                Placement="BottomEdgeAlignedLeft">
+                <MenuFlyoutItem
+                    Click="MenuFlyoutItemOnClick"
+                    IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
+                    Tag="{x:Bind TitlebarMenuFlyout}"
+                    Text="Hide this flyout">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource PointerHand}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    Click="MenuFlyoutItemOnClick"
+                    IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
+                    Tag="ActionSpecial"
+                    Text="Some undefined action">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource NoiseCancelation}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    Click="MenuFlyoutItemOnClick"
+                    IsEnabled="{x:Bind local:App.Profile.FirstRun.Equals(x:True), Mode=OneWay}"
+                    Tag="ActionFirstRun"
+                    Text="Reset FirstRun">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource ActionCenter}" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator Width="200" />
+                <MenuFlyoutItem
+                    Click="MenuFlyoutItemOnClick"
+                    IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
+                    Tag="ActionClose"
+                    Text="Close Application">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="{StaticResource PowerButton}" />
+                    </MenuFlyoutItem.Icon>
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F4" Modifiers="Menu" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuFlyout>
+        </Grid.Resources>
+        <StackPanel
+            Grid.Row="0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Orientation="Vertical"
+            Spacing="20">
+            <StackPanel
+                HorizontalAlignment="Center"
+                Orientation="Vertical"
+                Spacing="10">
+                <TextBlock
+                    x:Name="tbMessages"
+                    HorizontalAlignment="Center"
+                    FontSize="32"
+                    Text="WindowsAppSDK v1.6.25" />
+                <TextBlock
+                    x:Name="tbVersion"
+                    HorizontalAlignment="Center"
+                    FontSize="20"
+                    Foreground="{StaticResource SecondaryBorderBrush}"
+                    Text="{x:Bind local:App.DeviceModel}" />
+            </StackPanel>
+            <Grid>
+                <local:AnimatedCirclesControl
+                    x:Name="circles"
+                    AnimationDuration="0.7"
+                    AnimationFrequency="0.1"
+                    CircleSize="16"
+                    GradientColorOne="{StaticResource ACC2}"
+                    GradientColorTwo="{StaticResource ACC1}"
+                    IsRunning="False"
+                    ScaleFactor="1.4"
+                    UseRadialGradient="False" />
+                <Image
+                    x:Name="imgSpin"
+                    Width="32"
+                    Height="32"
+                    Margin="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Opacity="1.0"
+                    Source="ms-appx:///Assets/Spinner2.png"
+                    Visibility="Collapsed">
+                    <Image.Resources>
+                        <Storyboard
+                            x:Name="StoryboardSpin"
+                            AutoReverse="False"
+                            RepeatBehavior="Forever">
+                            <DoubleAnimation
+                                x:Name="dblAnimation"
+                                Storyboard.TargetName="spinnerTransform"
+                                Storyboard.TargetProperty="Angle"
+                                From="0"
+                                To="360"
+                                Duration="0:00:00.9" />
+                        </Storyboard>
+                    </Image.Resources>
+                    <Image.RenderTransform>
+                        <RotateTransform x:Name="spinnerTransform" CenterX="16" CenterY="16" />
+                    </Image.RenderTransform>
+                </Image>
+                <!--<local:CompositionShadow
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        BlurRadius="10"
+                        OffsetX="0"
+                        OffsetY="0"
+                        ShadowOpacity="0.3"
+                        Color="#96C7FF">-->
+                <Button
+                    x:Name="btnRun"
+                    MinWidth="160"
+                    MinHeight="40"
+                    Padding="0,1,0,0"
+                    HorizontalAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Click="ButtonOnClick"
+                    Content="Enhanced Button"
+                    Style="{StaticResource EnhancedButton}" />
+                <!--</local:CompositionShadow>-->
+            </Grid>
+            <CheckBox
+                x:Name="cbTest"
+                HorizontalAlignment="Center"
+                Checked="CheckBoxChanged"
+                Content="Glow CheckBox"
+                IsChecked="False"
+                Style="{StaticResource GlowCheckBox}"
+                Unchecked="CheckBoxChanged" />
+            <ToggleSwitch
+                HorizontalAlignment="Center"
+                Header=""
+                IsOn="True"
+                OffContent="Off Content"
+                OnContent="On Content"
+                Style="{StaticResource GlowSwitch}"
+                Toggled="OnSwitchToggled" />
+            <Slider
+                x:Name="sldrDays"
+                MinWidth="120"
+                Margin="10,6,10,2"
+                HorizontalAlignment="Center"
+                Maximum="365"
+                Minimum="1"
+                Style="{StaticResource GlowSlider}"
+                ValueChanged="SliderDaysChanged"
+                Value="180" />
+            <StackPanel Orientation="Horizontal" Spacing="20">
+                <ToggleButton
+                    x:Name="tbTest"
+                    Checked="ToggleOnChanged"
+                    Style="{StaticResource ToolbarToggleButton}"
+                    Unchecked="ToggleOnChanged">
+                    <FontIcon FontSize="24" Glyph="{StaticResource Unlock}" />
+                </ToggleButton>
+                <Button
+                    x:Name="tbButton"
+                    Click="ToolbarButtonOnClick"
+                    Content="Toolbar Button"
+                    Style="{StaticResource ToolbarButton}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="20">
+                <TextBox
+                    MinWidth="200"
+                    MinHeight="28"
+                    Background="Transparent"
+                    PlaceholderText="First name" />
+                <TextBox
+                    MinWidth="200"
+                    MinHeight="28"
+                    Background="Transparent"
+                    PlaceholderText="First name"
+                    Style="{StaticResource MinimalTextBox}" />
+            </StackPanel>
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="20">
+                <Image
+                    Width="50"
+                    Opacity="0.9"
+                    Source="ms-appx:///Assets/AltIcon1.png"
+                    Stretch="Uniform" />
+                <Image
+                    Width="50"
+                    Opacity="0.9"
+                    Source="ms-appx:///Assets/AltIcon2.png"
+                    Stretch="Uniform" />
+                <Image
+                    Width="50"
+                    Opacity="0.9"
+                    Source="ms-appx:///Assets/AltIcon3.png"
+                    Stretch="Uniform" />
+                <Image
+                    Width="50"
+                    Opacity="0.9"
+                    Source="ms-appx:///Assets/AltIcon4.png"
+                    Stretch="Uniform" />
+                <Image
+                    Width="50"
+                    Opacity="0.9"
+                    Source="ms-appx:///Assets/AltIcon5.png"
+                    Stretch="Uniform" />
+            </StackPanel>
+        </StackPanel>
+
+        <!--#region [InfoBar Content]-->
+        <StackPanel
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            Margin="0"
+            VerticalAlignment="Bottom">
+            <!--
+                Wrap this in a StackPanel/Grid to support AnimateUIElementOffset
+                This is my "new & improved" version of the original AutoCloseInfoBar.
+            -->
+            <local:SlideBar
+                x:Name="infoBar"
+                AutoCloseInterval="5000"
+                Background="{StaticResource GradientBarBrush}"
+                Foreground="{StaticResource PrimaryBrush}"
+                Severity="Informational"
+                SlideUp="True" />
+        </StackPanel>
+        <!--#endregion-->
+    </Grid>
+
+</Page>

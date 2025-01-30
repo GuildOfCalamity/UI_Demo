@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="UI_Demo.Dialogs.CloseDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:UI_Demo.Dialogs"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    BorderBrush="{StaticResource GradientBarBrush}"
+    BorderThickness="3"
+    CloseButtonText="Cancel"
+    CornerRadius="5"
+    DefaultButton="Primary"
+    PrimaryButtonText="OK"
+    SecondaryButtonText=""
+    mc:Ignorable="d">
+    <!--
+        NOTE: Absolutely DO NOT set the button styles in the ContentDialog header above.
+        e.g. PrimaryButtonStyle="{ThemeResource AccentButtonStyle}", this will cause
+        unhandled exceptions that will lead you to believe the issue is the XamlRoot.
+        This appears to only be an issue when invoking ContentDialogs from outside
+        of the MainWindow's XAML VisualTree.
+        I have added a note about this under the Microsoft-UI-XAML Issues:
+        https://github.com/microsoft/microsoft-ui-xaml/issues/2504#issuecomment-2612751024
+    -->
+    <ContentDialog.Resources>
+        <Style TargetType="Grid">
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </ContentDialog.Resources>
+    <ContentDialog.PrimaryButtonStyle>
+        <Style TargetType="Button">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+    </ContentDialog.PrimaryButtonStyle>
+    <ContentDialog.SecondaryButtonStyle>
+        <Style TargetType="Button">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+    </ContentDialog.SecondaryButtonStyle>
+    <ContentDialog.CloseButtonStyle>
+        <Style TargetType="Button">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+    </ContentDialog.CloseButtonStyle>
+    <ContentDialog.Title>
+        <Grid MinWidth="450" HorizontalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Grid.Column="0"
+                Margin="0,4,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                FontSize="{StaticResource FontSizeHuge}"
+                Foreground="{StaticResource SecondaryBrush}"
+                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                Text="Exit?" />
+            <Image
+                Grid.Column="1"
+                Height="50"
+                Margin="0,0,4,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Source="ms-appx:///Assets/Exclamation3.png" />
+        </Grid>
+    </ContentDialog.Title>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Grid.Row="0"
+            Margin="20,10,20,2"
+            FontSize="{StaticResource FontSizeMedium}"
+            Foreground="{StaticResource PrimaryBrush}"
+            Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+            Text="Are you sure you want to close the app?"
+            TextWrapping="Wrap" />
+        <TextBlock
+            Grid.Row="1"
+            Margin="20,6,20,12"
+            FontSize="{StaticResource FontSizeNormal}"
+            Foreground="{StaticResource SecondaryBrush}"
+            Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+            Text="Settings will be saved."
+            TextWrapping="Wrap" />
+    </Grid>
+</ContentDialog>
