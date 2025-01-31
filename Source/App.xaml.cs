@@ -19,6 +19,7 @@ using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.UI.ViewManagement;
 using System.Text;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace UI_Demo;
 
@@ -38,8 +39,8 @@ public partial class App : Application
 #endif
 
     public static Window? m_window;
-    public static int m_width { get; set; } = 900;
-    public static int m_height { get; set; } = 700;
+    public static int m_width { get; set; } = 950;
+    public static int m_height { get; set; } = 750;
     public static bool IsClosing { get; set; } = false;
     public static FrameworkElement? MainRoot { get; set; }
     public static IntPtr WindowHandle { get; set; }
@@ -359,6 +360,22 @@ public partial class App : Application
         }
         else
         {
+            // User's monitor setup could change on next run so verify that we're
+            // not trying to place the window on a monitor that no longer exists.
+            var displayArea = GetDisplayArea(m_window);
+            if (displayArea != null)
+            {
+                var monitorCount = GetMonitorCount();
+                if (Profile.WindowLeft >= (displayArea.OuterBounds.Width * monitorCount))
+                {
+                    Profile.WindowLeft = 100;
+                    DebugLog($"Current setting would cause window to appear outside display bounds, resetting to {Profile.WindowLeft}.");
+                }
+                else
+                {
+                    DebugLog($"Display area bounds: {displayArea.OuterBounds.Width * monitorCount},{displayArea.OuterBounds.Height}");
+                }
+            }
             AppWin?.MoveAndResize(new Windows.Graphics.RectInt32(Profile.WindowLeft, Profile.WindowTop, Profile.WindowWidth, Profile.WindowHeight), Microsoft.UI.Windowing.DisplayArea.Primary);
         }
 
@@ -531,6 +548,41 @@ public partial class App : Application
         return Math.Abs(windowBounds.Width - workArea.Width) < tolerance &&
                Math.Abs(windowBounds.Height - workArea.Height) < tolerance;
     }
+
+    /// <summary>
+    /// To my knowledge there is no way to get this natively via the WinUI3 SDK, so I'm adding a P/Invoke.
+    /// </summary>
+    /// <returns>the amount of displays the system recognizes</returns>
+    public static int GetMonitorCount()
+    {
+        int count = 0;
+
+        MonitorEnumProc callback = (IntPtr hDesktop, IntPtr hdc, ref ScreenRect prect, int d) => ++count > 0;
+
+        if (EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, 0))
+        {
+            Debug.WriteLine($"[INFO] You have {count} {(count > 1 ? "monitors" : "monitor")}.");
+            return count;
+        }
+        else
+        {
+            Debug.WriteLine("[WARNING] An error occurred while enumerating monitors.");
+            return 1;
+        }
+    }
+ 
+    [StructLayout(LayoutKind.Sequential)]
+    struct ScreenRect
+    {
+        public int left;
+        public int top;
+        public int right;
+        public int bottom;
+    }
+    delegate bool MonitorEnumProc(IntPtr hDesktop, IntPtr hdc, ref ScreenRect pRect, int dwData);
+
+    [DllImport("user32.dll")]
+    static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lpRect, MonitorEnumProc callback, int dwData);
     #endregion
 
     #region [Reflection Helpers]

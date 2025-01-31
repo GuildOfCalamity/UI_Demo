@@ -18,6 +18,8 @@ using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using Windows.UI.StartScreen;
 using WinRT.Interop;
+using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Xaml.Media.Animation;
 
 namespace UI_Demo;
 
@@ -34,7 +36,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Brush? _lvl3;
     static Brush? _lvl4;
     static Brush? _lvl5;
-
+    Border? _blurBorder;
+    AcrylicBrush? _blurBrush;
     public event PropertyChangedEventHandler? PropertyChanged;
     bool _isBusy = false;
     public bool IsBusy
@@ -81,6 +84,25 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             _lvl5 = new SolidColorBrush(Colors.Red);
         #endregion
 
+        #region [Blur Testing]
+        _blurBrush = new AcrylicBrush
+        {
+            TintOpacity = 0.2,
+            TintLuminosityOpacity = 0.1,
+            TintColor = Windows.UI.Color.FromArgb(255, 49, 122, 215),
+            FallbackColor = Windows.UI.Color.FromArgb(255, 49, 122, 215)
+        };
+
+        _blurBorder = new Border
+        {
+            // Adjust the top margin to account for the TitleBar height,
+            // or you could wire up this feature in the MainWindow.
+            Margin = new Thickness(0, -31, 0,0),
+            Background = _blurBrush,
+            Opacity = 0.8,
+            CornerRadius = new CornerRadius(0)
+        };
+        #endregion
     }
 
     public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
@@ -220,8 +242,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 }
                 else
                 {
+                    SetBlur(true, true);
                     tbMessages.Text = "Process complete!";
-                    ContentDialogResult result = DialogHelper.ShowAsTaskAsync(new Dialogs.ResultsDialog(), Content as FrameworkElement);
+                    _ = DialogHelper.ShowAsTask(new Dialogs.ResultsDialog(), Content as FrameworkElement);
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(3500);
+                        SetBlur(false, true);
+                    });
                 }
 
                 btnRun.IsEnabled = true;
@@ -354,21 +382,28 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         var cb = sender as CheckBox;
         if (this.Content != null) // use as "is loaded" check for the MainWindow
+        {
             UpdateInfoBar($"Check box {((bool)cb.IsChecked ? "checked" : "unchecked")}.", (bool)cb.IsChecked ? MessageLevel.Important : MessageLevel.Warning);
+        }
     }
 
     void ToggleOnChanged(object sender, RoutedEventArgs e)
     {
         var tb = sender as ToggleButton;
         if (this.Content != null) // use as "is loaded" check for the MainWindow
+        {
             UpdateInfoBar($"Toggle button {((bool)tb.IsChecked ? "checked" : "unchecked")}.", (bool)tb.IsChecked ? MessageLevel.Important : MessageLevel.Warning);
+        }
     }
 
     void OnSwitchToggled(object sender, RoutedEventArgs e)
     {
         var ts = sender as ToggleSwitch;
         if (this.Content != null) // use as "is loaded" check for the MainWindow
+        {
             UpdateInfoBar($"Toggle switch {(ts.IsOn ? "activated" : "deactivated")}.", ts.IsOn ? MessageLevel.Important : MessageLevel.Warning);
+            SetBlur(ts.IsOn, false);
+        }
     }
 
     async void SliderDaysChanged(object sender, RangeBaseValueChangedEventArgs e)
@@ -412,6 +447,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (this.Content is not null && !App.IsClosing)
                 {
+                    SetBlur(true, true);
                     ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.CloseDialog(), Content as FrameworkElement);
                     if (result is ContentDialogResult.Primary)
                     {   // The closing event will be picked up in App.xaml.cs
@@ -420,6 +456,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     else if (result is ContentDialogResult.None)
                     {
                         UpdateInfoBar($"User canceled the dialog.", MessageLevel.Information);
+                        SetBlur(false, true);
                     }
                 }
             }
@@ -565,5 +602,68 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// A test for changing the order of UIElements to simulate a blur effect.
+    /// </summary>
+    /// <param name="enable">true to use the <see cref="Microsoft.UI.Xaml.Media.AcrylicBrush"/>, false otherwise</param>
+    /// <param name="isOverlay">true inserts the border at top of z-order, false to remove border</param>
+    public void SetBlur(bool enable, bool isOverlay = false)
+    {
+        DispatcherQueue.InvokeOnUI(() => 
+        {
+            if (!isOverlay)
+            {
+                if (enable)
+                {
+                    root.Background = _blurBrush;
+                    //var fadeInAnimation = new DoubleAnimation
+                    //{
+                    //    From = 0,
+                    //    To = 1,
+                    //    Duration = new Duration(TimeSpan.FromMilliseconds(2000)),
+                    //    EasingFunction = new QuadraticEase()
+                    //};
+                    //var storyboard = new Storyboard();
+                    //Storyboard.SetTarget(fadeInAnimation, root);
+                    //Storyboard.SetTargetProperty(fadeInAnimation, "Opacity");
+                    //storyboard.Children.Add(fadeInAnimation);
+                    //storyboard.Begin();
+                }
+                else
+                {
+                    root.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 10, 10, 10));
+                    //var fadeInAnimation = new DoubleAnimation
+                    //{
+                    //    From = 1,
+                    //    To = 0,
+                    //    Duration = new Duration(TimeSpan.FromMilliseconds(2000)),
+                    //    EasingFunction = new QuadraticEase()
+                    //};
+                    //var storyboard = new Storyboard();
+                    //Storyboard.SetTarget(fadeInAnimation, root);
+                    //Storyboard.SetTargetProperty(fadeInAnimation, "Opacity");
+                    //storyboard.Children.Add(fadeInAnimation);
+                    //storyboard.Begin();
+                }
+
+            }
+            else
+            {
+                if (_blurBorder == null)
+                    return;
+                
+                //var container = (Page)root.Parent;
+                
+                var visual = ElementCompositionPreview.GetElementVisual(_blurBorder);
+                if (visual != null)
+                    visual.BorderMode = Microsoft.UI.Composition.CompositionBorderMode.Soft;
+                
+                if (enable)
+                    root.Children.Insert(root.Children.Count, _blurBorder); // Move to top
+                else
+                    root.Children.Remove(_blurBorder);
+            }
+        });
+    }
 
 }

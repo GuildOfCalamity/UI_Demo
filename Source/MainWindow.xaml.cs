@@ -129,6 +129,5 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         // Set the sprite visual as the background of the FrameworkElement.
         ElementCompositionPreview.SetElementChildVisual(fe, spriteVisual);
     }
-
     #endregion
 }

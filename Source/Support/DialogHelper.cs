@@ -53,7 +53,7 @@ public static class DialogHelper
     /// <param name="dialog"><see cref="ContentDialog"/></param>
     /// <param name="element"><see cref="FrameworkElement"/></param>
     /// <returns><see cref="ContentDialogResult"/></returns>
-    public static ContentDialogResult ShowAsTaskAsync(ContentDialog dialog, FrameworkElement element)
+    public static ContentDialogResult ShowAsTask(ContentDialog dialog, FrameworkElement element)
     {
         ContentDialogResult dialogResult = ContentDialogResult.None;
         if (!isOpening && dialog is not null && element is not null)
@@ -69,7 +69,7 @@ public static class DialogHelper
                 dialog.ShowAsync().AsTask().ContinueWith(t =>
                 {
                     if (t.Exception != null)
-                        App.DebugLog($"[ERROR] ShowAsyncAlt: {t.Exception.Message}");
+                        App.DebugLog($"[ERROR] ShowAsTask: {t.Exception.Message}");
                     else
                         dialogResult = t.Result;
 
