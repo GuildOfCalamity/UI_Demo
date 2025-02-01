@@ -56,7 +56,8 @@
       https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#preservecompilationcontext
     -->
 	  <PreserveCompilationContext>false</PreserveCompilationContext>
-  </PropertyGroup>
+  
+</PropertyGroup>
 
   <!-- 
      Define "IS_UNPACKAGED" constant if the app is an unpackaged app. 
@@ -71,6 +72,7 @@
     <None Remove="Assets\AltIcon4.png" />
     <None Remove="Assets\AppIcon.ico" />
     <None Remove="Assets\AppIcon.png" />
+    <None Remove="Assets\BlurPane2.png" />
     <None Remove="Assets\CautionIcon.png" />
     <None Remove="Assets\ErrorIcon.png" />
     <None Remove="Assets\Exclamation1.png" />
@@ -147,6 +149,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\AppIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\BlurPane.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\BlurPane2.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\CautionIcon.png">

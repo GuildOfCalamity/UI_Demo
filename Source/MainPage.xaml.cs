@@ -20,6 +20,13 @@ using Windows.UI.StartScreen;
 using WinRT.Interop;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Composition;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
+using System.Numerics;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Graphics.Effects;
 
 namespace UI_Demo;
 
@@ -36,8 +43,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Brush? _lvl3;
     static Brush? _lvl4;
     static Brush? _lvl5;
-    Border? _blurBorder;
-    AcrylicBrush? _blurBrush;
+    Compositor? _compositor;
+    SpriteVisual? _blurVisual;
     public event PropertyChangedEventHandler? PropertyChanged;
     bool _isBusy = false;
     public bool IsBusy
@@ -84,25 +91,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             _lvl5 = new SolidColorBrush(Colors.Red);
         #endregion
 
-        #region [Blur Testing]
-        _blurBrush = new AcrylicBrush
-        {
-            TintOpacity = 0.2,
-            TintLuminosityOpacity = 0.1,
-            TintColor = Windows.UI.Color.FromArgb(255, 49, 122, 215),
-            FallbackColor = Windows.UI.Color.FromArgb(255, 49, 122, 215)
-        };
-
-        _blurBorder = new Border
-        {
-            // Adjust the top margin to account for the TitleBar height,
-            // or you could wire up this feature in the MainWindow.
-            Margin = new Thickness(0, -31, 0,0),
-            Background = _blurBrush,
-            Opacity = 0.8,
-            CornerRadius = new CornerRadius(0)
-        };
-        #endregion
+        _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
     }
 
     public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
@@ -112,76 +101,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
     }
 
-    /// <summary>
-    /// NOTE: You must set a background color on the grid for the mouse events to be triggered.
-    /// You can use a transparent color e.g. #00111111 if you don't want a color to be visible.
-    /// </summary>
-    void HostGridOnPointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        if (_loaded && !App.IsClosing)
-        {
-            try
-            {
-                var grid = sender as Grid;
-                if (e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse)
-                {
-                    //var vector = e.GetCurrentPoint((UIElement)sender).Position.ToVector2();
-                    var mousePoint = e.GetCurrentPoint(grid);
-                    var position = mousePoint.Position;
-                    if (mousePoint.Properties.IsRightButtonPressed)
-                    {
-                        var rbp = mousePoint.Properties.IsRightButtonPressed;
-                        Debug.WriteLine($"[INFO] Mouse right-click detected at {position}");
-                        FlyoutShowOptions options = new FlyoutShowOptions();
-                        options.ShowMode = FlyoutShowMode.TransientWithDismissOnPointerMoveAway;
-                        options.Position = new Point(position.X / this.Content.XamlRoot.RasterizationScale, position.Y / this.Content.XamlRoot.RasterizationScale);
-                        //TitlebarMenuFlyout.ShowAt(this.Content, options);
-                        TitlebarMenuFlyout.ShowAt(grid, options);
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"[INFO] Ignoring non right-click event at {position}");
-                    }
-                }
-            }
-            catch (Exception) { }
-        }
-    }
-
-    void HostGridOnTapped(object sender, TappedRoutedEventArgs e)
-    {
-        if (_loaded && !App.IsClosing)
-        {
-            var localPoint = e.GetPosition(this);
-            Debug.WriteLine($"[INFO] Tap detected at {localPoint}");
-            if (Content is not null && Content.XamlRoot is not null)
-            {
-                if (TitlebarMenuFlyout.IsOpen)
-                    TitlebarMenuFlyout.Hide();
-            }
-        }
-    }
-
-    void MainPageOnLoaded(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded && this.Content != null)
-        {
-            sldrDays.Value = App.Profile!.LastCount;
-            if (App.ArgList.Count > 0)
-            {
-                UpdateInfoBar($"Received startup argument ⇒ {App.ArgList[0]}");
-                if (App.ArgList[0].Contains("JumpList-OpenLog"))
-                {
-                    OpenDebugLog();
-                }
-            }
-            else
-                UpdateInfoBar($"App.ArgList.Count ⇒ {App.ArgList.Count}");
-        }
-        _loaded = true;
-    }
-
-    #region [Events]
+     #region [Events]
 
     void ButtonOnClick(object sender, RoutedEventArgs e)
     {
@@ -242,13 +162,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 }
                 else
                 {
-                    SetBlur(true, true);
+                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 26 });
                     tbMessages.Text = "Process complete!";
                     _ = DialogHelper.ShowAsTask(new Dialogs.ResultsDialog(), Content as FrameworkElement);
                     Task.Run(async () =>
                     {
                         await Task.Delay(3500);
-                        SetBlur(false, true);
+                        RemoveBlurCompositionElement(root);
                     });
                 }
 
@@ -399,10 +319,19 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     void OnSwitchToggled(object sender, RoutedEventArgs e)
     {
         var ts = sender as ToggleSwitch;
-        if (this.Content != null) // use as "is loaded" check for the MainWindow
+        if (this.Content != null && ts != null) // use as "is loaded" check for the MainWindow
         {
-            UpdateInfoBar($"Toggle switch {(ts.IsOn ? "activated" : "deactivated")}.", ts.IsOn ? MessageLevel.Important : MessageLevel.Warning);
-            SetBlur(ts.IsOn, false);
+            var ctrlPosition = ts.TransformToVisual(root).TransformPoint(new Windows.Foundation.Point(0d, 0d));
+            Debug.WriteLine($"[INFO] Relative control position: {ctrlPosition.X},{ctrlPosition.Y}");
+            if (ts.IsOn)
+            {
+                AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 26 });
+            }
+            else
+            {
+                RemoveBlurCompositionElement(root);
+            }
+            UpdateInfoBar($"Blur composition {(ts.IsOn ? "activated" : "deactivated")}.", ts.IsOn ? MessageLevel.Important : MessageLevel.Warning);
         }
     }
 
@@ -423,6 +352,75 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 else if (result is ContentDialogResult.None) { UpdateInfoBar("User clicked 'Cancel'", MessageLevel.Warning); }
             }
         }
+    }
+
+    /// <summary>
+    /// NOTE: You must set a background color on the grid for the mouse events to be triggered.
+    /// You can use a transparent color e.g. #00111111 if you don't want a color to be visible.
+    /// </summary>
+    void HostGridOnPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (_loaded && !App.IsClosing)
+        {
+            try
+            {
+                var grid = sender as Grid;
+                if (e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse)
+                {
+                    //var vector = e.GetCurrentPoint((UIElement)sender).Position.ToVector2();
+                    var mousePoint = e.GetCurrentPoint(grid);
+                    var position = mousePoint.Position;
+                    if (mousePoint.Properties.IsRightButtonPressed)
+                    {
+                        var rbp = mousePoint.Properties.IsRightButtonPressed;
+                        Debug.WriteLine($"[INFO] Mouse right-click detected at {position}");
+                        FlyoutShowOptions options = new FlyoutShowOptions();
+                        options.ShowMode = FlyoutShowMode.TransientWithDismissOnPointerMoveAway;
+                        options.Position = new Point(position.X / this.Content.XamlRoot.RasterizationScale, position.Y / this.Content.XamlRoot.RasterizationScale);
+                        //TitlebarMenuFlyout.ShowAt(this.Content, options);
+                        TitlebarMenuFlyout.ShowAt(grid, options);
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[INFO] Ignoring non right-click event at {position}");
+                    }
+                }
+            }
+            catch (Exception) { }
+        }
+    }
+
+    void HostGridOnTapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (_loaded && !App.IsClosing)
+        {
+            var localPoint = e.GetPosition(this);
+            Debug.WriteLine($"[INFO] Tap detected at {localPoint}");
+            if (Content is not null && Content.XamlRoot is not null)
+            {
+                if (TitlebarMenuFlyout.IsOpen)
+                    TitlebarMenuFlyout.Hide();
+            }
+        }
+    }
+
+    void MainPageOnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded && this.Content != null)
+        {
+            sldrDays.Value = App.Profile!.LastCount;
+            if (App.ArgList.Count > 0)
+            {
+                UpdateInfoBar($"Received startup argument ⇒ {App.ArgList[0]}");
+                if (App.ArgList[0].Contains("JumpList-OpenLog"))
+                {
+                    OpenDebugLog();
+                }
+            }
+            else
+                UpdateInfoBar($"App.ArgList.Count ⇒ {App.ArgList.Count}");
+        }
+        _loaded = true;
     }
 
     /// <summary>
@@ -447,7 +445,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (this.Content is not null && !App.IsClosing)
                 {
-                    SetBlur(true, true);
+                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 26 });
                     ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.CloseDialog(), Content as FrameworkElement);
                     if (result is ContentDialogResult.Primary)
                     {   // The closing event will be picked up in App.xaml.cs
@@ -456,7 +454,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     else if (result is ContentDialogResult.None)
                     {
                         UpdateInfoBar($"User canceled the dialog.", MessageLevel.Information);
-                        SetBlur(false, true);
+                        RemoveBlurCompositionElement(root);
                     }
                 }
             }
@@ -518,7 +516,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
-
+    void TextBoxOnKeyUp(object sender, KeyRoutedEventArgs e) => UpdateInfoBar($"Key press: '{e.Key}'", MessageLevel.Information);
     #endregion
 
     void UpdateInfoBar(string msg, MessageLevel level = MessageLevel.Information)
@@ -603,67 +601,78 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// A test for changing the order of UIElements to simulate a blur effect.
+    /// A legit blur effect which will still allow the user to interact with the underlying controls.
     /// </summary>
-    /// <param name="enable">true to use the <see cref="Microsoft.UI.Xaml.Media.AcrylicBrush"/>, false otherwise</param>
-    /// <param name="isOverlay">true inserts the border at top of z-order, false to remove border</param>
-    public void SetBlur(bool enable, bool isOverlay = false)
+    void AddBlurCompositionElement(FrameworkElement fe, Windows.UI.Color shadowColor, float shadowOpacity = 0.94F, bool useSurfaceBrush = false, bool useImageForShadowMask = false)
     {
-        DispatcherQueue.InvokeOnUI(() => 
-        {
-            if (!isOverlay)
-            {
-                if (enable)
-                {
-                    root.Background = _blurBrush;
-                    //var fadeInAnimation = new DoubleAnimation
-                    //{
-                    //    From = 0,
-                    //    To = 1,
-                    //    Duration = new Duration(TimeSpan.FromMilliseconds(2000)),
-                    //    EasingFunction = new QuadraticEase()
-                    //};
-                    //var storyboard = new Storyboard();
-                    //Storyboard.SetTarget(fadeInAnimation, root);
-                    //Storyboard.SetTargetProperty(fadeInAnimation, "Opacity");
-                    //storyboard.Children.Add(fadeInAnimation);
-                    //storyboard.Begin();
-                }
-                else
-                {
-                    root.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 10, 10, 10));
-                    //var fadeInAnimation = new DoubleAnimation
-                    //{
-                    //    From = 1,
-                    //    To = 0,
-                    //    Duration = new Duration(TimeSpan.FromMilliseconds(2000)),
-                    //    EasingFunction = new QuadraticEase()
-                    //};
-                    //var storyboard = new Storyboard();
-                    //Storyboard.SetTarget(fadeInAnimation, root);
-                    //Storyboard.SetTargetProperty(fadeInAnimation, "Opacity");
-                    //storyboard.Children.Add(fadeInAnimation);
-                    //storyboard.Begin();
-                }
+        if (fe == null)
+            return;
 
-            }
-            else
-            {
-                if (_blurBorder == null)
-                    return;
-                
-                //var container = (Page)root.Parent;
-                
-                var visual = ElementCompositionPreview.GetElementVisual(_blurBorder);
-                if (visual != null)
-                    visual.BorderMode = Microsoft.UI.Composition.CompositionBorderMode.Soft;
-                
-                if (enable)
-                    root.Children.Insert(root.Children.Count, _blurBorder); // Move to top
-                else
-                    root.Children.Remove(_blurBorder);
-            }
-        });
+        CompositionSurfaceBrush? surfaceBrush = null;
+
+        // Get the current compositor
+        if (_compositor == null)
+            _compositor = ElementCompositionPreview.GetElementVisual(fe).Compositor;
+
+        // If we've already created the sprite, just make it visible.
+        if (_blurVisual != null)
+        {
+            _blurVisual.IsVisible = true;
+            return;
+        }
+
+        if (useSurfaceBrush)
+        {   // Create surface brush and load image.
+            surfaceBrush = _compositor.CreateSurfaceBrush();
+            // Use an image as the shadow.
+            surfaceBrush.Surface = LoadedImageSurface.StartLoadFromUri(new Uri("ms-appx:///Assets/BlurPane.png"));
+        }
+
+        // Create the destination sprite, sized to cover the entire list
+        _blurVisual = _compositor.CreateSpriteVisual();
+        if (fe.ActualSize != Vector2.Zero)
+            _blurVisual.Size = new Vector2((float)fe.ActualWidth, (float)fe.ActualHeight);
+        else
+            _blurVisual.Size = new Vector2((float)App.m_width, (float)App.m_height);
+
+        if (surfaceBrush != null)
+            _blurVisual.Brush = surfaceBrush;
+
+        // Create drop shadow...
+        DropShadow shadow = _compositor.CreateDropShadow();
+        shadow.Opacity = shadowOpacity;
+        shadow.Color = shadowColor;
+        shadow.BlurRadius = 100F;
+        shadow.Offset = new System.Numerics.Vector3(0, 0, -1);
+        if (useImageForShadowMask)
+        {   // Specify mask policy for shadow.
+            shadow.SourcePolicy = CompositionDropShadowSourcePolicy.InheritFromVisualContent;
+        }
+        // Associate shadow with visual.
+        _blurVisual.Shadow = shadow;
+
+        // Start out with the destination layer visible
+        _blurVisual.IsVisible = true;
+
+        // Apply the visual element
+        ElementCompositionPreview.SetElementChildVisual(fe, _blurVisual);
     }
 
+    /// <summary>
+    /// Dispose of any sprite and unparent it from the FrameworkElement.
+    /// If the <see cref="SpriteVisual"/> has already been created, it will be hidden.
+    /// </summary>
+    /// <param name="fe"><see cref="FrameworkElement"/></param>
+    void RemoveBlurCompositionElement(FrameworkElement fe)
+    {
+        if (fe == null)
+            return;
+
+        if (_blurVisual != null)
+        {
+            _blurVisual.IsVisible = false;
+            return;
+        }
+        ElementCompositionPreview.SetElementChildVisual(fe, null);
+    }
 }

@@ -11,16 +11,6 @@
 
     <Grid x:Name="root">
 
-        <!--#region [Blur Test]-->
-        <!--<Border
-            x:Name="BlurBorder"
-            Background="{ThemeResource SystemControlAcrylicWindowBrush}"
-            Grid.RowSpan="2"
-            Margin="0"
-            CornerRadius="0"
-            Opacity="0" />-->
-        <!--#endregion-->
-
         <Grid
             x:Name="host"
             Background="#00111111"
@@ -30,6 +20,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.Resources>
+                <!--#region [Context Flyout Menu]-->
                 <MenuFlyout
                     x:Name="TitlebarMenuFlyout"
                     x:FieldModifier="public"
@@ -75,8 +66,8 @@
                         </MenuFlyoutItem.KeyboardAccelerators>
                     </MenuFlyoutItem>
                 </MenuFlyout>
+                <!--#endregion-->
             </Grid.Resources>
-
 
             <StackPanel
                 Grid.Row="0"
@@ -204,11 +195,13 @@
                         MinWidth="200"
                         MinHeight="28"
                         Background="Transparent"
+                        KeyUp="TextBoxOnKeyUp"
                         PlaceholderText="First name" />
                     <TextBox
                         MinWidth="200"
                         MinHeight="28"
                         Background="Transparent"
+                        KeyUp="TextBoxOnKeyUp"
                         PlaceholderText="First name"
                         Style="{StaticResource MinimalTextBox}" />
                 </StackPanel>
