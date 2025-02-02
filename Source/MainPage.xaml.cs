@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
@@ -14,19 +16,17 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-
-using Windows.Foundation;
-using Windows.UI.StartScreen;
-using WinRT.Interop;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml.Media.Imaging;
+
+using Windows.Foundation;
+using Windows.UI.StartScreen;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
-using System.Numerics;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Effects;
+using WinRT.Interop;
 
 namespace UI_Demo;
 
@@ -43,8 +43,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Brush? _lvl3;
     static Brush? _lvl4;
     static Brush? _lvl5;
-    Compositor? _compositor;
-    SpriteVisual? _blurVisual;
     public event PropertyChangedEventHandler? PropertyChanged;
     bool _isBusy = false;
     public bool IsBusy
@@ -600,24 +598,37 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
+    #region [Blur Effect Compositor]
+
+    Compositor? _compositor;
+    SpriteVisual? _blurVisual;
+    ScalarKeyFrameAnimation? _showBlurAnimation;
+    ScalarKeyFrameAnimation? _hideBlurAnimation;
+    CompositionScopedBatch? _scopedBatch;
+
     /// <summary>
     /// A legit blur effect which will still allow the user to interact with the underlying controls.
     /// </summary>
-    void AddBlurCompositionElement(FrameworkElement fe, Windows.UI.Color shadowColor, float shadowOpacity = 0.94F, bool useSurfaceBrush = false, bool useImageForShadowMask = false)
+    void AddBlurCompositionElement(FrameworkElement fe, Windows.UI.Color shadowColor, float shadowOpacity = 0.93F, bool useSurfaceBrush = false, bool useImageForShadowMask = false)
     {
         if (fe == null)
             return;
 
         CompositionSurfaceBrush? surfaceBrush = null;
 
-        // Get the current compositor
+        // Get the current compositor.
         if (_compositor == null)
             _compositor = ElementCompositionPreview.GetElementVisual(fe).Compositor;
+
+        // If we're in the middle of an animation, cancel it now.
+        if (_scopedBatch != null)
+            CleanupScopeBatch();
 
         // If we've already created the sprite, just make it visible.
         if (_blurVisual != null)
         {
             _blurVisual.IsVisible = true;
+            BlurInVisualAnimation();
             return;
         }
 
@@ -628,7 +639,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             surfaceBrush.Surface = LoadedImageSurface.StartLoadFromUri(new Uri("ms-appx:///Assets/BlurPane.png"));
         }
 
-        // Create the destination sprite, sized to cover the entire list
+        // Create the destination sprite, sized to cover the entire page.
         _blurVisual = _compositor.CreateSpriteVisual();
         if (fe.ActualSize != Vector2.Zero)
             _blurVisual.Size = new Vector2((float)fe.ActualWidth, (float)fe.ActualHeight);
@@ -651,11 +662,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         // Associate shadow with visual.
         _blurVisual.Shadow = shadow;
 
-        // Start out with the destination layer visible
+        // Start out with the destination layer visible.
         _blurVisual.IsVisible = true;
 
-        // Apply the visual element
+        // Apply the visual element.
         ElementCompositionPreview.SetElementChildVisual(fe, _blurVisual);
+
+        BlurInVisualAnimation();
     }
 
     /// <summary>
@@ -670,9 +683,83 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
         if (_blurVisual != null)
         {
-            _blurVisual.IsVisible = false;
+            //_blurVisual.IsVisible = false;
+            BlurOutVisualAnimation();
             return;
         }
         ElementCompositionPreview.SetElementChildVisual(fe, null);
     }
+
+
+    void BlurInVisualAnimation()
+    {
+        if (_blurVisual == null || _compositor == null)
+            return;
+
+        // Add an easing function: this will ramp quickly at first and then slow down. The default easing on animations is always linear.
+        var ease = _compositor.CreateCubicBezierEasingFunction(new Vector2(0.25f, 0.4f), new Vector2(0.9f, 0.25f));
+
+        // Animate from transparent to fully opaque or translucent (depends on brush and image)
+        if (_showBlurAnimation == null)
+        {
+            _showBlurAnimation = _compositor.CreateScalarKeyFrameAnimation();
+            _showBlurAnimation.InsertKeyFrame(0f, 0f); //showAnimation.InsertKeyFrame(0f, 0f, ease);
+            _showBlurAnimation.InsertKeyFrame(1f, 1f); //showAnimation.InsertKeyFrame(1f, 1f, ease);
+            _showBlurAnimation.Duration = TimeSpan.FromMilliseconds(1200);
+        }
+        _blurVisual.StartAnimation("Opacity", _showBlurAnimation);
+    }
+
+    void BlurOutVisualAnimation()
+    {
+        if (_blurVisual == null || _compositor == null)
+            return;
+
+        // Start a scoped batch so we can register to completion event and hide the destination layer.
+        _scopedBatch = _compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
+
+        // Start the hide animation to fade out the destination effect.
+        if (_hideBlurAnimation == null)
+        {
+            _hideBlurAnimation = _compositor.CreateScalarKeyFrameAnimation();
+            _hideBlurAnimation.InsertKeyFrame(0f, 1f);
+            _hideBlurAnimation.InsertKeyFrame(1f, 0f);
+            _hideBlurAnimation.Duration = TimeSpan.FromMilliseconds(1200);
+        }
+        _blurVisual.StartAnimation("Opacity", _hideBlurAnimation);
+
+        // Scoped batch completed event.
+        _scopedBatch.Completed += ScopeBatchCompleted;
+        _scopedBatch.End();
+    }
+
+    /// <summary>
+    /// One the <see cref="ScalarKeyFrameAnimation"/>
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="args"></param>
+    void ScopeBatchCompleted(object sender, CompositionBatchCompletedEventArgs args)
+    {
+        if (_blurVisual == null)
+            return;
+
+        Debug.WriteLine($"[INFO] {nameof(_scopedBatch)} completed event");
+
+        // Scope batch completion event has fired, hide the destination sprite and cleanup the batch.
+        try { _blurVisual.IsVisible = false; }
+        catch (ObjectDisposedException) { Debug.WriteLine($"[WARNING] {nameof(_blurVisual)} is already disposed."); }
+
+        CleanupScopeBatch();
+    }
+
+    void CleanupScopeBatch()
+    {
+        if (_scopedBatch != null)
+        {
+            _scopedBatch.Completed -= ScopeBatchCompleted;
+            _scopedBatch.Dispose();
+            _scopedBatch = null;
+        }
+    }
+    #endregion
 }
