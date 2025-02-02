@@ -36,8 +36,9 @@ namespace UI_Demo;
 public sealed partial class MainPage : Page, INotifyPropertyChanged
 {
     #region [Props]
-    static bool _loaded = false;
-    static bool _useSpinner = false;
+    bool _loaded = false;
+    bool _useSpinner = false;
+    bool _useSurfaceBrush = false;
     static Brush? _lvl1;
     static Brush? _lvl2;
     static Brush? _lvl3;
@@ -302,6 +303,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         if (this.Content != null) // use as "is loaded" check for the MainWindow
         {
             UpdateInfoBar($"Check box {((bool)cb.IsChecked ? "checked" : "unchecked")}.", (bool)cb.IsChecked ? MessageLevel.Important : MessageLevel.Warning);
+            _useSurfaceBrush = (bool)cb.IsChecked;
+            // Force the SpriteVisual to be recreated.
+            if (_blurVisual != null)
+            {
+                _blurVisual.Dispose();
+                _blurVisual = null;
+            }
         }
     }
 
@@ -323,7 +331,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             Debug.WriteLine($"[INFO] Relative control position: {ctrlPosition.X},{ctrlPosition.Y}");
             if (ts.IsOn)
             {
-                AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 26 });
+                AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: _useSurfaceBrush, useImageForShadowMask: false);
             }
             else
             {
@@ -637,6 +645,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             surfaceBrush = _compositor.CreateSurfaceBrush();
             // Use an image as the shadow.
             surfaceBrush.Surface = LoadedImageSurface.StartLoadFromUri(new Uri("ms-appx:///Assets/BlurPane.png"));
+            surfaceBrush.Stretch = CompositionStretch.UniformToFill;
+            surfaceBrush.BitmapInterpolationMode = CompositionBitmapInterpolationMode.MagNearestMinLinearMipLinear;
+            //surfaceBrush.Scale = new Vector2 { X = 1.5f, Y = 1.5f };
         }
 
         // Create the destination sprite, sized to cover the entire page.
@@ -690,7 +701,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         ElementCompositionPreview.SetElementChildVisual(fe, null);
     }
 
-
+    /// <summary>
+    /// Animate the <see cref="SpriteVisual"/> to fade in using <see cref="ScalarKeyFrameAnimation"/>.
+    /// </summary>
     void BlurInVisualAnimation()
     {
         if (_blurVisual == null || _compositor == null)
@@ -710,6 +723,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         _blurVisual.StartAnimation("Opacity", _showBlurAnimation);
     }
 
+    /// <summary>
+    /// Animate the <see cref="SpriteVisual"/> to fade out using <see cref="ScalarKeyFrameAnimation"/>.
+    /// </summary>
     void BlurOutVisualAnimation()
     {
         if (_blurVisual == null || _compositor == null)
@@ -734,10 +750,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// One the <see cref="ScalarKeyFrameAnimation"/>
+    /// Once the <see cref="ScalarKeyFrameAnimation"/> completes, hide the <see cref="SpriteVisual"/>.
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="args"></param>
     void ScopeBatchCompleted(object sender, CompositionBatchCompletedEventArgs args)
     {
         if (_blurVisual == null)
@@ -752,6 +766,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         CleanupScopeBatch();
     }
 
+    /// <summary>
+    /// Dispose of the <see cref="CompositionScopedBatch"/> and unhook the event.
+    /// </summary>
     void CleanupScopeBatch()
     {
         if (_scopedBatch != null)
