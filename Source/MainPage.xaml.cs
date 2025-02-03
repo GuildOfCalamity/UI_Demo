@@ -27,6 +27,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using Windows.Graphics.Effects;
 using WinRT.Interop;
+using Windows.Storage;
 
 namespace UI_Demo;
 
@@ -322,7 +323,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
-    void OnSwitchToggled(object sender, RoutedEventArgs e)
+    async void OnSwitchToggled(object sender, RoutedEventArgs e)
     {
         var ts = sender as ToggleSwitch;
         if (this.Content != null && ts != null) // use as "is loaded" check for the MainWindow
@@ -331,13 +332,51 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             Debug.WriteLine($"[INFO] Relative control position: {ctrlPosition.X},{ctrlPosition.Y}");
             if (ts.IsOn)
             {
-                AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: _useSurfaceBrush, useImageForShadowMask: false);
+                // Create a new blur image for the CompositionSurfaceBrush.
+                var bmp = await AppCapture.GetScreenshot(root);
+                if (bmp != null)
+                {
+                    Debug.WriteLine($"[INFO] Got {bmp.PixelWidth},{bmp.PixelHeight}");
+
+                    // We'll need to force a new CompositionSurfaceBrush
+                    if (_blurVisual != null)
+                    {
+                        _blurVisual.Dispose();
+                        _blurVisual = null;
+                    }
+
+                    string assetPath = string.Empty;
+                    if (App.IsPackaged)
+                        assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurPane.png");
+                    else
+                        assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurPane.png");
+
+                    var blurred = await BlurHelper.ApplyBlurAsync(bmp);
+                    
+                    // Not saving for some reason.
+                    await AppCapture.SaveBitmapImageToDisk(blurred, assetPath);
+
+                    #region [test new BitmapImage result in-app]
+                    if (blurred != null)
+                    {
+                        blurTest.Visibility = Visibility.Visible;
+                        blurTest.Source = blurred;
+                    }
+                    #endregion
+                    
+                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: true, useImageForShadowMask: false);
+                }
+                else
+                {
+                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: false, useImageForShadowMask: false);
+                }
             }
             else
             {
                 RemoveBlurCompositionElement(root);
             }
             UpdateInfoBar($"Blur composition {(ts.IsOn ? "activated" : "deactivated")}.", ts.IsOn ? MessageLevel.Important : MessageLevel.Warning);
+            
         }
     }
 
@@ -622,6 +661,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         if (fe == null)
             return;
 
+        bool loadFromStream = false;
+
         CompositionSurfaceBrush? surfaceBrush = null;
 
         // Get the current compositor.
@@ -643,11 +684,31 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         if (useSurfaceBrush)
         {   // Create surface brush and load image.
             surfaceBrush = _compositor.CreateSurfaceBrush();
-            // Use an image as the shadow.
-            surfaceBrush.Surface = LoadedImageSurface.StartLoadFromUri(new Uri("ms-appx:///Assets/BlurPane.png"));
-            surfaceBrush.Stretch = CompositionStretch.UniformToFill;
-            surfaceBrush.BitmapInterpolationMode = CompositionBitmapInterpolationMode.MagNearestMinLinearMipLinear;
+
+            if (loadFromStream)
+            {
+                string assetPath = string.Empty;
+                if (App.IsPackaged)
+                    assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurPane.png");
+                else
+                    assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurPane.png");
+                StorageFile? file = Windows.Storage.StorageFile.GetFileFromPathAsync(assetPath).GetAwaiter().GetResult();
+                using (var inStream = file.OpenReadAsync().GetAwaiter().GetResult())
+                {
+                    var decoder = BitmapDecoder.CreateAsync(inStream).GetAwaiter().GetResult();
+                    // Use an image as the shadow.
+                    surfaceBrush.Surface = LoadedImageSurface.StartLoadFromStream(inStream);
+                }
+            }
+            else
+            {
+                // Use an image as the shadow.
+                surfaceBrush.Surface = LoadedImageSurface.StartLoadFromUri(new Uri("ms-appx:///Assets/BlurPane.png"));
+            }
+
             //surfaceBrush.Scale = new Vector2 { X = 1.5f, Y = 1.5f };
+            surfaceBrush.Stretch = CompositionStretch.UniformToFill;
+            surfaceBrush.BitmapInterpolationMode = CompositionBitmapInterpolationMode.Linear;
         }
 
         // Create the destination sprite, sized to cover the entire page.

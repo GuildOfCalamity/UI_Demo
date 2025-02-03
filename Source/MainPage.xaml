@@ -11,6 +11,12 @@
 
     <Grid x:Name="root">
 
+        <Image
+            x:Name="blurTest"
+            Width="1000"
+            Stretch="Uniform"
+            Visibility="Collapsed" />
+
         <Grid
             x:Name="host"
             Background="#00111111"
