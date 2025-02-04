@@ -1,23 +1,24 @@
 ﻿using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+
 using Microsoft.UI.Xaml.Media.Imaging;
+
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
-
 
 namespace UI_Demo;
 
 public static class BlurHelper
 {
     /// <summary>
-    /// Applies a simple box blur to a BitmapImage and returns a new blurred BitmapImage.
+    ///   Applies a simple box blur to a <see cref="BitmapImage"/> and returns a new blurred <see cref="BitmapImage"/>.
     /// </summary>
     /// <param name="bitmapImage">The input image to blur.</param>
     /// <param name="blurRadius">The blur intensity (higher = more blur).</param>
-    /// <returns>A blurred BitmapImage.</returns>
-    public static async Task<BitmapImage> ApplyBlurAsync(BitmapImage bitmapImage, int blurRadius = 5)
+    /// <returns>A blurred <see cref="BitmapImage"/></returns>
+    public static async Task<BitmapImage> ApplyBlurAsync(BitmapImage bitmapImage, int blurRadius = 6)
     {
         // Convert BitmapImage to a SoftwareBitmap
         SoftwareBitmap softwareBitmap = await ConvertBitmapImageToSoftwareBitmapAsync(bitmapImage);
@@ -41,28 +42,28 @@ public static class BlurHelper
     }
 
     /// <summary>
-    /// Applies a simple box blur to a BitmapImage and returns a new blurred BitmapImage.
+    /// Applies a simple box blur to a <see cref="BitmapImage"/> and returns a new blurred <see cref="BitmapImage"/>.
     /// </summary>
     /// <param name="softwareBitmap">The input image to blur.</param>
     /// <param name="blurRadius">The blur intensity (higher = more blur).</param>
-    /// <returns>A blurred BitmapImage.</returns>
-    public static async Task<BitmapImage> ApplyBlurAsync(SoftwareBitmap softwareBitmap, int blurRadius = 5)
+    /// <returns>A blurred <see cref="BitmapImage"/></returns>
+    public static async Task<BitmapImage> ApplyBlurAsync(SoftwareBitmap softwareBitmap, int blurRadius = 6)
     {
-        // Get pixel data
+        // Get the pixel data.
         int width = softwareBitmap.PixelWidth;
         int height = softwareBitmap.PixelHeight;
         byte[] pixelData = new byte[4 * width * height]; // BGRA8 format
 
         softwareBitmap.CopyToBuffer(pixelData.AsBuffer());
 
-        // Apply box blur effect
+        // Apply box blur effect.
         byte[] blurredPixels = ApplyBoxBlur(pixelData, width, height, blurRadius);
 
-        // Create a new SoftwareBitmap from blurred pixels
+        // Create a new SoftwareBitmap from blurred pixels.
         SoftwareBitmap blurredBitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
         blurredBitmap.CopyFromBuffer(blurredPixels.AsBuffer());
 
-        // Convert back to BitmapImage
+        // Convert back to BitmapImage.
         return await ConvertSoftwareBitmapToBitmapImageAsync(blurredBitmap);
     }
 
@@ -105,7 +106,6 @@ public static class BlurHelper
         }
         return result;
     }
-
 
     /// <summary>
     /// Converts a BitmapImage to a SoftwareBitmap.

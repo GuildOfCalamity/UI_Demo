@@ -96,6 +96,20 @@
                         FontSize="20"
                         Foreground="{StaticResource SecondaryBorderBrush}"
                         Text="{x:Bind local:App.DeviceModel}" />
+                    <!--
+                        If you want indeterminate behavior, don't set ProgressValue.
+                    -->
+                    <local:ProgressButton
+                        x:Name="progressButton"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        ButtonBusy="{x:Bind IsBusy, Mode=OneWay}"
+                        ButtonCornerRadius="5"
+                        ButtonEvent="{x:Bind ProgressButtonClickEvent, Mode=OneWay}"
+                        ButtonHeight="40"
+                        ButtonText="Progress Button"
+                        ButtonWidth="150"
+                        ProgressValue="{x:Bind Amount, Mode=OneWay}" />
                 </StackPanel>
                 <Grid>
                     <local:AnimatedCirclesControl
@@ -136,17 +150,9 @@
                             <RotateTransform x:Name="spinnerTransform" CenterX="16" CenterY="16" />
                         </Image.RenderTransform>
                     </Image>
-                    <!--<local:CompositionShadow
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        BlurRadius="10"
-                        OffsetX="0"
-                        OffsetY="0"
-                        ShadowOpacity="0.3"
-                        Color="#96C7FF">-->
                     <Button
                         x:Name="btnRun"
-                        MinWidth="160"
+                        Width="150"
                         MinHeight="40"
                         Padding="0,1,0,0"
                         HorizontalAlignment="Center"
@@ -154,22 +160,21 @@
                         Click="ButtonOnClick"
                         Content="Enhanced Button"
                         Style="{StaticResource EnhancedButton}" />
-                    <!--</local:CompositionShadow>-->
                 </Grid>
                 <CheckBox
                     x:Name="cbTest"
                     HorizontalAlignment="Center"
                     Checked="CheckBoxChanged"
-                    Content="Glow CheckBox"
-                    IsChecked="False"
+                    Content="Use SurfaceBrush"
+                    IsChecked="True"
                     Style="{StaticResource GlowCheckBox}"
                     Unchecked="CheckBoxChanged" />
                 <ToggleSwitch
                     HorizontalAlignment="Center"
                     Header=""
-                    IsOn="True"
-                    OffContent="Off Content"
-                    OnContent="On Content"
+                    IsOn="False"
+                    OffContent="Blur Composition Off"
+                    OnContent="Blur Composition On"
                     Style="{StaticResource GlowSwitch}"
                     Toggled="OnSwitchToggled" />
                 <Slider

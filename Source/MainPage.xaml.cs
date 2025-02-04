@@ -32,19 +32,20 @@ using Windows.Storage;
 namespace UI_Demo;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+/// The main content, which is loaded into MainWindow on launch.
 /// </summary>
 public sealed partial class MainPage : Page, INotifyPropertyChanged
 {
     #region [Props]
     bool _loaded = false;
     bool _useSpinner = false;
-    bool _useSurfaceBrush = false;
+    bool _useSurfaceBrush = true;
     static Brush? _lvl1;
     static Brush? _lvl2;
     static Brush? _lvl3;
     static Brush? _lvl4;
     static Brush? _lvl5;
+    public Action? ProgressButtonClickEvent { get; set; }
     public event PropertyChangedEventHandler? PropertyChanged;
     bool _isBusy = false;
     public bool IsBusy
@@ -56,6 +57,16 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             NotifyPropertyChanged(nameof(IsBusy));
         }
     }
+    double _amount = 0;
+    public double Amount
+    {
+        get => _amount;
+        set
+        {
+            _amount = value;
+            NotifyPropertyChanged(nameof(Amount));
+        }
+    }
     public ObservableCollection<string> LogMessages { get; private set; } = new();
     #endregion
 
@@ -63,6 +74,19 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         this.InitializeComponent();
         this.Loaded += MainPageOnLoaded;
+
+        // Action example for our ProgressButton control.
+        ProgressButtonClickEvent += async () =>
+        {
+            IsBusy = true;
+            Amount = 0;
+            for (int i = 0; i < 100; i++)
+            {
+                Amount += 1;
+                await Task.Delay(22);
+            }
+            IsBusy = false;
+        };
 
         #region [MessageLevel Defaults]
         if (App.Current.Resources.TryGetValue("GradientDebugBrush", out object _))
@@ -332,42 +356,61 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             Debug.WriteLine($"[INFO] Relative control position: {ctrlPosition.X},{ctrlPosition.Y}");
             if (ts.IsOn)
             {
-                // Create a new blur image for the CompositionSurfaceBrush.
+                // Capture an image of the current page.
                 var bmp = await AppCapture.GetScreenshot(root);
-                if (bmp != null)
+                if (bmp != null && _useSurfaceBrush)
                 {
-                    Debug.WriteLine($"[INFO] Got {bmp.PixelWidth},{bmp.PixelHeight}");
+                    string assetPath = string.Empty;
 
-                    // We'll need to force a new CompositionSurfaceBrush
+                    Debug.WriteLine($"[INFO] We have a software bitmap with dimensions {bmp.PixelWidth},{bmp.PixelHeight}");
+
+                    // We'll need to force a new CompositionSurfaceBrush since we'll be replacing it with our new blurred screenshot.
                     if (_blurVisual != null)
                     {
                         _blurVisual.Dispose();
                         _blurVisual = null;
                     }
 
-                    string assetPath = string.Empty;
                     if (App.IsPackaged)
-                        assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurPane.png");
+                        assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurTest.png");
                     else
-                        assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurPane.png");
+                        assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurTest.png");
 
+                    // Create a new blur image for the CompositionSurfaceBrush.
                     var blurred = await BlurHelper.ApplyBlurAsync(bmp);
                     
                     // Not saving for some reason.
-                    await AppCapture.SaveBitmapImageToDisk(blurred, assetPath);
+                    //await AppCapture.SaveBitmapImageToDisk(blurred, assetPath);
+
+                    // It seems that it's impossible to save a BitmapImage to disk directly,
+                    // you must load it into an Image control first and then save that.
+                    //await AppCapture.SaveBitmapImageToFileAsync(blurred, blurTest, assetPath);
 
                     #region [test new BitmapImage result in-app]
                     if (blurred != null)
                     {
-                        blurTest.Visibility = Visibility.Visible;
-                        blurTest.Source = blurred;
+                        // Didn't work properly.
+                        //var rtb = new RenderTargetBitmap();
+                        //await AppCapture.SaveBitmapImageToFileAsync(blurred, blurTest, rtb, assetPath);
+
+
+                        // This works properly.
+                        //blurTest.Visibility = Visibility.Visible;
+                        //blurTest.Source = blurred;
+                        //blurTest.Visibility = Visibility.Collapsed;
+                        //await AppCapture.SaveImageSourceToFileAsync(root, blurTest.Source, assetPath, App.m_width, App.m_height);
+
+
+                        // This works properly.
+                        await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
                     }
                     #endregion
-                    
+
                     AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: true, useImageForShadowMask: false);
                 }
                 else
                 {
+                    // Just use the "fog" effect if image routines are not needed - this effect is not as fancy, but it's much faster.
                     AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: false, useImageForShadowMask: false);
                 }
             }
@@ -385,8 +428,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         var sld = sender as Slider;
         if (sld != null && this.Content != null) // use as "is loaded" check for the MainWindow
         {
-            //UpdateInfoBar($"Slider changed to {(int)e.NewValue}");
-
             if (App.Profile != null)
                 App.Profile.LastCount = (int)e.NewValue;
 
@@ -521,6 +562,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     /// <summary>
     /// Test for pinning app via <see cref="SecondaryTile"/>.
+    /// Maybe this only works with packaged apps?
     /// </summary>
     async void ToolbarButtonOnClick(object sender, RoutedEventArgs e)
     {
@@ -673,7 +715,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         if (_scopedBatch != null)
             CleanupScopeBatch();
 
-        // If we've already created the sprite, just make it visible.
+        // If we've already created the sprite, just make it visible to save on memory usage.
         if (_blurVisual != null)
         {
             _blurVisual.IsVisible = true;
@@ -682,28 +724,36 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
 
         if (useSurfaceBrush)
-        {   // Create surface brush and load image.
+        {   
+            // Create surface brush and load image.
             surfaceBrush = _compositor.CreateSurfaceBrush();
 
             if (loadFromStream)
             {
                 string assetPath = string.Empty;
                 if (App.IsPackaged)
-                    assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurPane.png");
+                    assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurTest.png");
                 else
-                    assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurPane.png");
-                StorageFile? file = Windows.Storage.StorageFile.GetFileFromPathAsync(assetPath).GetAwaiter().GetResult();
-                using (var inStream = file.OpenReadAsync().GetAwaiter().GetResult())
+                    assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurTest.png");
+                if (File.Exists(assetPath))
                 {
-                    var decoder = BitmapDecoder.CreateAsync(inStream).GetAwaiter().GetResult();
-                    // Use an image as the shadow.
-                    surfaceBrush.Surface = LoadedImageSurface.StartLoadFromStream(inStream);
+                    StorageFile? file = Windows.Storage.StorageFile.GetFileFromPathAsync(assetPath).GetAwaiter().GetResult();
+                    using (var inStream = file.OpenReadAsync().GetAwaiter().GetResult())
+                    {
+                        var decoder = BitmapDecoder.CreateAsync(inStream).GetAwaiter().GetResult();
+                        // Use an image as the shadow.
+                        surfaceBrush.Surface = LoadedImageSurface.StartLoadFromStream(inStream);
+                    }
+                }
+                else
+                {
+                    UpdateInfoBar($"'{assetPath}' was not found", MessageLevel.Warning);
                 }
             }
             else
             {
                 // Use an image as the shadow.
-                surfaceBrush.Surface = LoadedImageSurface.StartLoadFromUri(new Uri("ms-appx:///Assets/BlurPane.png"));
+                surfaceBrush.Surface = LoadedImageSurface.StartLoadFromUri(new Uri("ms-appx:///Assets/BlurTest.png"));
             }
 
             //surfaceBrush.Scale = new Vector2 { X = 1.5f, Y = 1.5f };
@@ -832,12 +882,16 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     /// </summary>
     void CleanupScopeBatch()
     {
-        if (_scopedBatch != null)
+        try
         {
-            _scopedBatch.Completed -= ScopeBatchCompleted;
-            _scopedBatch.Dispose();
-            _scopedBatch = null;
+            if (_scopedBatch != null)
+            {
+                _scopedBatch.Completed -= ScopeBatchCompleted;
+                _scopedBatch.Dispose();
+                _scopedBatch = null;
+            }
         }
+        catch (InvalidOperationException) { }
     }
     #endregion
 }

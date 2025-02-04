@@ -135,17 +135,6 @@ public partial class App : Application
 
         this.InitializeComponent();
         AssemblyReferences = Extensions.GatherReferenceAssemblies(true);
-
-        DateTime future = new DateTime(2025, 2, 4, 0, 0, 0);
-        var nextRun = future - DateTime.Now;
-        if (nextRun < TimeSpan.FromHours(1))
-        {
-            Debug.WriteLine("[WARNING] Too close, skipping RunNow.");
-        }
-        else
-        {
-            Debug.WriteLine($"[INFO] {nextRun.ToReadableTime()}");
-        }
     }
 
     public static void CloseExistingInstance()

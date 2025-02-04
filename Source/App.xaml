@@ -22,6 +22,15 @@
 
             </ResourceDictionary.MergedDictionaries>
 
+            <!--#region [Converters]-->
+            <local:BooleanInverseConverter x:Key="BooleanInverter" />
+            <local:BooleanToVisibilityConverter x:Key="BooleanVisibility" />
+            <local:BooleanToOpacityConverter x:Key="BooleanOpacity" />
+            <local:BooleanToOpacityInverseConverter x:Key="BooleanOpacityInverse" />
+            <local:BooleanToVisibilityInverseConverter x:Key="BooleanVisibilityInverse" />
+            <!--#endregion-->
+
+
             <!--#region [Font Sizes]-->
             <x:Double x:Key="FontSizeHuge">30</x:Double>
             <x:Double x:Key="FontSizeLarge">18</x:Double>
@@ -60,6 +69,11 @@
             <Brush x:Key="HeaderBrush">#656569</Brush>
             <Brush x:Key="BorderBrush">#333337</Brush>
             <Brush x:Key="SelectionBrush">#303034</Brush>
+
+            <SolidColorBrush
+                x:Key="SampleProgressBrush"
+                Opacity="0.7"
+                Color="{StaticResource SecondaryFill}" />
 
             <SolidColorBrush x:Key="PrimaryBrushTextFill" Color="{StaticResource PrimaryFill}" />
             <SolidColorBrush x:Key="SecondaryBrushTextFill" Color="{StaticResource SecondaryFill}" />
