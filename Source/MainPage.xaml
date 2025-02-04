@@ -221,31 +221,18 @@
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
                     Spacing="20">
-                    <Image
-                        Width="50"
-                        Opacity="0.9"
-                        Source="ms-appx:///Assets/AltIcon1.png"
-                        Stretch="Uniform" />
-                    <Image
-                        Width="50"
-                        Opacity="0.9"
-                        Source="ms-appx:///Assets/AltIcon2.png"
-                        Stretch="Uniform" />
-                    <Image
-                        Width="50"
-                        Opacity="0.9"
-                        Source="ms-appx:///Assets/AltIcon3.png"
-                        Stretch="Uniform" />
-                    <Image
-                        Width="50"
-                        Opacity="0.9"
-                        Source="ms-appx:///Assets/AltIcon4.png"
-                        Stretch="Uniform" />
-                    <Image
-                        Width="50"
-                        Opacity="0.9"
-                        Source="ms-appx:///Assets/AltIcon5.png"
-                        Stretch="Uniform" />
+                    <StackPanel.Resources>
+                        <Style TargetType="Image">
+                            <Setter Property="Width" Value="50" />
+                            <Setter Property="Opacity" Value="0.9" />
+                            <Setter Property="Stretch" Value="Uniform" />
+                        </Style>
+                    </StackPanel.Resources>
+                    <Image Source="ms-appx:///Assets/AltIcon1.png" />
+                    <Image Source="ms-appx:///Assets/AltIcon2.png" />
+                    <Image Source="ms-appx:///Assets/AltIcon3.png" />
+                    <Image Source="ms-appx:///Assets/AltIcon4.png" />
+                    <Image Source="ms-appx:///Assets/AltIcon5.png" />
                 </StackPanel>
             </StackPanel>
 

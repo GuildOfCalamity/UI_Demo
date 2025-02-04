@@ -393,6 +393,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         //var rtb = new RenderTargetBitmap();
                         //await AppCapture.SaveBitmapImageToFileAsync(blurred, blurTest, rtb, assetPath);
 
+                        // Didn't work properly.
+                        var sftBmp = await AppCapture.ConvertBitmapImageToSoftwareBitmapAsyncAlt(blurred);
+                        if (sftBmp != null)
+                        {
+                            sftBmp.DpiX = 96; sftBmp.DpiY = 96;
+                            Debug.WriteLine($"[INFO] SoftwareBitmap {sftBmp.PixelWidth},{sftBmp.PixelHeight} PixelFormat={sftBmp.BitmapPixelFormat}");
+                            await AppCapture.SaveSoftwareBitmapToFileAsync(sftBmp, System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"));
+                        }
 
                         // This works properly.
                         //blurTest.Visibility = Visibility.Visible;

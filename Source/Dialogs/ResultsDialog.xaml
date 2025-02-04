@@ -72,6 +72,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TextBlock
             Grid.Row="0"
@@ -89,5 +90,23 @@
             Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
             Text="You may close this dialog at your convenience."
             TextWrapping="Wrap" />
+        <StackPanel
+            Grid.Row="2"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="12">
+            <StackPanel.Resources>
+                <Style TargetType="Image">
+                    <Setter Property="Width" Value="72" />
+                    <Setter Property="Stretch" Value="Uniform" />
+                </Style>
+            </StackPanel.Resources>
+            <Image Source="ms-appx:///Assets/Level1.png" />
+            <Image Source="ms-appx:///Assets/Level2.png" />
+            <Image Source="ms-appx:///Assets/Level3.png" />
+            <Image Source="ms-appx:///Assets/Level4.png" />
+            <Image Source="ms-appx:///Assets/Level5.png" />
+        </StackPanel>
     </Grid>
 </ContentDialog>
