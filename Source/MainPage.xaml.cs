@@ -24,6 +24,8 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 
 using WinRT.Interop;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Storage.Streams;
 
 namespace UI_Demo;
 
@@ -70,7 +72,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         this.InitializeComponent();
         this.Loaded += MainPageOnLoaded;
-
+        App.WindowSizeChanged += SizeChangeEvent;
         #region [Action example for our ProgressButton control]
         ProgressButtonClickEvent += async () =>
         {
@@ -116,6 +118,30 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         #endregion
 
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
+    }
+
+    public void SizeChangeEvent(Windows.Graphics.SizeInt32 newSize)
+    {
+        if (this.Content != null)
+        {
+            tsBlur.DispatcherQueue.TryEnqueue(() =>
+            {
+                if (tsBlur.IsOn && (bool)cbTest.IsChecked)
+                {
+                    // Force the SpriteVisual to be recreated.
+                    if (_blurVisual != null)
+                    {
+                        tsBlur.IsOn = false;
+                        _blurVisual.Dispose();
+                        _blurVisual = null;
+                    }
+                }
+            });
+        }
+        else
+        {
+            Debug.WriteLine($"[WARNING] Page content is not ready yet.");
+        }
     }
 
     public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
@@ -411,14 +437,29 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         //    await AppCapture.SaveSoftwareBitmapToFileAsync(sftBmp, System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"));
                         //}
 
+                        // Just saves black image? (no relevant pixel data)
+                        //var ms = await AppCapture.ConvertBitmapImageToMemoryStreamAsync(blurred);
+                        //using (FileStream fileStream = new FileStream(Path.Combine(AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"), FileMode.Create, FileAccess.Write)) { await ms.CopyToAsync(fileStream); }
+
+                        // Just saves black image? (no relevant pixel data)
+                        //var wb = await AppCapture.ConvertBitmapImageToWriteableBitmapAsync(blurred);
+                        //byte[] pixels = wb.PixelBuffer.ToByteArray();
+                        //Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(Path.Combine(AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"));
+                        //using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                        //{
+                        //    await AppCapture.EncodeAndSaveWriteableBitmapAsync(wb, pixels, stream);
+                        //}
+
+                        // Didn't work properly.
+                        //await AppCapture.SaveBitmapImageToFileAsync(blurred);
+
                         // This works properly.
                         //blurTest.Visibility = Visibility.Visible;
                         //blurTest.Source = blurred;
                         //blurTest.Visibility = Visibility.Collapsed;
                         //await AppCapture.SaveImageSourceToFileAsync(root, blurTest.Source, assetPath, App.m_width, App.m_height);
 
-
-                        // This works properly, but only because we use an Image control as a go-between.
+                        // This works properly, but only because we use an Image control as an intermediate.
                         await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
                     }
                     #endregion

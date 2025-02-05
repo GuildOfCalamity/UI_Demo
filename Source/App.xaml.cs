@@ -55,6 +55,7 @@ public partial class App : Application
     static EasClientDeviceInformation m_deviceInfo = new EasClientDeviceInformation();
     public static List<string> ArgList = new();
     public static List<string>? AssemblyReferences { get; private set; }
+    public static Action<Windows.Graphics.SizeInt32>? WindowSizeChanged { get; set; }
 
     #region [User preferences from Windows.UI.ViewManagement]
     // We won't configure backing fields for these as the user could adjust them during app lifetime.
@@ -286,6 +287,7 @@ public partial class App : Application
                 if (args.DidSizeChange)
                 {
                     Debug.WriteLine($"[INFO] Window size changed to {s.Size.Width},{s.Size.Height}");
+                    WindowSizeChanged?.Invoke(s.Size);
                     if (s.Presenter is not null && s.Presenter is OverlappedPresenter op)
                         IsWindowMaximized = op.State is OverlappedPresenterState.Maximized;
 

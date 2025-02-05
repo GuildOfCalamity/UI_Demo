@@ -171,6 +171,7 @@
                     Style="{StaticResource GlowCheckBox}"
                     Unchecked="CheckBoxChanged" />
                 <ToggleSwitch
+                    x:Name="tsBlur"
                     HorizontalAlignment="Center"
                     Header=""
                     IsOn="False"
