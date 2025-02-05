@@ -12,11 +12,18 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.Streams;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using System.Net;
+using System.Runtime.InteropServices;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
+using Windows.Networking;
 
 namespace UI_Demo;
 
 public static class AppCapture
 {
+    static int _counter = 0; // for file naming
+
     /*  --[ EXAMPLE USAGE ]--
     
         DispatcherTimer? tmr;
@@ -28,8 +35,6 @@ public static class AppCapture
     
         async void tmrOnTick(object? sender, object e) => await UpdateScreenshot(rootGrid, null);
     */
-
-    static int _counter = 0; // for file naming
 
     #region [Capture Routines]
     public static async Task<Windows.Graphics.Imaging.SoftwareBitmap> GetScreenshot(Microsoft.UI.Xaml.UIElement root)
@@ -402,25 +407,181 @@ public static class AppCapture
             Debug.WriteLine($"[ERROR] SaveBitmapImageToDisk({ex.HResult}): {ex.Message}");
         }
     }
+    #endregion
 
+    #region [Helpers and Tests]
     /// <summary>
-    ///   Converts a <see cref="BitmapImage"/> to a <see cref="SoftwareBitmap"/>.
+    /// Assumes PNG output via <see cref="Windows.Graphics.Imaging.BitmapEncoder"/>.
     /// </summary>
+    /// <param name="bitmapImage"><see cref="Microsoft.UI.Xaml.Media.Imaging.BitmapImage"/></param>
     /// <remarks>
-    ///   The <see cref="BitmapImage"/> must contain a UriSource.
+    /// This assumes the <see cref="Microsoft.UI.Xaml.Media.Imaging.BitmapImage"/> contains 
+    /// a UriSource, which will be used in conjunction with the ToStream() helper.
     /// </remarks>
-    public static async Task<SoftwareBitmap?> ConvertBitmapImageToSoftwareBitmapAsync(BitmapImage bitmapImage)
+    /// <returns><see cref="Windows.Graphics.Imaging.SoftwareBitmap"/></returns>
+    public static async Task<SoftwareBitmap> GetSoftwareBitmapFromBitmapImageAsync(BitmapImage bitmapImage)
     {
-        Uri uri = bitmapImage.UriSource;
-        if (uri == null)
-            return null; // BitmapImage is not loaded from a URI
+        uint width = 0;
+        uint height = 0;
 
-        StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(uri);
-        using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read))
+        if (bitmapImage.UriSource == null)
+            throw new Exception($"The {nameof(bitmapImage)} {nameof(bitmapImage.UriSource)} cannot be empty.");
+
+        if (bitmapImage.PixelWidth == 0 || bitmapImage.PixelHeight == 0)
         {
+            width = (uint)App.m_width;
+            height = (uint)App.m_height;
+        }
+        else
+        {
+            width= (uint)bitmapImage.PixelWidth;
+            height= (uint)bitmapImage.PixelHeight;
+        }
+
+        // Retrieve pixel data from the BitmapImage
+        using (InMemoryRandomAccessStream stream = new())
+        {
+            BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+            Stream pixelStream = bitmapImage.ToStream();
+            byte[] pixels = new byte[pixelStream.Length];
+            await pixelStream.ReadAsync(pixels, 0, pixels.Length);
+            // NOTE: A SoftwareBitmap displayed in a XAML app must be in BGRA pixel format with pre-multiplied alpha values.
+            encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, width, height, 96.0, 96.0, pixels);
+            await encoder.FlushAsync();
+            // Decode the image to a SoftwareBitmap
             BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
             return await decoder.GetSoftwareBitmapAsync();
         }
+    }
+
+    public static async Task<RandomAccessStreamReference> GetRandomAccessStreamFromUIElement(UIElement? element)
+    {
+        RenderTargetBitmap renderTargetBitmap = new();
+        InMemoryRandomAccessStream stream = new InMemoryRandomAccessStream();
+        // Render to an image at the current system scale and retrieve pixel contents
+        await renderTargetBitmap.RenderAsync(element);
+        var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();
+        // Encode image to an in-memory stream.
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+        encoder.SetPixelData(
+            BitmapPixelFormat.Bgra8,
+            BitmapAlphaMode.Ignore,
+            (uint)renderTargetBitmap.PixelWidth,
+            (uint)renderTargetBitmap.PixelHeight,
+            96d,
+            96d,
+            pixelBuffer.ToArray());
+        await encoder.FlushAsync();
+        // Set content to the encoded image in memory.
+        return RandomAccessStreamReference.CreateFromStream(stream);
+    }
+
+    /// <summary>
+    /// Returns the <see cref="UIElement"/> as an array of bytes.
+    /// </summary>
+    /// <param name="control"></param>
+    public static async Task<byte[]> GetUIElementAsPngBytes(UIElement control)
+    {
+        // Get XAML Visual in BGRA8 format
+        var rtb = new RenderTargetBitmap();
+        await rtb.RenderAsync(control, (int)control.ActualSize.X, (int)control.ActualSize.Y);
+
+        // Encode as PNG
+        var pixelBuffer = (await rtb.GetPixelsAsync()).ToArray();
+        IRandomAccessStream mraStream = new InMemoryRandomAccessStream();
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, mraStream);
+        encoder.SetPixelData(
+            BitmapPixelFormat.Bgra8,
+            BitmapAlphaMode.Premultiplied,
+            (uint)rtb.PixelWidth,
+            (uint)rtb.PixelHeight,
+            96,
+            96,
+            pixelBuffer);
+        await encoder.FlushAsync();
+
+        // Transform to byte array
+        var bytes = new byte[mraStream.Size];
+        await mraStream.ReadAsync(bytes.AsBuffer(), (uint)mraStream.Size, InputStreamOptions.None);
+
+        return bytes;
+    }
+
+    /// <summary>
+    /// Convert <see cref="byte[]"/> to <see cref="Microsoft.UI.Xaml.Media.Imaging.BitmapImage"/>
+    /// via <see cref="Windows.Storage.Streams.DataWriter"/>.
+    /// </summary>
+    /// <param name="data"><see cref="byte[]"/></param>
+    /// <returns><see cref="Microsoft.UI.Xaml.Media.Imaging.BitmapImage"/> if successful, null otherwise</returns>
+    public static async Task<Microsoft.UI.Xaml.Media.Imaging.BitmapImage?> GetBitmapImageFromBytesAsync(byte[] data)
+    {
+        try
+        {
+            var bitmapImage = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
+            using (var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream())
+            {
+                using (var writer = new Windows.Storage.Streams.DataWriter(stream))
+                {
+                    writer.WriteBytes(data);
+                    await writer.StoreAsync();
+                    await writer.FlushAsync();
+                    writer.DetachStream(); // probably called after leaving using scope
+                }
+                stream.Seek(0);
+                await bitmapImage.SetSourceAsync(stream);
+            }
+            return bitmapImage;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] GetBitmapAsync: {ex.Message}");
+            return null;
+        }
+    }
+
+ 
+    public static async void SetImageSource(string imageUrl, Image imageControl)
+    {
+        WebRequest myrequest = WebRequest.Create(imageUrl);
+        WebResponse myresponse = myrequest.GetResponse();
+        var imgstream = myresponse.GetResponseStream();
+     
+        // Try to create SoftwareBitmap
+        MemoryStream ms = new MemoryStream();
+        imgstream.CopyTo(ms);
+        var decoder = await BitmapDecoder.CreateAsync(ms.AsRandomAccessStream());
+        var softBitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+
+        // Use SoftwareBitmapSource to ImageSource
+        var source = new SoftwareBitmapSource();
+        await source.SetBitmapAsync(softBitmap);
+        imageControl.DispatcherQueue.TryEnqueue(() => imageControl.Source = source);
+    }
+
+    public static async Task<SoftwareBitmapSource> GetSoftwareBitmapFromBitmapImageSource(BitmapImage bitmapSource)
+    {
+        if (bitmapSource == null)
+            return null;
+
+        // get pixels as an array of bytes
+        var stride = bitmapSource.PixelWidth * 4;
+        var bytes = new byte[stride * bitmapSource.PixelHeight];
+
+        // There is no CopyPixels method available?
+        //bitmapSource.CopyPixels(bytes, stride, 0);
+
+        // get WinRT SoftwareBitmap
+        var softwareBitmap = new Windows.Graphics.Imaging.SoftwareBitmap(
+            Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8,
+            bitmapSource.PixelWidth,
+            bitmapSource.PixelHeight,
+            Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied);
+        softwareBitmap.CopyFromBuffer(bytes.AsBuffer());
+
+        // build WinUI3 SoftwareBitmapSource
+        var source = new Microsoft.UI.Xaml.Media.Imaging.SoftwareBitmapSource();
+        await source.SetBitmapAsync(softwareBitmap);
+        return source;
     }
 
     /// <summary>
@@ -560,6 +721,31 @@ public static class AppCapture
         }
     }
 
+    /// <summary>
+    ///   Converts a <see cref="BitmapImage"/> to a <see cref="SoftwareBitmap"/>.
+    /// </summary>
+    /// <remarks>
+    ///   The <see cref="BitmapImage"/> must contain a UriSource.
+    /// </remarks>
+    public static async Task<SoftwareBitmap?> ConvertBitmapImageToSoftwareBitmapIfValidUriSourceAsync(BitmapImage bitmapImage)
+    {
+        Uri uri = bitmapImage.UriSource;
+        if (uri == null)
+            return null; // BitmapImage is not loaded from a URI
+
+        StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(uri);
+        using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read))
+        {
+            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+            return await decoder.GetSoftwareBitmapAsync();
+        }
+    }
+
+    /// <summary>
+    /// Could the <see cref="BitmapImage.UriSource"/> be the issue?
+    /// </summary>
+    /// <param name="bitmapImage"><see cref="BitmapImage"/></param>
+    /// <returns><see cref="SoftwareBitmap"/></returns>
     public static async Task<SoftwareBitmap?> ConvertBitmapImageToSoftwareBitmapAsyncAlt(BitmapImage bitmapImage)
     {
         try
@@ -586,7 +772,6 @@ public static class AppCapture
             return null;
         }
     }
-    #endregion
 
     public static async Task<BitmapImage?> ToBitmapAsync(this byte[]? data, int decodeSize = -1)
     {
@@ -653,6 +838,30 @@ public static class AppCapture
                 throw new NotImplementedException($"ImageSource type: {imageSource?.GetType()} is not supported");
         }
     }
+
+    /// <summary>
+    /// Returns an encoder <see cref="Guid"/> based on the <paramref name="fileName"/> extension.
+    /// </summary>
+    public static Guid GetEncoderId(string fileName)
+    {
+        var ext = Path.GetExtension(fileName);
+
+        if (new[] { ".bmp", ".dib" }.Contains(ext))
+            return Windows.Graphics.Imaging.BitmapEncoder.BmpEncoderId;
+        else if (new[] { ".tiff", ".tif" }.Contains(ext))
+            return Windows.Graphics.Imaging.BitmapEncoder.TiffEncoderId;
+        else if (new[] { ".gif" }.Contains(ext))
+            return Windows.Graphics.Imaging.BitmapEncoder.GifEncoderId;
+        else if (new[] { ".jpg", ".jpeg", ".jpe", ".jfif", ".jif" }.Contains(ext))
+            return Windows.Graphics.Imaging.BitmapEncoder.JpegEncoderId;
+        else if (new[] { ".hdp", ".jxr", ".wdp" }.Contains(ext))
+            return Windows.Graphics.Imaging.BitmapEncoder.JpegXREncoderId;
+        else if (new[] { ".heic", ".heif", ".heifs" }.Contains(ext))
+            return Windows.Graphics.Imaging.BitmapEncoder.HeifEncoderId;
+        else // default will be PNG
+            return Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId;
+    }
+    #endregion
 
     #region [Internal Methods]
     internal static Stream ToStream(this Uri uri)

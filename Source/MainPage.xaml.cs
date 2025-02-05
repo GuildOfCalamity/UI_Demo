@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
@@ -17,17 +16,14 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Composition;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 using Windows.Foundation;
 using Windows.UI.StartScreen;
 using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
-using Windows.Graphics.Effects;
-using WinRT.Interop;
 using Windows.Storage;
+
+using WinRT.Interop;
 
 namespace UI_Demo;
 
@@ -75,18 +71,22 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         this.InitializeComponent();
         this.Loaded += MainPageOnLoaded;
 
-        // Action example for our ProgressButton control.
+        #region [Action example for our ProgressButton control]
         ProgressButtonClickEvent += async () =>
         {
+            tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Running…");
             IsBusy = true;
             Amount = 0;
             for (int i = 0; i < 100; i++)
             {
                 Amount += 1;
-                await Task.Delay(22);
+                await Task.Delay(15);
             }
+            tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Finished");
             IsBusy = false;
+            var dr = await DialogHelper.ShowAsync(new Dialogs.ResultsDialog("Action Result", "Progress button's action event was completed.", MessageLevel.Information), Content as FrameworkElement);
         };
+        #endregion
 
         #region [MessageLevel Defaults]
         if (App.Current.Resources.TryGetValue("GradientDebugBrush", out object _))
@@ -129,7 +129,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     void ButtonOnClick(object sender, RoutedEventArgs e)
     {
-        bool useTechnique1 = true;
+        bool useTechnique1 = false;
         
         var _cts = new CancellationTokenSource();
         
@@ -186,14 +186,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 }
                 else
                 {
-                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 26 });
                     tbMessages.Text = "Process complete!";
-                    _ = DialogHelper.ShowAsTask(new Dialogs.ResultsDialog(), Content as FrameworkElement);
-                    Task.Run(async () =>
-                    {
-                        await Task.Delay(3500);
-                        RemoveBlurCompositionElement(root);
-                    });
+                    _ = DialogHelper.ShowAsTask(new Dialogs.ResultsDialog("Process complete", "Button's click event was completed.", MessageLevel.Information), Content as FrameworkElement);
                 }
 
                 btnRun.IsEnabled = true;
@@ -252,18 +246,25 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 var list = task.Result; // Never access Task.Result unless the Task was successful.
                 foreach (var thing in list) { LogMessages.Add(thing); }
+                UpdateInfoBar("Technique #2 was completed.", MessageLevel.Information);
+                _ = DialogHelper.ShowAsTask(new Dialogs.ResultsDialog("Task Result", "Technique #2 ran to completion.", MessageLevel.Information), Content as FrameworkElement);
+
             }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.FromCurrentSynchronizationContext());
 
             /** Happens when faulted **/
             dummyTask.ContinueWith(task =>
             {
                 foreach (var ex in task.Exception!.Flatten().InnerExceptions) { tbMessages.Text = ex.Message; }
+                UpdateInfoBar("Technique #2 was completed.", MessageLevel.Error);
+                _ = DialogHelper.ShowAsTask(new Dialogs.ResultsDialog("Task Result", "Technique #2 has faulted.", MessageLevel.Error), Content as FrameworkElement);
             }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.FromCurrentSynchronizationContext());
 
             /** Happens when canceled **/
             dummyTask.ContinueWith(task =>
             {
                 tbMessages.Text = "Dummy Process Canceled!";
+                UpdateInfoBar("Technique #2 was completed.", MessageLevel.Warning);
+                _ = DialogHelper.ShowAsTask(new Dialogs.ResultsDialog("Task Result", "Technique #2 was canceled.", MessageLevel.Warning), Content as FrameworkElement);
             }, CancellationToken.None, TaskContinuationOptions.OnlyOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
 
             /** Always happens **/
@@ -273,13 +274,22 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }, TaskScheduler.FromCurrentSynchronizationContext());
 
             // Just a place-holder for this demo.
-            async Task<List<string>> SampleAsyncMethod(CancellationToken cancelToken = new CancellationToken())
+            async Task<List<string>> SampleAsyncMethod(CancellationToken cancelToken)
             {
                 var list = new List<string>();
-                for (int i = 1; i < 51; i++)
+                for (int i = 1; i < 101; i++)
                 {
                     list.Add($"Item {i}");
-                    await Task.Delay(200);
+                    
+                    await Task.Delay(50);
+
+                    int diceRoll = Random.Shared.Next(100);
+                    
+                    if (diceRoll == 99)
+                        _cts.Cancel();
+                    else if (diceRoll == 98)
+                        throw new Exception("This is a fake exception");
+
                     cancelToken.ThrowIfCancellationRequested();
                 }
                 return list;
@@ -378,8 +388,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
                     // Create a new blur image for the CompositionSurfaceBrush.
                     var blurred = await BlurHelper.ApplyBlurAsync(bmp);
-                    
-                    // Not saving for some reason.
+
+                    // Not saving for some reason, possible empty UriSource?
                     //await AppCapture.SaveBitmapImageToDisk(blurred, assetPath);
 
                     // It seems that it's impossible to save a BitmapImage to disk directly,
@@ -393,14 +403,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         //var rtb = new RenderTargetBitmap();
                         //await AppCapture.SaveBitmapImageToFileAsync(blurred, blurTest, rtb, assetPath);
 
-                        // Didn't work properly.
-                        var sftBmp = await AppCapture.ConvertBitmapImageToSoftwareBitmapAsyncAlt(blurred);
-                        if (sftBmp != null)
-                        {
-                            sftBmp.DpiX = 96; sftBmp.DpiY = 96;
-                            Debug.WriteLine($"[INFO] SoftwareBitmap {sftBmp.PixelWidth},{sftBmp.PixelHeight} PixelFormat={sftBmp.BitmapPixelFormat}");
-                            await AppCapture.SaveSoftwareBitmapToFileAsync(sftBmp, System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"));
-                        }
+                        // Just saves black image? (no relevant pixel data)
+                        //var sftBmp = await AppCapture.ConvertBitmapImageToSoftwareBitmapAsyncAlt(blurred);
+                        //if (sftBmp != null)
+                        //{
+                        //    Debug.WriteLine($"[INFO] SoftwareBitmap {sftBmp.PixelWidth},{sftBmp.PixelHeight} PixelFormat={sftBmp.BitmapPixelFormat} AlphaMode={sftBmp.BitmapAlphaMode}");
+                        //    await AppCapture.SaveSoftwareBitmapToFileAsync(sftBmp, System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"));
+                        //}
 
                         // This works properly.
                         //blurTest.Visibility = Visibility.Visible;
@@ -409,7 +418,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         //await AppCapture.SaveImageSourceToFileAsync(root, blurTest.Source, assetPath, App.m_width, App.m_height);
 
 
-                        // This works properly.
+                        // This works properly, but only because we use an Image control as a go-between.
                         await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
                     }
                     #endregion

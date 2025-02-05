@@ -159,6 +159,7 @@
                         VerticalContentAlignment="Center"
                         Click="ButtonOnClick"
                         Content="Enhanced Button"
+                        IsEnabled="{x:Bind IsBusy, Mode=OneWay, Converter={StaticResource BooleanInverter}}"
                         Style="{StaticResource EnhancedButton}" />
                 </Grid>
                 <CheckBox
