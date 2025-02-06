@@ -10,13 +10,14 @@ using System.Threading;
 using System.Diagnostics;
 
 using Microsoft.UI;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Composition;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 using Windows.Foundation;
 using Windows.UI.StartScreen;
@@ -24,8 +25,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 
 using WinRT.Interop;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.Storage.Streams;
+using Microsoft.UI.Xaml.Data;
 
 namespace UI_Demo;
 
@@ -66,13 +66,17 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
     public ObservableCollection<string> LogMessages { get; private set; } = new();
+    public ObservableCollection<string> Pictures = new();
     #endregion
-
     public MainPage()
     {
         this.InitializeComponent();
+
         this.Loaded += MainPageOnLoaded;
         App.WindowSizeChanged += SizeChangeEvent;
+
+        PopulatePictures();
+
         #region [Action example for our ProgressButton control]
         ProgressButtonClickEvent += async () =>
         {
@@ -120,7 +124,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
     }
 
-    public void SizeChangeEvent(Windows.Graphics.SizeInt32 newSize)
+    public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
+    {
+        if (string.IsNullOrEmpty(propertyName)) { return; }
+        // Confirm that we're on the UI thread in the event that DependencyProperty is changed under forked thread.
+        DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
+    }
+
+    #region [Events]
+    void SizeChangeEvent(Windows.Graphics.SizeInt32 newSize)
     {
         if (this.Content != null)
         {
@@ -143,15 +155,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             Debug.WriteLine($"[WARNING] Page content is not ready yet.");
         }
     }
-
-    public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-    {
-        if (string.IsNullOrEmpty(propertyName)) { return; }
-        // Confirm that we're on the UI thread in the event that DependencyProperty is changed under forked thread.
-        DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
-    }
-
-     #region [Events]
 
     void ButtonOnClick(object sender, RoutedEventArgs e)
     {
@@ -564,6 +567,22 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             else
                 UpdateInfoBar($"App.ArgList.Count ⇒ {App.ArgList.Count}");
+
+            // This only worked after adding <AllowUnsafeBlocks> to the csproj.
+            //Flipper.ItemsSource = Pictures;
+
+            if (Pictures.Count > 0)
+            {
+                // We can also create a binding in code-behind.
+                Binding binding = new Binding
+                {
+                    Mode = BindingMode.OneWay,
+                    Source = Pictures
+                };
+                BindingOperations.SetBinding(Flipper, FlipView.ItemsSourceProperty, binding);
+            }
+            else
+                UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
         }
         _loaded = true;
     }
@@ -746,6 +765,18 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
+    void PopulatePictures()
+    {
+        if (!App.IsPackaged)
+        {
+            string path = Path.Combine(System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets"));
+            foreach (var f in Directory.GetFiles(path, "*.png", SearchOption.TopDirectoryOnly))
+            {
+                Pictures.Add(f);
+            }
+        }
+    }
+    
     #region [Blur Effect Compositor]
 
     Compositor? _compositor;

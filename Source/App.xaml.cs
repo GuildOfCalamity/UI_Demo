@@ -39,8 +39,8 @@ public partial class App : Application
 #endif
 
     public static Window? m_window;
-    public static int m_width { get; set; } = 950;
-    public static int m_height { get; set; } = 750;
+    public static int m_width { get; set; } = 1200;
+    public static int m_height { get; set; } = 860;
     public static bool IsClosing { get; set; } = false;
     public static FrameworkElement? MainRoot { get; set; }
     public static IntPtr WindowHandle { get; set; }
@@ -135,6 +135,10 @@ public partial class App : Application
         }
 
         this.InitializeComponent();
+
+        // https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.application.focusvisualkind?view=windows-app-sdk-1.3
+        this.FocusVisualKind = FocusVisualKind.Reveal;
+
         AssemblyReferences = Extensions.GatherReferenceAssemblies(true);
     }
 

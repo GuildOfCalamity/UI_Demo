@@ -22,7 +22,7 @@
             Background="#00111111"
             PointerPressed="HostGridOnPointerPressed">
             <Grid.RowDefinitions>
-                <RowDefinition Height="600" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.Resources>
@@ -189,6 +189,59 @@
                     Style="{StaticResource GlowSlider}"
                     ValueChanged="SliderDaysChanged"
                     Value="180" />
+                <!--
+                    https://learn.microsoft.com/en-us/windows/apps/design/controls/flipview#specify-the-look-of-the-items
+                -->
+                <FlipView
+                    x:Name="Flipper"
+                    MaxWidth="300"
+                    MaxHeight="150"
+                    Background="Transparent">
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                    <FlipView.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="32" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <local:CompositionShadow
+                                    Grid.Row="0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    BlurRadius="2"
+                                    OffsetX="2"
+                                    OffsetY="2"
+                                    ShadowOpacity="0.7"
+                                    Color="#76b9ed">
+                                    <TextBlock
+                                        FontSize="{StaticResource FontSizeLarge}"
+                                        Foreground="{StaticResource PrimaryBrush}"
+                                        Style="{StaticResource TitleTextBlockStyle}"
+                                        Text="{x:Bind Mode=OneWay, Converter={StaticResource FullPathToFile}}" />
+                                </local:CompositionShadow>
+                                <Image
+                                    Grid.Row="1"
+                                    Source="{Binding}"
+                                    Stretch="Uniform" />
+                            </Grid>
+                        </DataTemplate>
+                    </FlipView.ItemTemplate>
+                </FlipView>
+                <!--  The SelectedPageIndex is bound to the FlipView to keep the PipsPager in sync.  -->
+                <PipsPager
+                    x:Name="FlipViewPipsPager"
+                    HorizontalAlignment="Center"
+                    MaxVisiblePips="10"
+                    NextButtonStyle="{StaticResource NextButtonStyle}"
+                    NextButtonVisibility="Visible"
+                    NumberOfPages="10"
+                    PreviousButtonStyle="{StaticResource PreviousButtonStyle}"
+                    PreviousButtonVisibility="Visible"
+                    SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
+
                 <StackPanel Orientation="Horizontal" Spacing="20">
                     <ToggleButton
                         x:Name="tbTest"

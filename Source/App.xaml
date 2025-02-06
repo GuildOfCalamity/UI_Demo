@@ -28,6 +28,7 @@
             <local:BooleanToOpacityConverter x:Key="BooleanOpacity" />
             <local:BooleanToOpacityInverseConverter x:Key="BooleanOpacityInverse" />
             <local:BooleanToVisibilityInverseConverter x:Key="BooleanVisibilityInverse" />
+            <local:FullPathToFileConverter x:Key="FullPathToFile" />
             <!--#endregion-->
 
 
@@ -60,7 +61,7 @@
             <Brush x:Key="SecondaryBrush">#76b9ed</Brush>
             <Brush x:Key="SecondaryBorderBrush">#AA469cdf</Brush>
             <Brush x:Key="SecondaryBackgroundBrush">#aa1a1b1b</Brush>
-            <Brush x:Key="TertiaryBrush">#C18447</Brush>
+            <Brush x:Key="TertiaryBrush">#4CFF00</Brush>
             <Brush x:Key="ItemBrush">#a03b7850</Brush>
             <Brush x:Key="LoadingBrush">#90ecf860</Brush>
             <Brush x:Key="BackgroundBrush">#1e1e1e</Brush>
@@ -126,6 +127,30 @@
                 TintLuminosityOpacity="0.1"
                 TintOpacity="0.2" />
             <!--#endregion-->
+
+            <Style
+                x:Key="NavButtonBaseStyle"
+                BasedOn="{StaticResource PipsPagerNavigationButtonBaseStyle}"
+                TargetType="Button">
+                <Setter Property="Width" Value="30" />
+                <Setter Property="Height" Value="30" />
+                <Setter Property="FontSize" Value="16" />
+            </Style>
+            <Style
+                x:Key="PreviousButtonStyle"
+                BasedOn="{StaticResource NavButtonBaseStyle}"
+                TargetType="Button">
+                <Setter Property="Content" Value="{StaticResource CaretUpSolid8}" />
+                <Setter Property="Foreground" Value="{StaticResource TertiaryBrush}" />
+            </Style>
+            <Style
+                x:Key="NextButtonStyle"
+                BasedOn="{StaticResource NavButtonBaseStyle}"
+                TargetType="Button">
+                <Setter Property="Content" Value="{StaticResource CaretDownSolid8}" />
+                <Setter Property="Foreground" Value="{StaticResource TertiaryBrush}" />
+            </Style>
+
 
             <!--#region [Button Styler]-->
             <Style x:Key="EnhancedButton" TargetType="Button">
