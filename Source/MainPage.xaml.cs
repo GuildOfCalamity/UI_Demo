@@ -460,6 +460,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         //await AppCapture.SaveImageSourceToFileAsync(root, blurTest.Source, assetPath, App.m_width, App.m_height);
 
                         // This works properly, but only because we use an Image control as an intermediate.
+                        // https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.imaging.bitmapimage?view=winrt-22621#examples
                         await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
                     }
                     #endregion

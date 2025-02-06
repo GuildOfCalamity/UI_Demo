@@ -7,25 +7,60 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 using Windows.Storage.Streams;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-using System.Net;
-using System.Runtime.InteropServices;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml;
-using Windows.Networking;
-using Windows.Storage.Pickers;
 
 namespace UI_Demo;
 
+/// <summary>
+///   Provides the practical object source type for the Image.Source and ImageBrush.ImageSource properties. 
+///   You can define a BitmapImage by using a Uniform Resource Identifier (URI) that references an image 
+///   source file, or by calling SetSourceAsync and supplying a stream.
+///   https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.imaging.bitmapimage?view=winrt-22621
+///   A BitmapImage can be sourced from these image file formats:
+///   - Joint Photographic Experts Group (JPEG)
+///   - Portable Network Graphics (PNG)
+///   - Bitmap (BMP)
+///   - Graphics Interchange Format (GIF)
+///   - Tagged Image File Format (TIFF)
+///   - JPEG XR
+///   - Icon (ICO)
+/// </summary>
+/// <remarks>
+///   If the image source is a stream, that stream is expected to contain an image file in one of these formats.
+///   The BitmapImage class represents an abstraction so that an image source can be set asynchronously but still 
+///   be referenced in XAML markup as a property value, or in code as an object that doesn't use awaitable syntax. 
+///   When you create a BitmapImage object in code, it initially has no valid source. You should then set its source 
+///   using one of these techniques:
+///   Use the BitmapImage(Uri) constructor rather than the default constructor. Although it's a constructor you can 
+///   think of this as having an implicit asynchronous behavior: the BitmapImage won't be ready for use until it 
+///   raises an ImageOpened event that indicates a successful async source set operation.
+///   Set the UriSource property. As with using the Uri constructor, this action is implicitly asynchronous, and the 
+///   BitmapImage won't be ready for use until it raises an ImageOpened event.
+///   Use SetSourceAsync. This method is explicitly asynchronous. The properties where you might use a BitmapImage, 
+///   such as Image.Source, are designed for this asynchronous behavior, and won't throw exceptions if they are set 
+///   using a BitmapImage that doesn't have a complete source yet. Rather than handling exceptions, you should handle 
+///   ImageOpened or ImageFailed events either on the BitmapImage directly or on the control that uses the source 
+///   (if those events are available on the control class).
+///   ImageFailed and ImageOpened are mutually exclusive. One event or the other will always be raised whenever a 
+///   BitmapImage object has its source value set or reset.
+///   The API for Image, BitmapImage and BitmapSource doesn't include any dedicated methods for encoding and decoding 
+///   of media formats. All of the encode and decode operations are built-in, and at most will surface aspects of 
+///   encode or decode as part of event data for load events. 
+///   If you want to do any special work with image encode or decode, which you might use if your app is doing image 
+///   conversions or manipulation, you should use the API that are available in the Windows.Graphics.Imaging namespace.
+/// </remarks>
 public static class AppCapture
 {
     static int _counter = 0; // for file naming
 
-    /*  --[ EXAMPLE USAGE ]--
+    /*  --[frame-based screenshot capture example]--
     
         DispatcherTimer? tmr;
 
@@ -411,7 +446,7 @@ public static class AppCapture
     }
     #endregion
 
-    #region [Helpers and Tests]
+    #region [Helpers & Test Methods]
     /// <summary>
     /// Assumes PNG output via <see cref="Windows.Graphics.Imaging.BitmapEncoder"/>.
     /// </summary>
@@ -456,6 +491,10 @@ public static class AppCapture
         }
     }
 
+    /// <summary>
+    /// Returns a <see cref="Windows.Storage.Streams.InMemoryRandomAccessStream"/> from a <see cref="Microsoft.UI.Xaml.UIElement"/>.
+    /// </summary>
+    /// <param name="element"><see cref="Microsoft.UI.Xaml.UIElement"/></param>
     public static async Task<RandomAccessStreamReference> GetRandomAccessStreamFromUIElement(UIElement? element)
     {
         RenderTargetBitmap renderTargetBitmap = new();
@@ -541,49 +580,28 @@ public static class AppCapture
         }
     }
 
- 
-    public static async void SetImageSource(string imageUrl, Image imageControl)
+    /// <summary>
+    ///  Set the <see cref="Microsoft.UI.Xaml.Controls.Image"/> source from a URL.
+    /// </summary>
+    /// <param name="imageUrl">the URL of the image</param>
+    /// <param name="imageControl"></param>
+    public static async void SetImageSourceFromUrl(string imageUrl, Image imageControl)
     {
-        WebRequest myrequest = WebRequest.Create(imageUrl);
-        WebResponse myresponse = myrequest.GetResponse();
-        var imgstream = myresponse.GetResponseStream();
-     
-        // Try to create SoftwareBitmap
-        MemoryStream ms = new MemoryStream();
-        imgstream.CopyTo(ms);
-        var decoder = await BitmapDecoder.CreateAsync(ms.AsRandomAccessStream());
-        var softBitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+        using (System.Net.Http.HttpClient client = new())
+        {
+            Stream? imgStream = await client.GetStreamAsync(imageUrl);
 
-        // Use SoftwareBitmapSource to ImageSource
-        var source = new SoftwareBitmapSource();
-        await source.SetBitmapAsync(softBitmap);
-        imageControl.DispatcherQueue.TryEnqueue(() => imageControl.Source = source);
-    }
+            // Create SoftwareBitmap from the stream.
+            MemoryStream ms = new MemoryStream();
+            await imgStream.CopyToAsync(ms);
+            var decoder = await BitmapDecoder.CreateAsync(ms.AsRandomAccessStream());
+            var softBitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
 
-    public static async Task<SoftwareBitmapSource> GetSoftwareBitmapFromBitmapImageSource(BitmapImage bitmapSource)
-    {
-        if (bitmapSource == null)
-            return null;
-
-        // get pixels as an array of bytes
-        var stride = bitmapSource.PixelWidth * 4;
-        var bytes = new byte[stride * bitmapSource.PixelHeight];
-
-        // There is no CopyPixels method available?
-        //bitmapSource.CopyPixels(bytes, stride, 0);
-
-        // get WinRT SoftwareBitmap
-        var softwareBitmap = new Windows.Graphics.Imaging.SoftwareBitmap(
-            Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8,
-            bitmapSource.PixelWidth,
-            bitmapSource.PixelHeight,
-            Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied);
-        softwareBitmap.CopyFromBuffer(bytes.AsBuffer());
-
-        // build WinUI3 SoftwareBitmapSource
-        var source = new Microsoft.UI.Xaml.Media.Imaging.SoftwareBitmapSource();
-        await source.SetBitmapAsync(softwareBitmap);
-        return source;
+            // Use SetBitmapAsync to the Image's source.
+            var source = new SoftwareBitmapSource();
+            await source.SetBitmapAsync(softBitmap);
+            imageControl.DispatcherQueue.TryEnqueue(() => imageControl.Source = source);
+        }
     }
 
     /// <summary>
@@ -620,6 +638,11 @@ public static class AppCapture
         return softwareBitmap;
     }
 
+    /// <summary>
+    ///  Uses a <see cref="BitmapEncoder"/> to flush pixel data into the <see cref="IRandomAccessStream"/>.
+    /// </summary>
+    /// <param name="renderTargetBitmap"><see cref="RenderTargetBitmap"/></param>
+    /// <param name="stream"><see cref="IRandomAccessStream"/></param>
     public static async Task EncodeAndSaveRenderTargetBitmapAsync(RenderTargetBitmap renderTargetBitmap, IRandomAccessStream stream)
     {
         var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();
@@ -908,15 +931,175 @@ public static class AppCapture
     }
 
     /// <summary>
-    /// Extracts pixel data from a WriteableBitmap.
+    /// Extracts pixel data from a <see cref="WriteableBitmap"/>.
     /// </summary>
-    public static async Task<byte[]> GetPixelDataAsync(WriteableBitmap writeableBitmap)
+    public static async Task<byte[]> GetPixelDataAsync(this WriteableBitmap writeableBitmap)
     {
         using (Stream pixelStream = writeableBitmap.PixelBuffer.AsStream())
         {
             byte[] pixels = new byte[pixelStream.Length];
             await pixelStream.ReadAsync(pixels, 0, pixels.Length);
             return pixels;
+        }
+    }
+
+    /// <summary>
+    /// Extracts pixel data from a <see cref="RenderTargetBitmap"/>.
+    /// </summary>
+    public static async Task<byte[]> GetPixelDataAsync(this RenderTargetBitmap renderTargetBitmap)
+    {
+        if (renderTargetBitmap == null)
+            throw new ArgumentNullException(nameof(renderTargetBitmap));
+
+        var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();
+        return pixelBuffer.ToArray();
+    }
+
+    /// <summary>
+    /// Reads pixel data from a byte array using <see cref="Windows.Storage.Streams.DataReader"/>.
+    /// </summary>
+    public static byte[] ReadPixelBufferWithDataReader(byte[] pixelData)
+    {
+        using (DataReader dataReader = DataReader.FromBuffer(pixelData.AsBuffer()))
+        {
+            byte[] pixels = new byte[pixelData.Length];
+            dataReader.ReadBytes(pixels);
+            return pixels;
+        }
+    }
+
+    public static async Task<byte[]> GetImageFileBytesAsync(string filePath)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("The image file does not exist.", filePath);
+
+        Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(filePath);
+
+        try
+        {
+            using (Windows.Storage.Streams.IRandomAccessStream stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read))
+            {
+                // Decode the image
+                Windows.Graphics.Imaging.BitmapDecoder decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(stream);
+
+                // Extract pixel data into a buffer (bitmap frame)
+                Windows.Graphics.Imaging.PixelDataProvider pixelDataProvider = await decoder.GetPixelDataAsync();
+
+                // Read pixel data using DataReader
+                return ReadPixelBufferWithDataReader(pixelDataProvider.DetachPixelData());
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] GetImageFileBytesAsync: {ex.Message}");
+            return new byte[0];
+        }
+    }
+
+    public static async Task<bool> WriteBytesUsingDataWriterAsync(byte[] data, string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(filePath);
+                using (Windows.Storage.Streams.IRandomAccessStream stream = await file.OpenAsync(Windows.Storage.FileAccessMode.ReadWrite))
+                {
+                    using (DataWriter dataWriter = new DataWriter(stream))
+                    {
+                        dataWriter.WriteBytes(data);
+                        await dataWriter.StoreAsync();
+                        await dataWriter.FlushAsync();
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                string? folderPath = System.IO.Path.GetDirectoryName(filePath);
+                string? fileName = System.IO.Path.GetFileName(filePath);
+                Windows.Storage.StorageFolder storageFolder = await Windows.Storage.StorageFolder.GetFolderFromPathAsync(folderPath);
+                Windows.Storage.StorageFile file = await storageFolder.CreateFileAsync(fileName, Windows.Storage.CreationCollisionOption.ReplaceExisting);
+                using (Windows.Storage.Streams.IRandomAccessStream stream = await file.OpenAsync(Windows.Storage.FileAccessMode.ReadWrite))
+                {
+                    using (DataWriter dataWriter = new DataWriter(stream))
+                    {
+                        dataWriter.WriteBytes(data);
+                        await dataWriter.StoreAsync();
+                        await dataWriter.FlushAsync();
+                    }
+                }
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] WriteBytesUsingDataWriterAsync: {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<byte[]> ReadBytesUsingDataReaderAsync(string filePath)
+    {
+        if (File.Exists(filePath))
+        {
+            Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(filePath);
+            using (Windows.Storage.Streams.IRandomAccessStream stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read))
+            {
+                using (DataReader reader = new DataReader(stream))
+                {
+                    byte[] bytes = new byte[stream.Size];
+                    reader.ReadBytes(bytes);
+                    return bytes;
+                }
+            }
+        }
+        else
+        {
+            return new byte[0];
+        }
+    }
+
+    /// <summary>
+    /// Decodes a <see cref="byte[]"/> to <see cref="Microsoft.UI.Xaml.Media.Imaging.BitmapImage"/>
+    /// via <see cref="Windows.Graphics.Imaging.BitmapDecoder.CreateAsync"/>.
+    /// </summary>
+    /// <param name="data"><see cref="byte[]"/></param>
+    /// <returns><see cref="Microsoft.UI.Xaml.Media.Imaging.BitmapImage"/> if successful, null otherwise</returns>
+    public static async Task<ImageSource?> ImageFromBase64(byte[] bytes, Guid? decoderId)
+    {
+        try
+        {
+            if (decoderId == null)
+            {
+                decoderId = Windows.Graphics.Imaging.BitmapDecoder.PngDecoderId; // https://learn.microsoft.com/en-us/uwp/api/windows.graphics.imaging.bitmapdecoder.pngdecoderid?view=winrt-22621
+                // [Available decoders]
+                //  - GIF
+                //  - HEIF
+                //  - ICO
+                //  - JPEG
+                //  - JPEGXR
+                //  - PNG
+                //  - TIFF
+                //  - WEBP
+            }
+
+            Windows.Storage.Streams.IRandomAccessStream? image = bytes.AsBuffer().AsStream().AsRandomAccessStream();
+
+            // Create the decoder from the image bytes.
+            var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync((Guid)decoderId, image);
+            image.Seek(0);
+
+            // Create writable bitmap from decoder source.
+            var output = new Microsoft.UI.Xaml.Media.Imaging.WriteableBitmap((int)decoder.PixelHeight, (int)decoder.PixelWidth);
+            await output.SetSourceAsync(image);
+
+            return output;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] ImageFromBase64: {ex.Message}");
+            return null;
         }
     }
     #endregion
@@ -1136,6 +1319,35 @@ public static class AppCapture
 
         // Step 3: Save the file
         await encoder.FlushAsync();
+    }
+
+    /// <summary>
+    /// Encodes and saves a RenderTargetBitmap to a file using DataWriter.
+    /// </summary>
+    public static async Task EncodeAndSaveBitmapWithDataWriterAsync(RenderTargetBitmap renderTargetBitmap, byte[] pixels, IRandomAccessStream stream)
+    {
+        // Step 1: Create BitmapEncoder
+        BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+
+        // Step 2: Set pixel data
+        encoder.SetPixelData(
+            BitmapPixelFormat.Bgra8,
+            BitmapAlphaMode.Premultiplied,
+            (uint)renderTargetBitmap.PixelWidth,
+            (uint)renderTargetBitmap.PixelHeight,
+            96, 96, // DPI
+            pixels);
+
+        // Step 3: Encode and flush
+        await encoder.FlushAsync();
+
+        // Step 4: Write the image file manually using DataWriter
+        using (DataWriter dataWriter = new DataWriter(stream))
+        {
+            dataWriter.WriteBytes(pixels);
+            await dataWriter.StoreAsync();
+            await dataWriter.FlushAsync();
+        }
     }
     #endregion
 }
