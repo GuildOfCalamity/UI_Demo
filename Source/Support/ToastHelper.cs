@@ -13,24 +13,13 @@ namespace UI_Demo;
 
 public static class ToastHelper
 {
-    /// <summary>
-    /// https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/adaptive-interactive-toasts?tabs=appsdk
-    /// </summary>
-    public static void ShowStandardToast(string header, string body)
-    {
-        ToastImageAndText(header, body, "NoticeIcon.png");
-    }
-
-    /// <summary>
-    /// https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/adaptive-interactive-toasts?tabs=appsdk
-    /// </summary>
-    public static void ShowWarningToast(string header, string body, string buttonNotification)
-    {
-        ToastImageAndText(header, body, "WarningIcon.png");
-    }
+    public static void ShowStandardToast(string header, string body) => ToastImageAndText(header, body, "AppIcon.png");
+    public static void ShowNoticeToast(string header, string body) => ToastImageAndText(header, body, "NoticeIcon.png");
+    public static void ShowWarningToast(string header, string body, string buttonNotification) => ToastImageAndText(header, body, "WarningIcon.png");
 
     /// <summary>
     /// The <see cref="AppNotificationManager"/> appears to available for packaged apps only.
+    /// https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/adaptive-interactive-toasts?tabs=appsdk
     /// </summary>
     public static bool SendTestNotification()
     {

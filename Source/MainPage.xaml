@@ -23,8 +23,13 @@
             PointerPressed="HostGridOnPointerPressed">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
             <Grid.Resources>
                 <!--#region [Context Flyout Menu]-->
                 <MenuFlyout
@@ -43,8 +48,8 @@
                     <MenuFlyoutItem
                         Click="MenuFlyoutItemOnClick"
                         IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
-                        Tag="ActionSpecial"
-                        Text="Some undefined action">
+                        Tag="ActionToken"
+                        Text="Signal cancel token">
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="{StaticResource NoiseCancelation}" />
                         </MenuFlyoutItem.Icon>
@@ -75,8 +80,48 @@
                 <!--#endregion-->
             </Grid.Resources>
 
-            <StackPanel
+            <local:SeparatorLine
                 Grid.Row="0"
+                Grid.ColumnSpan="2"
+                VerticalAlignment="Top"
+                Line1Brush="{StaticResource GradientLine1Brush}"
+                Line2Brush="{StaticResource GradientLine2Brush}"
+                SeparatorThickness="2" />
+
+            <!--#region [Channel Messages]-->
+            <ListView
+                x:Name="lvChannelMessages"
+                Grid.Row="1"
+                Grid.RowSpan="2"
+                Grid.Column="1"
+                Margin="0,0,10,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch"
+                Opacity="0.7">
+                <!--<ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapGrid HorizontalChildrenAlignment="Left" Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>-->
+                <ListView.Transitions>
+                    <TransitionCollection>
+                        <EdgeUIThemeTransition />
+                    </TransitionCollection>
+                </ListView.Transitions>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock
+                            FontSize="{StaticResource FontSizeNormal}"
+                            Foreground="{StaticResource GradientListBrush}"
+                            Text="{Binding}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <!--#endregion-->
+
+            <StackPanel
+                Grid.Row="1"
+                Grid.ColumnSpan="2"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Orientation="Vertical"
@@ -194,8 +239,8 @@
                 -->
                 <FlipView
                     x:Name="Flipper"
-                    MaxWidth="300"
-                    MaxHeight="150"
+                    MaxWidth="200"
+                    MaxHeight="100"
                     Background="Transparent">
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel Orientation="Horizontal" />
@@ -237,7 +282,7 @@
                     MaxVisiblePips="10"
                     NextButtonStyle="{StaticResource NextButtonStyle}"
                     NextButtonVisibility="Visible"
-                    NumberOfPages="10"
+                    NumberOfPages="{x:Bind Pictures.Count}"
                     PreviousButtonStyle="{StaticResource PreviousButtonStyle}"
                     PreviousButtonVisibility="Visible"
                     SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
@@ -254,7 +299,50 @@
                         x:Name="tbButton"
                         Click="ToolbarButtonOnClick"
                         Content="Toolbar Button"
-                        Style="{StaticResource ToolbarButton}" />
+                        Style="{StaticResource ToolbarButton}">
+                        <Button.Flyout>
+                            <!--
+                                If LightDismissOverlayMode is "On", the Page background will be darkened when it's opened.
+                            -->
+                            <Flyout
+                                x:Name="flyoutText"
+                                AreOpenCloseAnimationsEnabled="True"
+                                LightDismissOverlayMode="Off"
+                                Opened="flyoutTextOnOpened"
+                                ShowMode="TransientWithDismissOnPointerMoveAway">
+                                <Flyout.FlyoutPresenterStyle>
+                                    <Style TargetType="FlyoutPresenter">
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="IsDefaultShadowEnabled" Value="True" />
+                                        <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled" />
+                                        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+                                        <Setter Property="IsTabStop" Value="True" />
+                                        <Setter Property="TabNavigation" Value="Cycle" />
+                                    </Style>
+                                </Flyout.FlyoutPresenterStyle>
+                                <StackPanel
+                                    Margin="0"
+                                    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                                    BorderBrush="{StaticResource GradientFlyoutBrush}"
+                                    BorderThickness="3"
+                                    CornerRadius="5"
+                                    Orientation="Vertical">
+                                    <local:CompositionShadow
+                                        Margin="16"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        BlurRadius="2"
+                                        OffsetX="2"
+                                        OffsetY="2"
+                                        ShadowOpacity="0.8"
+                                        Color="#000000">
+                                        <TextBlock Text="I'm an example of a Flyout, I'll close myself in a few seconds." TextWrapping="Wrap" />
+                                    </local:CompositionShadow>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="20">
                     <TextBox
@@ -271,7 +359,7 @@
                         PlaceholderText="First name"
                         Style="{StaticResource MinimalTextBox}" />
                 </StackPanel>
-                <StackPanel
+                <!--<StackPanel
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
@@ -288,7 +376,7 @@
                     <Image Source="ms-appx:///Assets/AltIcon3.png" />
                     <Image Source="ms-appx:///Assets/AltIcon4.png" />
                     <Image Source="ms-appx:///Assets/AltIcon5.png" />
-                </StackPanel>
+                </StackPanel>-->
             </StackPanel>
 
             <!--#region [InfoBar Content]-->

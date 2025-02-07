@@ -14,3 +14,12 @@ public enum MessageLevel
     Warning = 3,
     Error = 4
 }
+
+public enum ChannelMessageType
+{
+    AppHeartbeat = 0,
+    AppSize = 1,
+    AppState = 2,
+    AppClose = 3,
+    AppException = 4
+}

@@ -1835,6 +1835,11 @@ public static class Extensions
         }
     }
 
+    public static T GetRandomEnum<T>() where T : Enum
+    {
+        var values = Enum.GetValues(typeof(T)).Cast<T>();
+        return values.ElementAt(Random.Shared.Next(values.Count()));
+    }
 
     #region [WinUI Specific]
     /// <summary>

@@ -88,6 +88,7 @@
     <None Remove="Dialogs\CloseDialog.xaml" />
     <None Remove="MainPage.xaml" />
     <None Remove="ProgressButton.xaml" />
+    <None Remove="SeparatorLine.xaml" />
   </ItemGroup>
 	
   <ItemGroup>
@@ -215,6 +216,11 @@
     <Content Update="Assets\WarningIcon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="SeparatorLine.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="ProgressButton.xaml">

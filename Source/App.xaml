@@ -94,6 +94,40 @@
                 <GradientStop Offset="1.0" Color="{StaticResource LinearBorder1}" />
             </LinearGradientBrush>
 
+            <LinearGradientBrush x:Key="GradientFlyoutBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Offset="0.0" Color="{StaticResource SecondaryFill}" />
+                <GradientStop Offset="0.2" Color="{StaticResource LinearBorder3}" />
+                <GradientStop Offset="0.6" Color="{StaticResource LinearBorder2}" />
+                <GradientStop Offset="1.0" Color="{StaticResource SecondaryFill}" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GradientListBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="#FF76b9ed" />
+                <GradientStop Offset="0.3" Color="#FFD0E0F0" />
+                <GradientStop Offset="0.5" Color="#FF66a9dd" />
+                <GradientStop Offset="1.0" Color="#FF304050" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GradientPipBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="#FF304050" />
+                <GradientStop Offset="0.1" Color="#FF5483A8" />
+                <GradientStop Offset="0.5" Color="#FFD0E0F0" />
+                <GradientStop Offset="0.9" Color="#FF5483A8" />
+                <GradientStop Offset="1.0" Color="#FF304050" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GradientLine1Brush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="#F066a9dd" />
+                <GradientStop Offset="0.3" Color="#F0305D7A" />
+                <GradientStop Offset="1.0" Color="#F0304050" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GradientLine2Brush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="#F0F0F0F0" />
+                <GradientStop Offset="0.3" Color="#F0A0B0C0" />
+                <GradientStop Offset="1.0" Color="#F076b9ed" />
+            </LinearGradientBrush>
+
             <LinearGradientBrush x:Key="GradientDebugBrush" StartPoint="0,0.2" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#F0F0F0F0" />
                 <GradientStop Offset="0.3" Color="#F0A0A0A0" />
@@ -134,21 +168,24 @@
                 TargetType="Button">
                 <Setter Property="Width" Value="30" />
                 <Setter Property="Height" Value="30" />
-                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontWeight" Value="Bold" />
             </Style>
             <Style
                 x:Key="PreviousButtonStyle"
                 BasedOn="{StaticResource NavButtonBaseStyle}"
                 TargetType="Button">
-                <Setter Property="Content" Value="{StaticResource CaretUpSolid8}" />
-                <Setter Property="Foreground" Value="{StaticResource TertiaryBrush}" />
+                <!--  The default pip nav styler rotates the content by 90 degrees.  -->
+                <Setter Property="Content" Value="{StaticResource ChevronUpSmall}" />
+                <Setter Property="Foreground" Value="{StaticResource GradientPipBrush}" />
             </Style>
             <Style
                 x:Key="NextButtonStyle"
                 BasedOn="{StaticResource NavButtonBaseStyle}"
                 TargetType="Button">
-                <Setter Property="Content" Value="{StaticResource CaretDownSolid8}" />
-                <Setter Property="Foreground" Value="{StaticResource TertiaryBrush}" />
+                <!--  The default pip nav styler rotates the content by 90 degrees.  -->
+                <Setter Property="Content" Value="{StaticResource ChevronDownSmall}" />
+                <Setter Property="Foreground" Value="{StaticResource GradientPipBrush}" />
             </Style>
 
 

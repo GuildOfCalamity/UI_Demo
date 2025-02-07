@@ -5,19 +5,21 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using System.Diagnostics;
 
 using Microsoft.UI;
 using Microsoft.UI.Composition;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 using Windows.Foundation;
 using Windows.UI.StartScreen;
@@ -25,7 +27,6 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 
 using WinRT.Interop;
-using Microsoft.UI.Xaml.Data;
 
 namespace UI_Demo;
 
@@ -43,6 +44,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Brush? _lvl3;
     static Brush? _lvl4;
     static Brush? _lvl5;
+    DispatcherTimer? _flyoutTimer;
+    CancellationTokenSource _ctsTask;
+
+    readonly int _maxMessages = 20;
+    readonly ObservableCollection<string>? _messages;
+    readonly DispatcherQueue _localDispatcher;
+
     public Action? ProgressButtonClickEvent { get; set; }
     public event PropertyChangedEventHandler? PropertyChanged;
     bool _isBusy = false;
@@ -68,13 +76,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     public ObservableCollection<string> LogMessages { get; private set; } = new();
     public ObservableCollection<string> Pictures = new();
     #endregion
+
     public MainPage()
     {
         this.InitializeComponent();
-
         this.Loaded += MainPageOnLoaded;
         App.WindowSizeChanged += SizeChangeEvent;
-
         PopulatePictures();
 
         #region [Action example for our ProgressButton control]
@@ -86,7 +93,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             for (int i = 0; i < 100; i++)
             {
                 Amount += 1;
-                await Task.Delay(15);
+                await Task.Delay(18);
             }
             tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Finished");
             IsBusy = false;
@@ -120,6 +127,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         else
             _lvl5 = new SolidColorBrush(Colors.Red);
         #endregion
+
+        _localDispatcher = DispatcherQueue.GetForCurrentThread();
+        _messages = new();
+        Binding binding = new Binding { Mode = BindingMode.OneWay, Source = _messages };
+        BindingOperations.SetBinding(lvChannelMessages, ListView.ItemsSourceProperty, binding);
 
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
     }
@@ -160,11 +172,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         bool useTechnique1 = false;
         
-        var _cts = new CancellationTokenSource();
-        
+        _ctsTask = new CancellationTokenSource();
+
         IsBusy = false;
         UpdateInfoBar("Starting task…", MessageLevel.Information);
-
         btnRun.IsEnabled = false;
         tbMessages.Text = "Running…";
 
@@ -181,7 +192,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 ToggleAnimation(IsBusy);
                 await Task.Delay(3500);
 
-            }, _cts.Token);
+            }, _ctsTask.Token);
 
             /** 
              **   You wouldn't use both of these ContinueWith examples below, just select the one you're comfortable with.
@@ -268,7 +279,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             #region [*************** Technique #2 ***************]
 
-            var dummyTask = SampleAsyncMethod(_cts.Token);
+            var dummyTask = SampleAsyncMethod(_ctsTask.Token);
 
             /** Happens when successful **/
             dummyTask.ContinueWith(task =>
@@ -315,7 +326,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     int diceRoll = Random.Shared.Next(100);
                     
                     if (diceRoll == 99)
-                        _cts.Cancel();
+                        _ctsTask.Cancel();
                     else if (diceRoll == 98)
                         throw new Exception("This is a fake exception");
 
@@ -583,6 +594,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             else
                 UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
+
+            // Start channel test
+            _ = Task.Run(async () => await ConsumerWaitToReadAsync(App.CoreChannelToken.Token));
         }
         _loaded = true;
     }
@@ -624,8 +638,16 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionFirstRun", StringComparison.OrdinalIgnoreCase))
             {
-                // Reset first run flag
+                // Reset first run flag.
                 App.Profile!.FirstRun = true;
+            }
+            else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionToken", StringComparison.OrdinalIgnoreCase))
+            {
+                if (App.CoreChannelToken is not null)
+                    App.CoreChannelToken.Cancel(); // Signal the channel cancellation token.
+
+                if (_ctsTask is not null)
+                    _ctsTask.Cancel(); // Signal the task cancellation token.
             }
             else
             {
@@ -647,6 +669,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         bool isPinnedSuccessfully = false;
         try
         {
+            flyoutText.ShowAt(sender as Button);
+
             string tag = App.GetCurrentNamespace() ?? "WinUI Demo";
 
             SecondaryTile secondaryTile = new SecondaryTile($"WinUI_{tag}");
@@ -678,6 +702,30 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 UpdateInfoBar($"Pin to start failed: {ex.Message}", MessageLevel.Error);
             else
                 UpdateInfoBar($"Pin to start failed: {ex.StackTrace}", MessageLevel.Error);
+        }
+    }
+
+    void flyoutTextOnOpened(object sender, object e)
+    {
+        if (flyoutText.IsOpen)
+        {
+            if (_flyoutTimer != null) { _flyoutTimer.Stop(); }
+            // If we had an existing timer just re-create it.
+            _flyoutTimer = new DispatcherTimer();
+            _flyoutTimer.Interval = TimeSpan.FromSeconds(4);
+            _flyoutTimer.Tick += (_, _) =>
+            {
+                flyoutText.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+                {
+                    if (flyoutText.IsOpen)
+                    {
+                        flyoutText.Hide();
+                        ToastHelper.ShowStandardToast(App.GetCurrentAssemblyName() ?? "WinUI3", "Flyout was closed via timer event.");
+                    }
+                });
+                if (_flyoutTimer != null) { _flyoutTimer.Stop(); }
+            };
+            _flyoutTimer.Start();
         }
     }
 
@@ -776,7 +824,84 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
         }
     }
-    
+
+    #region [Channel Consumer Test]
+    /// <summary>
+    /// Reads messages from the core app channel and updates the UI.
+    /// </summary>
+    async Task ConsumerWaitToReadAsync(CancellationToken token)
+    {
+        if (App.CoreMessageChannel is null)
+            return;
+
+        int count = 0;
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                // Blocks until until data is available in the channel.
+                if (await App.CoreMessageChannel.Reader.WaitToReadAsync(token))
+                {
+                    //var message = await _messageChannel.Reader.ReadAsync(token);
+                    while (App.CoreMessageChannel.Reader.TryRead(out var message))
+                    {
+                        string formatted = $"📢 {DateTime.Now:T} – {message} #{++count:D3}";
+                        _localDispatcher.TryEnqueue(() =>
+                        {
+                            if (_messages.Count > _maxMessages)
+                                _messages.RemoveAt(_maxMessages);
+
+                            _messages?.Insert(0, formatted);
+                        });
+                    }
+                }
+
+                // Wait for channel completion before notifying UI
+                //await _messageChannel.Reader.Completion;
+                //_localDispatcher.TryEnqueue(() => { _messages.Insert(0, "Channel completed, no more messages."); });
+            }
+            catch (OperationCanceledException)
+            {
+                if (!App.IsClosing)
+                    UpdateInfoBar("Channel consumer was canceled!", MessageLevel.Warning);
+                else
+                    Debug.WriteLine("[WARNING] Channel consumer was canceled!");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads messages from the core app channel and updates the UI.
+    /// </summary>
+    async Task ConsumerReadAllAsync(CancellationToken token)
+    {
+        if (App.CoreMessageChannel is null)
+            return;
+
+        int count = 0;
+        try
+        {
+            // Blocks until the channel receives a message or it canceled.
+            await foreach (var message in App.CoreMessageChannel.Reader.ReadAllAsync(token))
+            {
+                string formatted = $"🔔 {DateTime.Now:T} – {message} #{++count:D3}";
+                _localDispatcher.TryEnqueue(() => _messages?.Insert(0, formatted));
+            }
+
+            // Wait for channel completion before notifying UI
+            //await _messageChannel.Reader.Completion;
+            //_localDispatcher.TryEnqueue(() => { _messages.Insert(0, "Channel completed, no more messages."); });
+        }
+        catch (OperationCanceledException)
+        {
+            if (!App.IsClosing)
+                UpdateInfoBar("Channel consumer was canceled!", MessageLevel.Warning);
+            else
+                Debug.WriteLine("[WARNING] Channel consumer was canceled!");
+        }
+    }
+    #endregion
+
     #region [Blur Effect Compositor]
 
     Compositor? _compositor;

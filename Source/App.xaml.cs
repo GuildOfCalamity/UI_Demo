@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -17,9 +20,6 @@ using Windows.Storage;
 using Windows.System;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.UI.ViewManagement;
-using System.Text;
-using System.IO;
-using System.Runtime.InteropServices;
 
 namespace UI_Demo;
 
@@ -56,6 +56,10 @@ public partial class App : Application
     public static List<string> ArgList = new();
     public static List<string>? AssemblyReferences { get; private set; }
     public static Action<Windows.Graphics.SizeInt32>? WindowSizeChanged { get; set; }
+
+    public static Channel<ChannelMessageType>? CoreMessageChannel;
+    public static CancellationTokenSource? CoreChannelToken;
+
 
     #region [User preferences from Windows.UI.ViewManagement]
     // We won't configure backing fields for these as the user could adjust them during app lifetime.
@@ -134,12 +138,20 @@ public partial class App : Application
             CloseExistingInstanceAlt();
         }
 
+        #region [System.Threading.Channels example]
+        CoreMessageChannel = Channel.CreateUnbounded<ChannelMessageType>();
+        CoreChannelToken = new CancellationTokenSource();
+        #endregion
+
         this.InitializeComponent();
 
         // https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.application.focusvisualkind?view=windows-app-sdk-1.3
         this.FocusVisualKind = FocusVisualKind.Reveal;
 
         AssemblyReferences = Extensions.GatherReferenceAssemblies(true);
+
+        // System.Threading.Channels test
+        _ = Task.Run(() => ChannelProducerAsync(CoreChannelToken.Token));
     }
 
     public static void CloseExistingInstance()
@@ -267,8 +279,13 @@ public partial class App : Application
             // We don't have the Closing event exposed by default, so we'll use the AppWindow to compensate.
             AppWin.Closing += (s, e) =>
             {
-                App.IsClosing = true;
                 Debug.WriteLine($"[INFO] Application closing detected at {DateTime.Now.ToString("hh:mm:ss.fff tt")}");
+                
+                App.IsClosing = true;
+                
+                if (CoreChannelToken is not null)
+                    CoreChannelToken.Cancel();
+
                 if (Profile is not null)
                 {
                     Process proc = Process.GetCurrentProcess();
@@ -1039,6 +1056,38 @@ public partial class App : Application
                     LaunchArgs["Link"] = linkIndex is -1 ? LaunchArgs["Link"] : desktopLaunchArgs[linkIndex + 1];
                 }
             }
+        }
+    }
+    #endregion
+
+    #region [Channel Testing]
+    /// <summary>
+    ///   Generates messages and writes to the <see cref="CoreMessageChannel"/>.
+    /// </summary>
+    /// <remarks>
+    ///   Can be used as an EventBus for app-wide signaling. 
+    ///   Currently we're just injecting a random <see cref="ChannelMessageType"/>.
+    /// </remarks>
+    public async Task ChannelProducerAsync(CancellationToken token)
+    {
+        if (CoreMessageChannel is null)
+            return;
+
+        try
+        {
+            while (!token.IsCancellationRequested && !IsClosing)
+            {
+                await Task.Delay(5000);
+                await CoreMessageChannel.Writer.WriteAsync(Extensions.GetRandomEnum<ChannelMessageType>(), token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.WriteLine("[WARNING] Producer channel was canceled!");
+        }
+        finally
+        {
+            CoreMessageChannel.Writer.Complete(); // Mark the channel as complete
         }
     }
     #endregion
