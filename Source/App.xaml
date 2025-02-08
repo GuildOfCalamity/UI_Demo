@@ -116,6 +116,18 @@
                 <GradientStop Offset="1.0" Color="#FF304050" />
             </LinearGradientBrush>
 
+            <LinearGradientBrush x:Key="GradientVerticalBrush" StartPoint="0,1" EndPoint="1,1">
+                <GradientStop Offset="0.0" Color="#32F0F0F0" />
+                <GradientStop Offset="0.3" Color="#32A0A0A0" />
+                <GradientStop Offset="1.0" Color="#32505050" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GradientHorizontalBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="#32F0F0F0" />
+                <GradientStop Offset="0.3" Color="#32A0A0A0" />
+                <GradientStop Offset="1.0" Color="#32505050" />
+            </LinearGradientBrush>
+
             <LinearGradientBrush x:Key="GradientLine1Brush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#F066a9dd" />
                 <GradientStop Offset="0.3" Color="#F0305D7A" />

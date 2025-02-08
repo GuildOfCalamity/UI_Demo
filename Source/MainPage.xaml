@@ -80,24 +80,36 @@
                 <!--#endregion-->
             </Grid.Resources>
 
-            <local:SeparatorLine
+            <!--<local:SeparatorLine
                 Grid.Row="0"
                 Grid.ColumnSpan="2"
                 VerticalAlignment="Top"
                 Line1Brush="{StaticResource GradientLine1Brush}"
                 Line2Brush="{StaticResource GradientLine2Brush}"
-                SeparatorThickness="2" />
+                SeparatorThickness="2" />-->
 
-            <local:SeparatorLine
+            <Rectangle
+                Grid.Row="0"
+                Grid.ColumnSpan="2"
+                Height="3"
+                Margin="0,10,0,5"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Fill="{StaticResource GradientHorizontalBrush}"
+                RadiusX="3"
+                RadiusY="3" />
+
+            <Rectangle
                 Grid.Row="0"
                 Grid.RowSpan="3"
-                Width="4"
-                Height="600"
+                Grid.Column="1"
+                Width="3"
+                Margin="0,10,0,5"
+                HorizontalAlignment="Center"
                 VerticalAlignment="Stretch"
-                Line1Brush="{StaticResource GradientLine1Brush}"
-                Line2Brush="{StaticResource GradientLine2Brush}"
-                SeparatorThickness="2" />
-
+                Fill="{StaticResource GradientVerticalBrush}"
+                RadiusX="3"
+                RadiusY="3" />
 
             <!--#region [Channel Messages]-->
             <ListView
