@@ -88,6 +88,17 @@
                 Line2Brush="{StaticResource GradientLine2Brush}"
                 SeparatorThickness="2" />
 
+            <local:SeparatorLine
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Width="4"
+                Height="600"
+                VerticalAlignment="Stretch"
+                Line1Brush="{StaticResource GradientLine1Brush}"
+                Line2Brush="{StaticResource GradientLine2Brush}"
+                SeparatorThickness="2" />
+
+
             <!--#region [Channel Messages]-->
             <ListView
                 x:Name="lvChannelMessages"

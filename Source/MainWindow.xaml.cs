@@ -1,7 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
-
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.UI.Content;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -69,6 +70,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             Debug.WriteLine($"[INFO] MainWindow First Visible");
         }
         _firstVisible = true;
+        PubSubService<string>.Instance.SendMessage($"🔔 MainWindow Visibility Changed");
     }
 
     void MinimizeOnClicked(object sender, RoutedEventArgs args) => _overlapPresenter?.Minimize();

@@ -87,6 +87,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         this.InitializeComponent();
         this.Loaded += MainPageOnLoaded;
+        this.Unloaded += MainPageOnUnloaded;
         App.WindowSizeChanged += SizeChangeEvent;
         PopulatePictures();
 
@@ -595,9 +596,18 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
 
             // Start channel test
-            _ = Task.Run(async () => await ConsumerWaitToReadAsync(App.CoreChannelToken.Token));
+            //_ = Task.Run(async () => await ConsumerWaitToReadAsync(App.CoreChannelToken.Token));
+            _ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
+
+            // Subscribe to messages
+            PubSubService<string>.Instance.Subscribe(OnPubSubReceived);
         }
         _loaded = true;
+    }
+
+    void MainPageOnUnloaded(object sender, RoutedEventArgs e)
+    {
+        PubSubService<string>.Instance.Unsubscribe(OnPubSubReceived);
     }
 
     /// <summary>
@@ -728,6 +738,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             UpdateInfoBar($"Tag data is empty for this MenuFlyoutItem.", MessageLevel.Error);
         }
+    }
+
+    /// <summary>
+    /// <see cref="PubSubService{T}"> testing.
+    /// </summary>
+    void OnPubSubReceived(string message)
+    {
+        _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, message));
     }
     #endregion
 
@@ -1039,7 +1057,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
     #endregion
 
-    #region [Channel Consumer Test]
+    #region [Channel Methods]
     /// <summary>
     /// Reads messages from the core app channel and updates the UI.
     /// </summary>
@@ -1114,11 +1132,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 Debug.WriteLine("[WARNING] Channel consumer was canceled!");
         }
     }
-    #endregion
-
-    #region [Multiple Channel Test]
     /// <summary>
-    /// Test multiple channel listeners.
+    /// Test channel listeners.
     /// </summary>
     void SendMessageToStringService(CancellationToken token = default)
     {   // Send a test message to non-generic consumer
@@ -1150,15 +1165,17 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Test multiple channel listeners. (generic version)
+    /// Test channel listeners. (generic version)
     /// </summary>
     async Task SendNumberToGenericMessageService(CancellationToken token = default)
     {   // Send a numeric code to generic consumer
-        await MessageService<int>.Instance.SendMessageAsync(Random.Shared.Next(1,1000), token);
+        await MessageService<ChannelMessageType>.Instance.SendMessageAsync(Extensions.GetRandomEnum<ChannelMessageType>(), token);
     }
     async Task StartListeningToGenericMessageServiceAsync(CancellationToken token = default)
     {
-        var reader = MessageService<int>.Instance.GetMessageReader();
+        int count = 0;
+        var reader = MessageService<ChannelMessageType>.Instance.GetMessageReader();
+        //_maxMessages = MessageService<ChannelMessageType>.Instance.GetMaxmimumLimit();
         try
         {
             await foreach (var message in reader.ReadAllAsync(token))
@@ -1170,14 +1187,18 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         if (_coreMessages.Count > _maxMessages)
                             _coreMessages.RemoveAt(_maxMessages);
 
-                        _coreMessages?.Insert(0, $"{message}");
+                        string formatted = $"📢 {DateTime.Now:T} – {message} #{++count:D3}";
+                        _coreMessages?.Insert(0, $"{formatted}");
                     });
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, "⚠️ UI Consumer Canceled."));
+            if (!App.IsClosing)
+                UpdateInfoBar("Generic channel consumer was canceled!", MessageLevel.Warning);
+            else
+                Debug.WriteLine("[WARNING] Generic channel consumer was canceled!");
         }
     }
     #endregion

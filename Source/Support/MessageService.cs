@@ -7,8 +7,11 @@ namespace UI_Demo;
 
 #region [Non-Generic]
 /// <summary>
-/// Allows multiple consumers to read messages asynchronously.
+///   Allows multiple consumers to read messages asynchronously.
 /// </summary>
+/// <remarks>
+///   This is first come first serve, so whomever reads the message first will get it.
+/// </remarks>
 public class MessageService
 {
     readonly int _maxMessages = 1000;
@@ -19,7 +22,7 @@ public class MessageService
     public static MessageService Instance => _instance.Value;
 
     /// <summary>
-    /// Default constructor.
+    /// Private constructor to prevent external instantiation.
     /// </summary>
     private MessageService()
     {
@@ -57,13 +60,21 @@ public class MessageService
     {
         _messageChannel.Writer.Complete();
     }
+
+    /// <summary>
+    /// Return the maximum amount of messages that the channel will allow.
+    /// </summary>
+    public int GetMaxmimumLimit() => _maxMessages;
 }
 #endregion
 
 #region [Generic]
 /// <summary>
-/// Allows multiple consumers to read messages asynchronously (generic version).
+///   Allows multiple consumers to read messages asynchronously (generic version).
 /// </summary>
+/// <remarks>
+///   This is first come first serve, so whomever reads the message first will get it.
+/// </remarks>
 public class MessageService<T>
 {
     readonly int _maxMessages = 1000;
@@ -74,7 +85,7 @@ public class MessageService<T>
     public static MessageService<T> Instance => _instance.Value;
 
     /// <summary>
-    /// Default constructor.
+    /// Private constructor to prevent external instantiation.
     /// </summary>
     private MessageService()
     {
@@ -111,5 +122,11 @@ public class MessageService<T>
     {
         _messageChannel.Writer.Complete();
     }
+
+    /// <summary>
+    /// Return the maximum amount of messages that the channel will allow.
+    /// </summary>
+    public int GetMaxmimumLimit() => _maxMessages;
+
 }
 #endregion

@@ -151,7 +151,8 @@ public partial class App : Application
         AssemblyReferences = Extensions.GatherReferenceAssemblies(true);
 
         // System.Threading.Channels test
-        _ = Task.Run(() => ChannelProducerAsync(CoreChannelToken.Token));
+        //_ = Task.Run(() => ChannelProducerAsync(CoreChannelToken.Token));
+        _ = Task.Run(() => GenericProducerMessageService(CoreChannelToken.Token));
     }
 
     public static void CloseExistingInstance()
@@ -1088,6 +1089,33 @@ public partial class App : Application
         finally
         {
             CoreMessageChannel.Writer.Complete(); // Mark the channel as complete
+        }
+    }
+
+    /// <summary>
+    ///   Generates messages and writes to the <see cref="MessageService{T}"/>.
+    /// </summary>
+    /// <remarks>
+    ///   Can be used as an EventBus for app-wide signaling. 
+    ///   Currently we're just injecting a random <see cref="ChannelMessageType"/>.
+    /// </remarks>
+    public async Task GenericProducerMessageService(CancellationToken token = default)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested && !IsClosing)
+            {
+                await Task.Delay(5000);
+                await MessageService<ChannelMessageType>.Instance.SendMessageAsync(Extensions.GetRandomEnum<ChannelMessageType>(), token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.WriteLine("[WARNING] Generic producer channel was canceled!");
+        }
+        finally
+        {
+            MessageService<ChannelMessageType>.Instance.Complete(); // Mark the channel as complete
         }
     }
     #endregion
