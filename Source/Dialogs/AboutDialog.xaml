@@ -131,13 +131,13 @@
             Orientation="Horizontal"
             Spacing="4">
             <Image
-                Width="30"
-                Height="30"
+                Width="40"
+                Height="40"
                 Margin="0,1,8,0"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Opacity="0.9"
-                Source="ms-appx:///Assets/Spinner.png"
+                Source="ms-appx:///Assets/Spinner3.png"
                 Visibility="Visible">
                 <Image.Resources>
                     <Storyboard
@@ -160,7 +160,7 @@
                     </Storyboard>
                 </Image.Resources>
                 <Image.RenderTransform>
-                    <RotateTransform x:Name="spinnerTransform" CenterX="15" CenterY="15" />
+                    <RotateTransform x:Name="spinnerTransform" CenterX="20" CenterY="20" />
                 </Image.RenderTransform>
             </Image>
             <TextBlock

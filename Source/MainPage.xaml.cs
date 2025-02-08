@@ -48,7 +48,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     CancellationTokenSource _ctsTask;
 
     readonly int _maxMessages = 20;
-    readonly ObservableCollection<string>? _messages;
+    readonly ObservableCollection<string>? _coreMessages;
     readonly DispatcherQueue _localDispatcher;
 
     public Action? ProgressButtonClickEvent { get; set; }
@@ -75,6 +75,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
     public ObservableCollection<string> LogMessages { get; private set; } = new();
     public ObservableCollection<string> Pictures = new();
+    public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
+    {
+        if (string.IsNullOrEmpty(propertyName)) { return; }
+        // Confirm that we're on the UI thread in the event that DependencyProperty is changed under forked thread.
+        DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
+    }
     #endregion
 
     public MainPage()
@@ -129,18 +135,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         #endregion
 
         _localDispatcher = DispatcherQueue.GetForCurrentThread();
-        _messages = new();
-        Binding binding = new Binding { Mode = BindingMode.OneWay, Source = _messages };
+        _coreMessages = new();
+        Binding binding = new Binding { Mode = BindingMode.OneWay, Source = _coreMessages };
         BindingOperations.SetBinding(lvChannelMessages, ListView.ItemsSourceProperty, binding);
 
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
-    }
-
-    public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-    {
-        if (string.IsNullOrEmpty(propertyName)) { return; }
-        // Confirm that we're on the UI thread in the event that DependencyProperty is changed under forked thread.
-        DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
     }
 
     #region [Events]
@@ -602,65 +601,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Communal event for <see cref="MenuFlyoutItem"/> clicks.
-    /// The action performed will be based on the tag data.
-    /// </summary>
-    async void MenuFlyoutItemOnClick(object sender, RoutedEventArgs e)
-    {
-        var mfi = sender as MenuFlyoutItem;
-
-        // Auto-hide if tag was passed like this ⇒ Tag="{x:Bind TitlebarMenuFlyout}"
-        if (mfi is not null && mfi.Tag is not null && mfi.Tag is MenuFlyout mf)
-        { 
-            mf?.Hide(); 
-            return; 
-        }
-
-        if (mfi is not null && mfi.Tag is not null)
-        {
-            var tag = $"{mfi.Tag}";
-            if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionClose", StringComparison.OrdinalIgnoreCase))
-            {
-                if (this.Content is not null && !App.IsClosing)
-                {
-                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 26 });
-                    ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.CloseDialog(), Content as FrameworkElement);
-                    if (result is ContentDialogResult.Primary)
-                    {   // The closing event will be picked up in App.xaml.cs
-                        (Application.Current as App)?.Exit();
-                    }
-                    else if (result is ContentDialogResult.None)
-                    {
-                        UpdateInfoBar($"User canceled the dialog.", MessageLevel.Information);
-                        RemoveBlurCompositionElement(root);
-                    }
-                }
-            }
-            else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionFirstRun", StringComparison.OrdinalIgnoreCase))
-            {
-                // Reset first run flag.
-                App.Profile!.FirstRun = true;
-            }
-            else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionToken", StringComparison.OrdinalIgnoreCase))
-            {
-                if (App.CoreChannelToken is not null)
-                    App.CoreChannelToken.Cancel(); // Signal the channel cancellation token.
-
-                if (_ctsTask is not null)
-                    _ctsTask.Cancel(); // Signal the task cancellation token.
-            }
-            else
-            {
-                UpdateInfoBar($"No action has been defined for '{tag}'.", MessageLevel.Warning);
-            }
-        }
-        else
-        {
-            UpdateInfoBar($"Tag data is empty for this MenuFlyoutItem.", MessageLevel.Error);
-        }
-    }
-
-    /// <summary>
     /// Test for pinning app via <see cref="SecondaryTile"/>.
     /// Maybe this only works with packaged apps?
     /// </summary>
@@ -730,8 +670,68 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     void TextBoxOnKeyUp(object sender, KeyRoutedEventArgs e) => UpdateInfoBar($"Key press: '{e.Key}'", MessageLevel.Information);
+
+    /// <summary>
+    /// Communal event for <see cref="MenuFlyoutItem"/> clicks.
+    /// The action performed will be based on the tag data.
+    /// </summary>
+    async void MenuFlyoutItemOnClick(object sender, RoutedEventArgs e)
+    {
+        var mfi = sender as MenuFlyoutItem;
+
+        // Auto-hide if tag was passed like this ⇒ Tag="{x:Bind TitlebarMenuFlyout}"
+        if (mfi is not null && mfi.Tag is not null && mfi.Tag is MenuFlyout mf)
+        {
+            mf?.Hide();
+            return;
+        }
+
+        if (mfi is not null && mfi.Tag is not null)
+        {
+            var tag = $"{mfi.Tag}";
+            if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionClose", StringComparison.OrdinalIgnoreCase))
+            {
+                if (this.Content is not null && !App.IsClosing)
+                {
+                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 26 });
+                    ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.CloseDialog(), Content as FrameworkElement);
+                    if (result is ContentDialogResult.Primary)
+                    {   // The closing event will be picked up in App.xaml.cs
+                        (Application.Current as App)?.Exit();
+                    }
+                    else if (result is ContentDialogResult.None)
+                    {
+                        UpdateInfoBar($"User canceled the dialog.", MessageLevel.Information);
+                        RemoveBlurCompositionElement(root);
+                    }
+                }
+            }
+            else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionFirstRun", StringComparison.OrdinalIgnoreCase))
+            {
+                // Reset first run flag.
+                App.Profile!.FirstRun = true;
+            }
+            else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionToken", StringComparison.OrdinalIgnoreCase))
+            {
+                if (App.CoreChannelToken is not null)
+                    App.CoreChannelToken.Cancel(); // Signal the channel cancellation token.
+
+                if (_ctsTask is not null)
+                    _ctsTask.Cancel(); // Signal the task cancellation token.
+            }
+            else
+            {
+                UpdateInfoBar($"No action has been defined for '{tag}'.", MessageLevel.Warning);
+            }
+        }
+        else
+        {
+            UpdateInfoBar($"Tag data is empty for this MenuFlyoutItem.", MessageLevel.Error);
+        }
+    }
     #endregion
 
+    #region [Helpers]
     void UpdateInfoBar(string msg, MessageLevel level = MessageLevel.Information)
     {
         if (App.IsClosing || infoBar == null)
@@ -815,89 +815,18 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     void PopulatePictures()
     {
-        if (!App.IsPackaged)
+        string assetPath = string.Empty;
+
+        if (App.IsPackaged)
+            assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets");
+        else
+            assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets");
+
+        Pictures.Clear();
+
+        foreach (var f in Directory.GetFiles(assetPath, "*.png", SearchOption.TopDirectoryOnly))
         {
-            string path = Path.Combine(System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets"));
-            foreach (var f in Directory.GetFiles(path, "*.png", SearchOption.TopDirectoryOnly))
-            {
-                Pictures.Add(f);
-            }
-        }
-    }
-
-    #region [Channel Consumer Test]
-    /// <summary>
-    /// Reads messages from the core app channel and updates the UI.
-    /// </summary>
-    async Task ConsumerWaitToReadAsync(CancellationToken token)
-    {
-        if (App.CoreMessageChannel is null)
-            return;
-
-        int count = 0;
-        while (!token.IsCancellationRequested)
-        {
-            try
-            {
-                // Blocks until until data is available in the channel.
-                if (await App.CoreMessageChannel.Reader.WaitToReadAsync(token))
-                {
-                    //var message = await _messageChannel.Reader.ReadAsync(token);
-                    while (App.CoreMessageChannel.Reader.TryRead(out var message))
-                    {
-                        string formatted = $"📢 {DateTime.Now:T} – {message} #{++count:D3}";
-                        _localDispatcher.TryEnqueue(() =>
-                        {
-                            if (_messages.Count > _maxMessages)
-                                _messages.RemoveAt(_maxMessages);
-
-                            _messages?.Insert(0, formatted);
-                        });
-                    }
-                }
-
-                // Wait for channel completion before notifying UI
-                //await _messageChannel.Reader.Completion;
-                //_localDispatcher.TryEnqueue(() => { _messages.Insert(0, "Channel completed, no more messages."); });
-            }
-            catch (OperationCanceledException)
-            {
-                if (!App.IsClosing)
-                    UpdateInfoBar("Channel consumer was canceled!", MessageLevel.Warning);
-                else
-                    Debug.WriteLine("[WARNING] Channel consumer was canceled!");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Reads messages from the core app channel and updates the UI.
-    /// </summary>
-    async Task ConsumerReadAllAsync(CancellationToken token)
-    {
-        if (App.CoreMessageChannel is null)
-            return;
-
-        int count = 0;
-        try
-        {
-            // Blocks until the channel receives a message or it canceled.
-            await foreach (var message in App.CoreMessageChannel.Reader.ReadAllAsync(token))
-            {
-                string formatted = $"🔔 {DateTime.Now:T} – {message} #{++count:D3}";
-                _localDispatcher.TryEnqueue(() => _messages?.Insert(0, formatted));
-            }
-
-            // Wait for channel completion before notifying UI
-            //await _messageChannel.Reader.Completion;
-            //_localDispatcher.TryEnqueue(() => { _messages.Insert(0, "Channel completed, no more messages."); });
-        }
-        catch (OperationCanceledException)
-        {
-            if (!App.IsClosing)
-                UpdateInfoBar("Channel consumer was canceled!", MessageLevel.Warning);
-            else
-                Debug.WriteLine("[WARNING] Channel consumer was canceled!");
+            Pictures.Add(f);
         }
     }
     #endregion
@@ -1107,6 +1036,149 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
         }
         catch (InvalidOperationException) { }
+    }
+    #endregion
+
+    #region [Channel Consumer Test]
+    /// <summary>
+    /// Reads messages from the core app channel and updates the UI.
+    /// </summary>
+    async Task ConsumerWaitToReadAsync(CancellationToken token)
+    {
+        if (App.CoreMessageChannel is null)
+            return;
+
+        int count = 0;
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                // Blocks until until data is available in the channel.
+                if (await App.CoreMessageChannel.Reader.WaitToReadAsync(token))
+                {
+                    //var message = await _messageChannel.Reader.ReadAsync(token);
+                    while (App.CoreMessageChannel.Reader.TryRead(out var message))
+                    {
+                        string formatted = $"📢 {DateTime.Now:T} – {message} #{++count:D3}";
+                        _localDispatcher.TryEnqueue(() =>
+                        {
+                            if (_coreMessages.Count > _maxMessages)
+                                _coreMessages.RemoveAt(_maxMessages);
+
+                            _coreMessages?.Insert(0, formatted);
+                        });
+                    }
+                }
+
+                // Wait for channel completion before notifying UI
+                //await _messageChannel.Reader.Completion;
+                //_localDispatcher.TryEnqueue(() => { _messages.Insert(0, "Channel completed, no more messages."); });
+            }
+            catch (OperationCanceledException)
+            {
+                if (!App.IsClosing)
+                    UpdateInfoBar("Channel consumer was canceled!", MessageLevel.Warning);
+                else
+                    Debug.WriteLine("[WARNING] Channel consumer was canceled!");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads messages from the core app channel and updates the UI.
+    /// </summary>
+    async Task ConsumerReadAllAsync(CancellationToken token)
+    {
+        if (App.CoreMessageChannel is null)
+            return;
+
+        int count = 0;
+        try
+        {
+            // Blocks until the channel receives a message or it canceled.
+            await foreach (var message in App.CoreMessageChannel.Reader.ReadAllAsync(token))
+            {
+                string formatted = $"🔔 {DateTime.Now:T} – {message} #{++count:D3}";
+                _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, formatted));
+            }
+
+            // Wait for channel completion before notifying UI
+            //await _messageChannel.Reader.Completion;
+            //_localDispatcher.TryEnqueue(() => { _messages.Insert(0, "Channel completed, no more messages."); });
+        }
+        catch (OperationCanceledException)
+        {
+            if (!App.IsClosing)
+                UpdateInfoBar("Channel consumer was canceled!", MessageLevel.Warning);
+            else
+                Debug.WriteLine("[WARNING] Channel consumer was canceled!");
+        }
+    }
+    #endregion
+
+    #region [Multiple Channel Test]
+    /// <summary>
+    /// Test multiple channel listeners.
+    /// </summary>
+    void SendMessageToStringService(CancellationToken token = default)
+    {   // Send a test message to non-generic consumer
+        _ = MessageService.Instance.SendMessageAsync("🚀 WinUI 3 Channel Test Started!", token);
+    }
+    async Task StartListeningToMessageServiceAsync(CancellationToken token = default)
+    {
+        var reader = MessageService.Instance.GetMessageReader();
+        try
+        {
+            await foreach (var message in reader.ReadAllAsync(token))
+            {
+                if (_coreMessages is not null)
+                {
+                    _localDispatcher.TryEnqueue(() =>
+                    {
+                        if (_coreMessages.Count > _maxMessages)
+                            _coreMessages.RemoveAt(_maxMessages);
+
+                        _coreMessages?.Insert(0, message);
+                    });
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, "⚠️ UI Consumer Canceled."));
+        }
+    }
+
+    /// <summary>
+    /// Test multiple channel listeners. (generic version)
+    /// </summary>
+    async Task SendNumberToGenericMessageService(CancellationToken token = default)
+    {   // Send a numeric code to generic consumer
+        await MessageService<int>.Instance.SendMessageAsync(Random.Shared.Next(1,1000), token);
+    }
+    async Task StartListeningToGenericMessageServiceAsync(CancellationToken token = default)
+    {
+        var reader = MessageService<int>.Instance.GetMessageReader();
+        try
+        {
+            await foreach (var message in reader.ReadAllAsync(token))
+            {
+                if (_coreMessages is not null)
+                {
+                    _localDispatcher.TryEnqueue(() =>
+                    {
+                        if (_coreMessages.Count > _maxMessages)
+                            _coreMessages.RemoveAt(_maxMessages);
+
+                        _coreMessages?.Insert(0, $"{message}");
+                    });
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, "⚠️ UI Consumer Canceled."));
+        }
     }
     #endregion
 }
