@@ -83,9 +83,11 @@
     <None Remove="Assets\Spinner.png" />
     <None Remove="Assets\WarningIcon.png" />
     <None Remove="CompositionShadow.xaml" />
+    <None Remove="ControlsPage.xaml" />
     <None Remove="Controls\AnimatedCirclesControl.xaml" />
     <None Remove="Dialogs\AboutDialog.xaml" />
     <None Remove="Dialogs\CloseDialog.xaml" />
+    <None Remove="GridSplitter.xaml" />
     <None Remove="MainPage.xaml" />
     <None Remove="ProgressButton.xaml" />
     <None Remove="SeparatorLine.xaml" />
@@ -216,6 +218,16 @@
     <Content Update="Assets\WarningIcon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="ControlsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="GridSplitter.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="SeparatorLine.xaml">

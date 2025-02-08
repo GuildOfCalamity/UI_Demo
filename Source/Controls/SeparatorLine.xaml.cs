@@ -96,6 +96,7 @@ public sealed partial class SeparatorLine : UserControl
     }
 
     #region [Events]
+    /// <inheritdoc />
     protected override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
