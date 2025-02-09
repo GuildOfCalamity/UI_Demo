@@ -27,22 +27,17 @@ public partial class GridSplitter
 
         var minWidth = columnDefinition.MinWidth;
         if (!double.IsNaN(minWidth) && newWidth < minWidth)
-        {
             newWidth = minWidth;
-        }
 
         var maxWidth = columnDefinition.MaxWidth;
         if (!double.IsNaN(maxWidth) && newWidth > maxWidth)
-        {
             newWidth = maxWidth;
-        }
 
         if (newWidth > ActualWidth)
         {
             columnDefinition.Width = new GridLength(newWidth, unitType);
             return true;
         }
-
         return false;
     }
 
@@ -52,20 +47,14 @@ public partial class GridSplitter
 
         var minWidth = columnDefinition.MinWidth;
         if (!double.IsNaN(minWidth) && newWidth < minWidth)
-        {
             return false;
-        }
 
         var maxWidth = columnDefinition.MaxWidth;
         if (!double.IsNaN(maxWidth) && newWidth > maxWidth)
-        {
             return false;
-        }
 
         if (newWidth <= ActualWidth)
-        {
             return false;
-        }
 
         return true;
     }
@@ -76,22 +65,17 @@ public partial class GridSplitter
 
         var minHeight = rowDefinition.MinHeight;
         if (!double.IsNaN(minHeight) && newHeight < minHeight)
-        {
             newHeight = minHeight;
-        }
 
         var maxWidth = rowDefinition.MaxHeight;
         if (!double.IsNaN(maxWidth) && newHeight > maxWidth)
-        {
             newHeight = maxWidth;
-        }
 
         if (newHeight > ActualHeight)
         {
             rowDefinition.Height = new GridLength(newHeight, unitType);
             return true;
         }
-
         return false;
     }
 
@@ -101,20 +85,14 @@ public partial class GridSplitter
 
         var minHeight = rowDefinition.MinHeight;
         if (!double.IsNaN(minHeight) && newHeight < minHeight)
-        {
             return false;
-        }
 
         var maxHeight = rowDefinition.MaxHeight;
         if (!double.IsNaN(maxHeight) && newHeight > maxHeight)
-        {
             return false;
-        }
 
         if (newHeight <= ActualHeight)
-        {
             return false;
-        }
 
         return true;
     }
@@ -188,25 +166,15 @@ public partial class GridSplitter
         {
             // When HorizontalAlignment is Left, Right or Center, resize Columns
             if (HorizontalAlignment != HorizontalAlignment.Stretch)
-            {
                 direction = GridResizeDirection.Columns;
-            }
-
             // When VerticalAlignment is Top, Bottom or Center, resize Rows
             else if (VerticalAlignment != VerticalAlignment.Stretch)
-            {
                 direction = GridResizeDirection.Rows;
-            }
-
             // Check Width vs Height
             else if (ActualWidth <= ActualHeight)
-            {
                 direction = GridResizeDirection.Columns;
-            }
             else
-            {
                 direction = GridResizeDirection.Rows;
-            }
         }
 
         return direction;
@@ -223,36 +191,28 @@ public partial class GridSplitter
             {
                 switch (HorizontalAlignment)
                 {
-                    case HorizontalAlignment.Left:
-                        resizeBehavior = GridResizeBehavior.PreviousAndCurrent;
+                    case HorizontalAlignment.Left: resizeBehavior = GridResizeBehavior.PreviousAndCurrent;
                         break;
-                    case HorizontalAlignment.Right:
-                        resizeBehavior = GridResizeBehavior.CurrentAndNext;
+                    case HorizontalAlignment.Right: resizeBehavior = GridResizeBehavior.CurrentAndNext;
                         break;
-                    default:
-                        resizeBehavior = GridResizeBehavior.PreviousAndNext;
+                    default: resizeBehavior = GridResizeBehavior.PreviousAndNext;
                         break;
                 }
             }
-
             // resize direction is vertical
             else
             {
                 switch (VerticalAlignment)
                 {
-                    case VerticalAlignment.Top:
-                        resizeBehavior = GridResizeBehavior.PreviousAndCurrent;
+                    case VerticalAlignment.Top: resizeBehavior = GridResizeBehavior.PreviousAndCurrent;
                         break;
-                    case VerticalAlignment.Bottom:
-                        resizeBehavior = GridResizeBehavior.CurrentAndNext;
+                    case VerticalAlignment.Bottom: resizeBehavior = GridResizeBehavior.CurrentAndNext;
                         break;
-                    default:
-                        resizeBehavior = GridResizeBehavior.PreviousAndNext;
+                    default: resizeBehavior = GridResizeBehavior.PreviousAndNext;
                         break;
                 }
             }
         }
-
         return resizeBehavior;
     }
 }

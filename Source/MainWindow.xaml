@@ -79,6 +79,7 @@
         -->
         <Grid Grid.Row="1">
             <local:MainPage />
+            <!--<local:ControlsPage />-->
         </Grid>
     </Grid>
 </Window>

@@ -18,6 +18,7 @@ public partial class GridSplitter : Control
     internal const int GripperCustomCursorDefaultResource = -1;
     internal static readonly InputCursor ColumnsSplitterCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
     internal static readonly InputCursor RowSplitterCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeNorthSouth);
+    internal static readonly InputCursor SplitterCursorHover = InputSystemCursor.Create(InputSystemCursorShape.Hand);
 
     internal InputCursor PreviousCursor { get; set; }
 
@@ -38,18 +39,14 @@ public partial class GridSplitter : Control
         get
         {
             if (ParentLevel == 0)
-            {
                 return this;
-            }
 
             var parent = Parent;
             for (int i = 2; i < ParentLevel; i++)
             {
                 var frameworkElement = parent as FrameworkElement;
                 if (frameworkElement != null)
-                {
                     parent = frameworkElement.Parent;
-                }
             }
 
             return parent as FrameworkElement;
@@ -69,17 +66,12 @@ public partial class GridSplitter : Control
         get
         {
             if (Resizable == null)
-            {
                 return null;
-            }
 
             var gridSplitterTargetedColumnIndex = GetTargetedColumn();
 
-            if ((gridSplitterTargetedColumnIndex >= 0)
-                && (gridSplitterTargetedColumnIndex < Resizable.ColumnDefinitions.Count))
-            {
+            if ((gridSplitterTargetedColumnIndex >= 0) && (gridSplitterTargetedColumnIndex < Resizable.ColumnDefinitions.Count))
                 return Resizable.ColumnDefinitions[gridSplitterTargetedColumnIndex];
-            }
 
             return null;
         }
@@ -93,17 +85,12 @@ public partial class GridSplitter : Control
         get
         {
             if (Resizable == null)
-            {
                 return null;
-            }
 
             var gridSplitterSiblingColumnIndex = GetSiblingColumn();
 
-            if ((gridSplitterSiblingColumnIndex >= 0)
-                && (gridSplitterSiblingColumnIndex < Resizable.ColumnDefinitions.Count))
-            {
+            if ((gridSplitterSiblingColumnIndex >= 0) && (gridSplitterSiblingColumnIndex < Resizable.ColumnDefinitions.Count))
                 return Resizable.ColumnDefinitions[gridSplitterSiblingColumnIndex];
-            }
 
             return null;
         }
@@ -117,17 +104,12 @@ public partial class GridSplitter : Control
         get
         {
             if (Resizable == null)
-            {
                 return null;
-            }
 
             var gridSplitterTargetedRowIndex = GetTargetedRow();
 
-            if ((gridSplitterTargetedRowIndex >= 0)
-                && (gridSplitterTargetedRowIndex < Resizable.RowDefinitions.Count))
-            {
+            if ((gridSplitterTargetedRowIndex >= 0) && (gridSplitterTargetedRowIndex < Resizable.RowDefinitions.Count))
                 return Resizable.RowDefinitions[gridSplitterTargetedRowIndex];
-            }
 
             return null;
         }
@@ -141,17 +123,12 @@ public partial class GridSplitter : Control
         get
         {
             if (Resizable == null)
-            {
                 return null;
-            }
 
             var gridSplitterSiblingRowIndex = GetSiblingRow();
 
-            if ((gridSplitterSiblingRowIndex >= 0)
-                && (gridSplitterSiblingRowIndex < Resizable.RowDefinitions.Count))
-            {
+            if ((gridSplitterSiblingRowIndex >= 0) && (gridSplitterSiblingRowIndex < Resizable.RowDefinitions.Count))
                 return Resizable.RowDefinitions[gridSplitterSiblingRowIndex];
-            }
 
             return null;
         }
@@ -164,8 +141,7 @@ public partial class GridSplitter : Control
     {
         DefaultStyleKey = typeof(GridSplitter);
         Loaded += GridSplitter_Loaded;
-        string automationName = "GridSplitter";
-        AutomationProperties.SetName(this, automationName);
+        AutomationProperties.SetName(this, "GridSplitter");
     }
 
     /// <inheritdoc />
@@ -198,48 +174,47 @@ public partial class GridSplitter : Control
         ManipulationMode = ManipulationModes.TranslateX | ManipulationModes.TranslateY;
     }
 
-    private void GridSplitter_PointerReleased(object sender, PointerRoutedEventArgs e)
+    #region [VisualStateManager]
+    void GridSplitter_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
         _pressed = false;
         VisualStateManager.GoToState(this, _pointerEntered ? "PointerOver" : "Normal", true);
     }
 
-    private void GridSplitter_PointerPressed(object sender, PointerRoutedEventArgs e)
+    void GridSplitter_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         _pressed = true;
         VisualStateManager.GoToState(this, "Pressed", true);
     }
 
-    private void GridSplitter_PointerExited(object sender, PointerRoutedEventArgs e)
+    void GridSplitter_PointerExited(object sender, PointerRoutedEventArgs e)
     {
         _pointerEntered = false;
-
         if (!_pressed && !_dragging)
-        {
             VisualStateManager.GoToState(this, "Normal", true);
-        }
     }
 
-    private void GridSplitter_PointerEntered(object sender, PointerRoutedEventArgs e)
+    void GridSplitter_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
         _pointerEntered = true;
-
         if (!_pressed && !_dragging)
         {
+            ProtectedCursor = SplitterCursorHover;
             VisualStateManager.GoToState(this, "PointerOver", true);
         }
     }
 
-    private void GridSplitter_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
+    void GridSplitter_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
     {
         _dragging = false;
         _pressed = false;
         VisualStateManager.GoToState(this, _pointerEntered ? "PointerOver" : "Normal", true);
     }
 
-    private void GridSplitter_ManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e)
+    void GridSplitter_ManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e)
     {
         _dragging = true;
         VisualStateManager.GoToState(this, "Pressed", true);
     }
+    #endregion
 }

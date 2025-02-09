@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -132,6 +133,8 @@ public partial class GridSplitter
             ProtectedCursor = RowSplitterCursor;
 
         base.OnManipulationStarted(e);
+
+        Debug.WriteLine("[INFO] GridSplitter - ManipulationStarted");
     }
 
     /// <inheritdoc />
@@ -140,6 +143,8 @@ public partial class GridSplitter
         ProtectedCursor = PreviousCursor;
 
         base.OnManipulationCompleted(e);
+
+        Debug.WriteLine("[INFO] GridSplitter - ManipulationCompleted");
     }
 
     /// <inheritdoc />
