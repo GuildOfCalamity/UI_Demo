@@ -80,7 +80,7 @@ public static class AppCapture
         // Try and use the root's native size first, if that fails then use the app's static size.
         var ras = root.ActualSize.ToSize();
         if (ras.Width != double.NaN && ras.Height != double.NaN && ras.Width > 0 && ras.Height > 0)
-            await renderTargetBitmap.RenderAsync(root, (int)(ras.Width + 1), (int)(ras.Height + 1));
+            await renderTargetBitmap.RenderAsync(root, (int)ras.Width, (int)ras.Height);
         else
             await renderTargetBitmap.RenderAsync(root, App.m_width, App.m_height);
 
@@ -131,7 +131,7 @@ public static class AppCapture
         // Try and use the root's native size first, if that fails then use the app's static size.
         var ras = root.ActualSize.ToSize();
         if (ras.Width != double.NaN && ras.Height != double.NaN && ras.Width > 0 && ras.Height > 0)
-            await renderTargetBitmap.RenderAsync(root, (int)(ras.Width + 1), (int)(ras.Height + 1));
+            await renderTargetBitmap.RenderAsync(root, (int)ras.Width, (int)ras.Height);
         else
             await renderTargetBitmap.RenderAsync(root, App.m_width, App.m_height);
 
@@ -176,23 +176,41 @@ public static class AppCapture
     ///   1 Linear.........: A bilinear interpolation algorithm. The output pixel values are computed as a weighted average of the nearest four pixels in a 2x2 grid.
     ///   0 NearestNeighbor: A nearest neighbor interpolation algorithm. Also known as nearest pixel or point interpolation. The output pixel is assigned the value of the pixel that the point falls within. No other pixels are considered.
     /// </remarks>
-    public static async Task SaveSoftwareBitmapToFileAsync(Windows.Graphics.Imaging.SoftwareBitmap softwareBitmap, string filePath, Windows.Graphics.Imaging.BitmapInterpolationMode interpolation = Windows.Graphics.Imaging.BitmapInterpolationMode.Fant)
+    public static async Task<bool> SaveSoftwareBitmapToFileAsync(Windows.Graphics.Imaging.SoftwareBitmap softwareBitmap, string filePath, Windows.Graphics.Imaging.BitmapInterpolationMode interpolation = Windows.Graphics.Imaging.BitmapInterpolationMode.NearestNeighbor, int maxRetries = 5)
     {
+        int attempt = 0;
+
         if (File.Exists(filePath))
         {
-            Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(filePath);
-            using (Windows.Storage.Streams.IRandomAccessStream stream = await file.OpenAsync(Windows.Storage.FileAccessMode.ReadWrite))
+            while (attempt < maxRetries)
             {
-                Windows.Graphics.Imaging.BitmapEncoder encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId, stream);
-                encoder.SetSoftwareBitmap(softwareBitmap);
-                encoder.BitmapTransform.InterpolationMode = interpolation;
                 try
                 {
-                    await encoder.FlushAsync();
+                    Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(filePath);
+                    using (Windows.Storage.Streams.IRandomAccessStream stream = await file.OpenAsync(Windows.Storage.FileAccessMode.ReadWrite))
+                    {
+                        BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+                        encoder.SetSoftwareBitmap(softwareBitmap);
+                        encoder.BitmapTransform.InterpolationMode = interpolation;
+                        await encoder.FlushAsync();
+                        return true; // Success
+                    }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    attempt++;
+                    Debug.WriteLine($"[ERROR] UnauthorizedAccessException - Retry {attempt}/{maxRetries}: {ex.Message}");
+                    if (attempt >= maxRetries)
+                    {
+                        Debug.WriteLine("[ERROR] Max retries reached. Giving up.");
+                        return false;
+                    }
+                    await Task.Delay(150); // Wait before retrying
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"[ERROR] SaveSoftwareBitmapToFileAsync({ex.HResult}): {ex.Message}");
+                    return false;
                 }
             }
         }
@@ -212,6 +230,7 @@ public static class AppCapture
                 try
                 {
                     await encoder.FlushAsync();
+                    return true;
                 }
                 catch (Exception ex)
                 {
@@ -219,6 +238,7 @@ public static class AppCapture
                 }
             }
         }
+        return false;
     }
 
     /// <summary>

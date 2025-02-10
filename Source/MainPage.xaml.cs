@@ -428,18 +428,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurTest.png");
 
                     // Create a new blur image for the CompositionSurfaceBrush.
-                    var blurred = await BlurHelper.ApplyBlurAsync(bmp);
+                    var saved = await BlurHelper.ApplyBlurAndSaveAsync(bmp, assetPath, 5);
 
-                    #region [test new BitmapImage result in-app]
-                    if (blurred != null)
-                    {
-                        // This works properly, but only because we use an Image control as an intermediate.
-                        // https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.imaging.bitmapimage?view=winrt-22621#examples
-                        await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
-                    }
-                    #endregion
+                    // This works properly, but only because we use an Image control as an intermediate.
+                    // https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.imaging.bitmapimage?view=winrt-22621#examples
+                    //await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
 
-                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: true, useImageForShadowMask: false);
+                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: saved, useImageForShadowMask: false);
                 }
                 else
                 {

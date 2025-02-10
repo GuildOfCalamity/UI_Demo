@@ -68,6 +68,61 @@ public static class BlurHelper
     }
 
     /// <summary>
+    /// Applies a simple box blur to a <see cref="BitmapImage"/> and returns a new blurred <see cref="SoftwareBitmap"/>.
+    /// </summary>
+    /// <param name="softwareBitmap">The input image to blur.</param>
+    /// <param name="blurRadius">The blur intensity (higher = more blur).</param>
+    /// <returns>A blurred <see cref="BitmapImage"/></returns>
+    public static SoftwareBitmap ApplyBlur(SoftwareBitmap softwareBitmap, int blurRadius = 6)
+    {
+        // Get the pixel data.
+        int width = softwareBitmap.PixelWidth;
+        int height = softwareBitmap.PixelHeight;
+        byte[] pixelData = new byte[4 * width * height]; // BGRA8 format
+
+        softwareBitmap.CopyToBuffer(pixelData.AsBuffer());
+
+        // Apply box blur effect.
+        byte[] blurredPixels = ApplyBoxBlur(pixelData, width, height, blurRadius);
+
+        // Create a new SoftwareBitmap from blurred pixels.
+        SoftwareBitmap blurredBitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
+        blurredBitmap.CopyFromBuffer(blurredPixels.AsBuffer());
+
+        // Convert back to BitmapImage.
+        return blurredBitmap;
+    }
+
+    /// <summary>
+    /// Applies a simple box blur to a <see cref="BitmapImage"/> and saves the <see cref="SoftwareBitmap"/> to disk.
+    /// </summary>
+    /// <param name="softwareBitmap">The input image to blur.</param>
+    /// <param name="blurRadius">The blur intensity (higher = more blur).</param>
+    /// <param name="filePath">The output path to save.</param>
+    /// <returns>A blurred <see cref="BitmapImage"/></returns>
+    public static async Task<bool> ApplyBlurAndSaveAsync(SoftwareBitmap softwareBitmap, string filePath, int blurRadius = 6)
+    {
+        // Get the pixel data.
+        int width = softwareBitmap.PixelWidth;
+        int height = softwareBitmap.PixelHeight;
+        byte[] pixelData = new byte[4 * width * height]; // BGRA8 format
+
+        softwareBitmap.CopyToBuffer(pixelData.AsBuffer());
+
+        // Apply box blur effect.
+        byte[] blurredPixels = ApplyBoxBlur(pixelData, width, height, blurRadius);
+
+        // Create a new SoftwareBitmap from blurred pixels.
+        SoftwareBitmap blurredBitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
+        blurredBitmap.CopyFromBuffer(blurredPixels.AsBuffer());
+
+        if (string.IsNullOrEmpty(filePath))
+            return false;
+
+        return await AppCapture.SaveSoftwareBitmapToFileAsync(blurredBitmap, filePath);
+    }
+
+    /// <summary>
     /// Applies a simple box blur algorithm to pixel data.
     /// </summary>
     static byte[] ApplyBoxBlur(byte[] pixels, int width, int height, int radius)
