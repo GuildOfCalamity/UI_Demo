@@ -131,13 +131,13 @@
             Orientation="Horizontal"
             Spacing="4">
             <Image
-                Width="40"
-                Height="40"
+                Width="50"
+                Height="50"
                 Margin="0,1,8,0"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Opacity="0.9"
-                Source="ms-appx:///Assets/Spinner3.png"
+                Source="ms-appx:///Assets/Spinner17.png"
                 Visibility="Visible">
                 <Image.Resources>
                     <Storyboard
@@ -150,7 +150,7 @@
                             Storyboard.TargetProperty="Angle"
                             From="0"
                             To="360"
-                            Duration="0:00:01.25">
+                            Duration="0:00:01.5">
                             <!--
                             <DoubleAnimation.EasingFunction>
                                 <SineEase EasingMode="EaseInOut" />
@@ -160,7 +160,7 @@
                     </Storyboard>
                 </Image.Resources>
                 <Image.RenderTransform>
-                    <RotateTransform x:Name="spinnerTransform" CenterX="20" CenterY="20" />
+                    <RotateTransform x:Name="spinnerTransform" CenterX="25" CenterY="25" />
                 </Image.RenderTransform>
             </Image>
             <TextBlock

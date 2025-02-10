@@ -27,6 +27,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 
 using WinRT.Interop;
+using Microsoft.UI.Windowing;
 
 namespace UI_Demo;
 
@@ -47,8 +48,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     DispatcherTimer? _flyoutTimer;
     CancellationTokenSource _ctsTask;
 
-    readonly int _maxMessages = 20;
-    readonly ObservableCollection<string>? _coreMessages;
+    readonly int _maxMessages = 12;
+    readonly ObservableCollection<ApplicationMessage>? _coreMessages;
     readonly DispatcherQueue _localDispatcher;
 
     public Action? ProgressButtonClickEvent { get; set; }
@@ -429,50 +430,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     // Create a new blur image for the CompositionSurfaceBrush.
                     var blurred = await BlurHelper.ApplyBlurAsync(bmp);
 
-                    // Not saving for some reason, possible empty UriSource?
-                    //await AppCapture.SaveBitmapImageToDisk(blurred, assetPath);
-
-                    // It seems that it's impossible to save a BitmapImage to disk directly,
-                    // you must load it into an Image control first and then save that.
-                    //await AppCapture.SaveBitmapImageToFileAsync(blurred, blurTest, assetPath);
-
                     #region [test new BitmapImage result in-app]
                     if (blurred != null)
                     {
-                        // Didn't work properly.
-                        //var rtb = new RenderTargetBitmap();
-                        //await AppCapture.SaveBitmapImageToFileAsync(blurred, blurTest, rtb, assetPath);
-
-                        // Just saves black image? (no relevant pixel data)
-                        //var sftBmp = await AppCapture.ConvertBitmapImageToSoftwareBitmapAsyncAlt(blurred);
-                        //if (sftBmp != null)
-                        //{
-                        //    Debug.WriteLine($"[INFO] SoftwareBitmap {sftBmp.PixelWidth},{sftBmp.PixelHeight} PixelFormat={sftBmp.BitmapPixelFormat} AlphaMode={sftBmp.BitmapAlphaMode}");
-                        //    await AppCapture.SaveSoftwareBitmapToFileAsync(sftBmp, System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"));
-                        //}
-
-                        // Just saves black image? (no relevant pixel data)
-                        //var ms = await AppCapture.ConvertBitmapImageToMemoryStreamAsync(blurred);
-                        //using (FileStream fileStream = new FileStream(Path.Combine(AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"), FileMode.Create, FileAccess.Write)) { await ms.CopyToAsync(fileStream); }
-
-                        // Just saves black image? (no relevant pixel data)
-                        //var wb = await AppCapture.ConvertBitmapImageToWriteableBitmapAsync(blurred);
-                        //byte[] pixels = wb.PixelBuffer.ToByteArray();
-                        //Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(Path.Combine(AppContext.BaseDirectory, "Assets", "SoftwareBitmap.png"));
-                        //using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                        //{
-                        //    await AppCapture.EncodeAndSaveWriteableBitmapAsync(wb, pixels, stream);
-                        //}
-
-                        // Didn't work properly.
-                        //await AppCapture.SaveBitmapImageToFileAsync(blurred);
-
-                        // This works properly.
-                        //blurTest.Visibility = Visibility.Visible;
-                        //blurTest.Source = blurred;
-                        //blurTest.Visibility = Visibility.Collapsed;
-                        //await AppCapture.SaveImageSourceToFileAsync(root, blurTest.Source, assetPath, App.m_width, App.m_height);
-
                         // This works properly, but only because we use an Image control as an intermediate.
                         // https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.imaging.bitmapimage?view=winrt-22621#examples
                         await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
@@ -585,29 +545,41 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             if (Pictures.Count > 0)
             {
                 // We can also create a binding in code-behind.
-                Binding binding = new Binding
-                {
-                    Mode = BindingMode.OneWay,
-                    Source = Pictures
-                };
+                Binding binding = new Binding { Mode = BindingMode.OneWay, Source = Pictures };
                 BindingOperations.SetBinding(Flipper, FlipView.ItemsSourceProperty, binding);
             }
             else
                 UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
 
-            // Start channel test
-            //_ = Task.Run(async () => await ConsumerWaitToReadAsync(App.CoreChannelToken.Token));
+            // Start channel test. (pub sub is the better option now)
             _ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
 
-            // Subscribe to messages
-            PubSubService<string>.Instance.Subscribe(OnPubSubReceived);
+            // Subscribe to app-wide messages.
+            PubSubService<ApplicationMessage>.Instance.Subscribe(OnPubSubReceived);
         }
         _loaded = true;
     }
 
     void MainPageOnUnloaded(object sender, RoutedEventArgs e)
     {
-        PubSubService<string>.Instance.Unsubscribe(OnPubSubReceived);
+        PubSubService<ApplicationMessage>.Instance.Unsubscribe(OnPubSubReceived);
+    }
+
+    /// <summary>
+    /// <see cref="PubSubService{T}"> testing.
+    /// </summary>
+    void OnPubSubReceived(ApplicationMessage msg)
+    {
+        if (_loaded && msg != null)
+        {
+            _localDispatcher.TryEnqueue(() =>
+            {
+                if (_coreMessages.Count > _maxMessages)
+                    _coreMessages.RemoveAt(_maxMessages);
+            
+                _coreMessages?.Insert(0, msg);
+            });
+        }
     }
 
     /// <summary>
@@ -738,14 +710,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             UpdateInfoBar($"Tag data is empty for this MenuFlyoutItem.", MessageLevel.Error);
         }
-    }
-
-    /// <summary>
-    /// <see cref="PubSubService{T}"> testing.
-    /// </summary>
-    void OnPubSubReceived(string message)
-    {
-        _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, message));
     }
     #endregion
 
@@ -1083,7 +1047,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                             if (_coreMessages.Count > _maxMessages)
                                 _coreMessages.RemoveAt(_maxMessages);
 
-                            _coreMessages?.Insert(0, formatted);
+                            _coreMessages?.Insert(0, new ApplicationMessage { MessageText = formatted });
                         });
                     }
                 }
@@ -1117,7 +1081,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             await foreach (var message in App.CoreMessageChannel.Reader.ReadAllAsync(token))
             {
                 string formatted = $"🔔 {DateTime.Now:T} – {message} #{++count:D3}";
-                _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, formatted));
+                _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, new ApplicationMessage { MessageText = formatted }));
             }
 
             // Wait for channel completion before notifying UI
@@ -1153,14 +1117,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         if (_coreMessages.Count > _maxMessages)
                             _coreMessages.RemoveAt(_maxMessages);
 
-                        _coreMessages?.Insert(0, message);
+                        _coreMessages?.Insert(0, new ApplicationMessage { MessageText = message });
                     });
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, "⚠️ UI Consumer Canceled."));
+            _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, new ApplicationMessage { MessageText = "⚠️ UI Consumer Canceled." }));
         }
     }
 
@@ -1188,7 +1152,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                             _coreMessages.RemoveAt(_maxMessages);
 
                         string formatted = $"📢 {DateTime.Now:T} – {message} #{++count:D3}";
-                        _coreMessages?.Insert(0, $"{formatted}");
+                        _coreMessages?.Insert(0, new ApplicationMessage { MessageText = $"{formatted}" });
                     });
                 }
             }

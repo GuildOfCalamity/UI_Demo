@@ -657,38 +657,6 @@ public static class AppCapture
     }
 
     /// <summary>
-    /// Saves a BitmapImage to a file (PNG format) even without a UriSource.
-    /// </summary>
-    /// <remarks>
-    /// The <paramref name="hostImageControl"/> must be visible when calling this method.
-    /// </remarks>
-    public static async Task SaveBitmapImageToFileAsyncOld(BitmapImage bitmapImage, Microsoft.UI.Xaml.Controls.Image hostImageControl, string filePath)
-    {
-        if (bitmapImage == null)
-            throw new ArgumentNullException(nameof(bitmapImage));
-        if (hostImageControl == null)
-            throw new ArgumentNullException(nameof(hostImageControl));
-
-        // Step 1: Render the BitmapImage to RenderTargetBitmap
-        RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap();
-        await renderTargetBitmap.RenderAsync(hostImageControl);
-
-        // Step 2: Convert RenderTargetBitmap to SoftwareBitmap
-        SoftwareBitmap softwareBitmap = await ConvertRenderTargetBitmapToSoftwareBitmapAsync(renderTargetBitmap);
-
-        // Step 3: Get the StorageFile
-        StorageFile? file = await Windows.Storage.StorageFile.GetFileFromPathAsync(filePath);
-        if (file == null)
-            return;
-
-        // Step 4: Save the image
-        using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-        {
-            await EncodeAndSaveSoftwareBitmapAsync(softwareBitmap, stream);
-        }
-    }
-
-    /// <summary>
     /// Saves a BitmapImage to a file (PNG format) via an <see cref="Microsoft.UI.Xaml.Controls.Image"/>.
     /// </summary>
     /// <remarks>
@@ -763,38 +731,6 @@ public static class AppCapture
         {
             BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
             return await decoder.GetSoftwareBitmapAsync();
-        }
-    }
-
-    /// <summary>
-    /// Could the <see cref="BitmapImage.UriSource"/> be the issue?
-    /// </summary>
-    /// <param name="bitmapImage"><see cref="BitmapImage"/></param>
-    /// <returns><see cref="SoftwareBitmap"/></returns>
-    public static async Task<SoftwareBitmap?> ConvertBitmapImageToSoftwareBitmapAsyncAlt(BitmapImage bitmapImage)
-    {
-        try
-        {
-            if (bitmapImage.PixelWidth == 0 || bitmapImage.PixelHeight == 0)
-            {
-                Debug.WriteLine($"[WARNING] ConvertBitmapImageToSoftwareBitmapAlt: The width and height are not valid.");
-                Debugger.Break();
-            }
-
-            InMemoryRandomAccessStream memoryStream = new InMemoryRandomAccessStream();
-            BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, memoryStream);
-
-            // Create dummy SoftwareBitmap (since BitmapImage doesn't have direct pixel access)
-            SoftwareBitmap softwareBitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, bitmapImage.PixelWidth, bitmapImage.PixelHeight, BitmapAlphaMode.Premultiplied);
-
-            encoder.SetSoftwareBitmap(softwareBitmap);
-            await encoder.FlushAsync();
-            return softwareBitmap;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ERROR] ConvertBitmapImageToSoftwareBitmapAsyncAlt: {ex.Message}");
-            return null;
         }
     }
 
@@ -1185,46 +1121,6 @@ public static class AppCapture
     }
 
     /// <summary>
-    /// Converts a BitmapImage to a MemoryStream using a WriteableBitmap.
-    /// </summary>
-    public static async Task<MemoryStream> ConvertBitmapImageToMemoryStreamAsyncAlt(BitmapImage bitmapImage)
-    {
-        if (bitmapImage.PixelWidth == 0 || bitmapImage.PixelHeight == 0)
-            throw new InvalidOperationException("BitmapImage has no valid pixel dimensions.");
-
-        // Step 1: Convert BitmapImage to WriteableBitmap
-        WriteableBitmap writeableBitmap = await ConvertBitmapImageToWriteableBitmapAsync(bitmapImage);
-
-        // Step 2: Get pixel buffer from WriteableBitmap
-        Stream pixelStream = writeableBitmap.PixelBuffer.AsStream();
-        byte[] pixels = new byte[pixelStream.Length];
-        await pixelStream.ReadAsync(pixels, 0, pixels.Length);
-
-        // Step 3: Create an in-memory stream
-        using (InMemoryRandomAccessStream randomStream = new InMemoryRandomAccessStream())
-        {
-            // Step 4: Encode as PNG
-            BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, randomStream);
-            encoder.SetPixelData(
-                BitmapPixelFormat.Bgra8,
-                BitmapAlphaMode.Premultiplied,
-                (uint)writeableBitmap.PixelWidth,
-                (uint)writeableBitmap.PixelHeight,
-                96, 96, // DPI
-                pixels);
-
-            await encoder.FlushAsync();
-
-            // Step 5: Convert to MemoryStream
-            MemoryStream finalStream = new MemoryStream();
-            await randomStream.AsStreamForRead().CopyToAsync(finalStream);
-            finalStream.Position = 0; // Reset position for reading
-
-            return finalStream;
-        }
-    }
-
-    /// <summary>
     /// Saves a BitmapImage to a file by converting it to a WriteableBitmap first.
     /// </summary>
     public static async Task SaveBitmapImageToFileAsync(BitmapImage bitmapImage, string fileName = "BitmapImage.png")
@@ -1262,19 +1158,22 @@ public static class AppCapture
         if (bitmapImage.PixelWidth == 0 || bitmapImage.PixelHeight == 0)
             throw new InvalidOperationException("BitmapImage has no valid pixel dimensions.");
 
+        WriteableBitmap writeableBitmap = new WriteableBitmap(bitmapImage.PixelWidth, bitmapImage.PixelHeight);
+
         using (InMemoryRandomAccessStream memoryStream = new InMemoryRandomAccessStream())
         {
-            // Step 1: Load BitmapImage into a stream
+            // Encode BitmapImage to a stream
             BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, memoryStream);
             encoder.SetSoftwareBitmap(new SoftwareBitmap(BitmapPixelFormat.Bgra8, bitmapImage.PixelWidth, bitmapImage.PixelHeight, BitmapAlphaMode.Premultiplied));
             await encoder.FlushAsync();
 
-            // Step 2: Convert stream to WriteableBitmap
-            WriteableBitmap writeableBitmap = new WriteableBitmap(bitmapImage.PixelWidth, bitmapImage.PixelHeight);
+            // Assign stream to WriteableBitmap
             await writeableBitmap.SetSourceAsync(memoryStream);
-            return writeableBitmap;
         }
+
+        return writeableBitmap;
     }
+
 
     /// <summary>
     /// Converts a BitmapImage to a WriteableBitmap.

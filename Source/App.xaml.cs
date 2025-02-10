@@ -152,7 +152,13 @@ public partial class App : Application
 
         // System.Threading.Channels test
         //_ = Task.Run(() => ChannelProducerAsync(CoreChannelToken.Token));
-        _ = Task.Run(() => GenericProducerMessageService(CoreChannelToken.Token));
+        //_ = Task.Run(() => GenericProducerMessageService(CoreChannelToken.Token));
+        
+        // PubSubService test
+        _ = Task.Run(() => PubSubHeartbeat());
+
+
+        Debug.WriteLine($"[INFO] {Extensions.ToReadableTime(480000)}");
     }
 
     public static void CloseExistingInstance()
@@ -344,6 +350,14 @@ public partial class App : Application
                             {
                                 Debug.WriteLine($"[INFO] Ignoring position saving (window maximized or restored)");
                             }
+
+                            PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+                            {
+                                Module = ModuleId.App,
+                                MessageText = $"🔔 AppWin PositionChange Detected",
+                                MessageType = typeof(OverlappedPresenterState),
+                                MessagePayload = op.State
+                            });
                         }
                     }
                     else
@@ -1119,4 +1133,22 @@ public partial class App : Application
         }
     }
     #endregion
+
+    public async Task PubSubHeartbeat()
+    {
+        try
+        {
+            while (!IsClosing)
+            {
+                await Task.Delay(5000);
+                PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+                {
+                    Module = ModuleId.App,
+                    MessageText = $"🔔 Heartbeat",
+                    MessageType = typeof(string),
+                });
+            }
+        }
+        catch (Exception) { }
+    }
 }

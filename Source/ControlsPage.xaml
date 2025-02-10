@@ -11,7 +11,7 @@
         <Style TargetType="Border">
             <Setter Property="BorderThickness" Value="1,1,0,0" />
             <Setter Property="Padding" Value="14" />
-            <Setter Property="BorderBrush" Value="{ThemeResource SystemControlHighlightChromeHighBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource AccentButtonBackgroundPressed}" />
         </Style>
 
         <Style TargetType="TextBlock">
@@ -26,7 +26,7 @@
         Margin="40"
         VerticalAlignment="Top"
         AutomationProperties.Name="GridSplitterRoot"
-        BorderBrush="{ThemeResource SystemControlHighlightChromeHighBrush}"
+        BorderBrush="{ThemeResource AccentButtonBackgroundPressed}"
         BorderThickness="0,0,1,1">
         <Grid.RowDefinitions>
             <RowDefinition
@@ -71,18 +71,20 @@
         <local:GridSplitter
             x:Name="GridSplitterHorizontal"
             Grid.Column="1"
-            Width="8"
+            Width="6"
             HorizontalAlignment="Left"
-            Background="{StaticResource GradientHorizontalBrush}" />
+            Background="{StaticResource GradientHorizontalBrush}"
+            CornerRadius="3" />
 
         <!--  Example Row Grid Splitter  -->
         <local:GridSplitter
             x:Name="GridSplitterVertical"
             Grid.Row="1"
             Grid.ColumnSpan="3"
-            Height="8"
+            Height="6"
             VerticalAlignment="Top"
-            Background="{StaticResource GradientVerticalBrush}">
+            Background="{StaticResource GradientVerticalBrush}"
+            CornerRadius="3">
             <local:GridSplitter.Element>
                 <TextBlock
                     HorizontalAlignment="Center"

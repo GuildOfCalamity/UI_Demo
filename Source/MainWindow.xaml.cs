@@ -70,7 +70,13 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             Debug.WriteLine($"[INFO] MainWindow First Visible");
         }
         _firstVisible = true;
-        PubSubService<string>.Instance.SendMessage($"🔔 MainWindow Visibility Changed ({args.Visible})");
+        PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+        {
+           Module = ModuleId.MainWindow,
+           MessageText = $"🔔 MainWindow Visibility Changed",
+           MessageType = typeof(bool),
+           MessagePayload = args.Visible
+        });
     }
 
     void MinimizeOnClicked(object sender, RoutedEventArgs args) => _overlapPresenter?.Minimize();

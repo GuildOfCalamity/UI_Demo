@@ -27,8 +27,8 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition />
+                <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <Grid.Resources>
                 <!--#region [Context Flyout Menu]-->
@@ -111,6 +111,17 @@
                 RadiusX="3"
                 RadiusY="3" />
 
+            <!--
+            <local:GridSplitter
+                x:Name="GridSplitterHorizontal"
+                Grid.RowSpan="3"
+                Grid.Column="1"
+                Width="5"
+                Margin="0,10,0,5"
+                HorizontalAlignment="Left"
+                Background="{StaticResource GradientHorizontalBrush}" />
+            -->
+
             <!--#region [Channel Messages]-->
             <ListView
                 x:Name="lvChannelMessages"
@@ -120,7 +131,7 @@
                 Margin="0,0,10,0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Stretch"
-                Opacity="0.7">
+                Opacity="0.9">
                 <!--<ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapGrid HorizontalChildrenAlignment="Left" Orientation="Horizontal" />
@@ -132,11 +143,43 @@
                     </TransitionCollection>
                 </ListView.Transitions>
                 <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock
-                            FontSize="{StaticResource FontSizeNormal}"
-                            Foreground="{StaticResource GradientListBrush}"
-                            Text="{Binding}" />
+                    <DataTemplate x:DataType="local:ApplicationMessage">
+                        <Grid Margin="0,3,0,3">
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Margin="2,2,4,2"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeNormal}"
+                                    Foreground="{StaticResource PrimaryBrush}"
+                                    Text="{x:Bind Module, Mode=OneWay}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Margin="4,2,2,2"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeNormal}"
+                                    Foreground="{StaticResource HeaderBrush}"
+                                    Text="{x:Bind MessageTime, Mode=OneWay, Converter={StaticResource StringToFormat}, ConverterParameter='{}{0:ddd, dd MMM yyyy – hh:mm:ss tt}'}" />
+                            </Grid>
+                            <TextBlock
+                                Grid.Row="1"
+                                Margin="2"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                FontSize="{StaticResource FontSizeNormal}"
+                                Foreground="{StaticResource SecondaryBrush}"
+                                Text="{x:Bind MessageText, Mode=OneWay}" />
+                        </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

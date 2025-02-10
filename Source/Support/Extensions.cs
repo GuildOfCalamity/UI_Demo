@@ -1841,6 +1841,52 @@ public static class Extensions
         return values.ElementAt(Random.Shared.Next(values.Count()));
     }
 
+    /// <summary>
+    /// Returns true if within 10 minutes +/- of 2AM, false otherwise.
+    /// </summary>
+    public static bool IsCloseTo2AM()
+    {
+        DateTime now = DateTime.Now;
+        // "now.Date" will always return midnight
+        DateTime threeAM = now.Date.AddHours(2);
+        DateTime tenMinutesBefore = threeAM.AddMinutes(-10);
+        DateTime tenMinutesAfter = threeAM.AddMinutes(10);
+        return now >= tenMinutesBefore && now <= tenMinutesAfter;
+    }
+
+    /// <summary>
+    /// Display a readable sentence as to when the time will happen.
+    /// e.g. "8 minutes 0 milliseconds"
+    /// </summary>
+    /// <param name="milliseconds">integer value</param>
+    /// <returns>human friendly format</returns>
+    public static string ToReadableTime(int milliseconds)
+    {
+        if (milliseconds < 0)
+            throw new ArgumentException("Milliseconds cannot be negative.");
+
+        TimeSpan timeSpan = TimeSpan.FromMilliseconds(milliseconds);
+
+        if (timeSpan.TotalHours >= 1)
+        {
+            return string.Format("{0:0} hour{1} {2:0} minute{3}",
+                timeSpan.Hours, timeSpan.Hours == 1 ? "" : "s",
+                timeSpan.Minutes, timeSpan.Minutes == 1 ? "" : "s");
+        }
+        else if (timeSpan.TotalMinutes >= 1)
+        {
+            return string.Format("{0:0} minute{1} {2:0} second{3}",
+                timeSpan.Minutes, timeSpan.Minutes == 1 ? "" : "s",
+                timeSpan.Seconds, timeSpan.Seconds == 1 ? "" : "s");
+        }
+        else
+        {
+            return string.Format("{0:0} second{1} {2:0} millisecond{3}",
+                timeSpan.Seconds, timeSpan.Seconds == 1 ? "" : "s",
+                timeSpan.Milliseconds, timeSpan.Milliseconds == 1 ? "" : "s");
+        }
+    }
+
     #region [WinUI Specific]
     /// <summary>
     /// Can be useful if you only have a root (not merged) resource dictionary.

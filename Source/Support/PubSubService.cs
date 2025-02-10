@@ -52,3 +52,20 @@ public class PubSubService<T>
         MessageReceived -= listener;
     }
 }
+
+public class ApplicationMessage
+{
+    public ModuleId Module { get; set; }
+    public string? MessageText { get; set; }
+    public Type? MessageType { get; set; }
+    public object? MessagePayload { get; set; }
+    public DateTime MessageTime { get; set; } = DateTime.Now;
+}
+
+public enum ModuleId
+{
+    App = 0,
+    MainWindow = 1,
+    MainPage = 2,
+    ControlsPage = 3,
+}

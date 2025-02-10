@@ -29,6 +29,7 @@
             <local:BooleanToOpacityInverseConverter x:Key="BooleanOpacityInverse" />
             <local:BooleanToVisibilityInverseConverter x:Key="BooleanVisibilityInverse" />
             <local:FullPathToFileConverter x:Key="FullPathToFile" />
+            <local:StringFormatConverter x:Key="StringToFormat" />
             <!--#endregion-->
 
 
@@ -180,6 +181,7 @@
                 TintOpacity="0.2" />
             <!--#endregion-->
 
+            <!--#region [PipPager Styler]-->
             <Style
                 x:Key="NavButtonBaseStyle"
                 BasedOn="{StaticResource PipsPagerNavigationButtonBaseStyle}"
@@ -205,6 +207,7 @@
                 <Setter Property="Content" Value="{StaticResource ChevronDownSmall}" />
                 <Setter Property="Foreground" Value="{StaticResource GradientPipBrush}" />
             </Style>
+            <!--#endregion-->
 
             <!--#region [GridSplitter Styler]-->
             <SolidColorBrush x:Key="SystemControlSplitterPointerOver" Color="{ThemeResource SystemBaseLowColor}" />
@@ -222,7 +225,10 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="local:GridSplitter">
-                            <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                            <Grid
+                                x:Name="RootGrid"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="{TemplateBinding CornerRadius}">
                                 <ContentPresenter
                                     HorizontalContentAlignment="Stretch"
                                     VerticalContentAlignment="Stretch"
