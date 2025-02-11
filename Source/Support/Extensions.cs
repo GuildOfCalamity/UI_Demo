@@ -770,6 +770,39 @@ public static class Extensions
     }
 
     /// <summary>
+    /// Display a readable sentence as to when the time will happen.
+    /// e.g. "8 minutes 0 milliseconds"
+    /// </summary>
+    /// <param name="milliseconds">integer value</param>
+    /// <returns>human friendly format</returns>
+    public static string ToReadableTime(int milliseconds)
+    {
+        if (milliseconds < 0)
+            throw new ArgumentException("Milliseconds cannot be negative.");
+
+        TimeSpan timeSpan = TimeSpan.FromMilliseconds(milliseconds);
+
+        if (timeSpan.TotalHours >= 1)
+        {
+            return string.Format("{0:0} hour{1} {2:0} minute{3}",
+                timeSpan.Hours, timeSpan.Hours == 1 ? "" : "s",
+                timeSpan.Minutes, timeSpan.Minutes == 1 ? "" : "s");
+        }
+        else if (timeSpan.TotalMinutes >= 1)
+        {
+            return string.Format("{0:0} minute{1} {2:0} second{3}",
+                timeSpan.Minutes, timeSpan.Minutes == 1 ? "" : "s",
+                timeSpan.Seconds, timeSpan.Seconds == 1 ? "" : "s");
+        }
+        else
+        {
+            return string.Format("{0:0} second{1} {2:0} millisecond{3}",
+                timeSpan.Seconds, timeSpan.Seconds == 1 ? "" : "s",
+                timeSpan.Milliseconds, timeSpan.Milliseconds == 1 ? "" : "s");
+        }
+    }
+
+    /// <summary>
     /// Determines if the date is a working day, weekend, or determine the next workday coming up.
     /// </summary>
     /// <param name="date"><see cref="DateTime"/></param>
@@ -1852,39 +1885,6 @@ public static class Extensions
         DateTime tenMinutesBefore = threeAM.AddMinutes(-10);
         DateTime tenMinutesAfter = threeAM.AddMinutes(10);
         return now >= tenMinutesBefore && now <= tenMinutesAfter;
-    }
-
-    /// <summary>
-    /// Display a readable sentence as to when the time will happen.
-    /// e.g. "8 minutes 0 milliseconds"
-    /// </summary>
-    /// <param name="milliseconds">integer value</param>
-    /// <returns>human friendly format</returns>
-    public static string ToReadableTime(int milliseconds)
-    {
-        if (milliseconds < 0)
-            throw new ArgumentException("Milliseconds cannot be negative.");
-
-        TimeSpan timeSpan = TimeSpan.FromMilliseconds(milliseconds);
-
-        if (timeSpan.TotalHours >= 1)
-        {
-            return string.Format("{0:0} hour{1} {2:0} minute{3}",
-                timeSpan.Hours, timeSpan.Hours == 1 ? "" : "s",
-                timeSpan.Minutes, timeSpan.Minutes == 1 ? "" : "s");
-        }
-        else if (timeSpan.TotalMinutes >= 1)
-        {
-            return string.Format("{0:0} minute{1} {2:0} second{3}",
-                timeSpan.Minutes, timeSpan.Minutes == 1 ? "" : "s",
-                timeSpan.Seconds, timeSpan.Seconds == 1 ? "" : "s");
-        }
-        else
-        {
-            return string.Format("{0:0} second{1} {2:0} millisecond{3}",
-                timeSpan.Seconds, timeSpan.Seconds == 1 ? "" : "s",
-                timeSpan.Milliseconds, timeSpan.Milliseconds == 1 ? "" : "s");
-        }
     }
 
     #region [WinUI Specific]
