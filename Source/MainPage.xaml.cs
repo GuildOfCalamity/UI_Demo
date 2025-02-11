@@ -47,8 +47,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Brush? _lvl5;
     DispatcherTimer? _flyoutTimer;
     CancellationTokenSource _ctsTask;
+    
+    float _springMultiplier = 1.05f;
+    SpringVector3NaturalMotionAnimation? _springAnimation;
 
-    readonly int _maxMessages = 12;
+    readonly int _maxMessages = 50;
     readonly ObservableCollection<ApplicationMessage>? _coreMessages;
     readonly DispatcherQueue _localDispatcher;
 
@@ -82,6 +85,36 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         // Confirm that we're on the UI thread in the event that DependencyProperty is changed under forked thread.
         DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
     }
+
+    public int ProcessorCount
+    {
+        get
+        {
+            try
+            {
+                return App.MachineAndUserVars["NUMBER_OF_PROCESSORS"] switch
+                {
+                    "64" => 64,
+                    "32" => 32,
+                    "28" => 28,
+                    "24" => 24,
+                    "20" => 20,
+                    "18" => 18,
+                    "16" => 16,
+                    "14" => 14,
+                    "12" => 12,
+                    "10" => 10,
+                    "8" => 8,
+                    "6" => 6,
+                    "4" => 4,
+                    "2" => 2,
+                    "1" => 1,
+                    _ => 0
+                };
+            }
+            catch (KeyNotFoundException) { return 2; }
+        }
+    }
     #endregion
 
     public MainPage()
@@ -89,6 +122,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         this.InitializeComponent();
         this.Loaded += MainPageOnLoaded;
         this.Unloaded += MainPageOnUnloaded;
+        MessageSplitView.PaneOpened += OnPaneOpenedOrClosed;
+        MessageSplitView.PaneClosed += OnPaneOpenedOrClosed;
         App.WindowSizeChanged += SizeChangeEvent;
         PopulatePictures();
 
@@ -142,6 +177,46 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         BindingOperations.SetBinding(lvChannelMessages, ListView.ItemsSourceProperty, binding);
 
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
+
+        // SpringVector3NaturalMotionAnimation
+        btnRun.PointerEntered += RunButtonOnPointerEntered;
+        btnRun.PointerExited += RunButtonOnPointerExited;
+    }
+
+    /// <summary>
+    /// <see cref="SpringVector3NaturalMotionAnimation"/>
+    /// </summary>
+    void RunButtonOnPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        var btn = sender as Button;
+        if (btn != null)
+        {
+            CreateOrUpdateSpringAnimation(_springMultiplier);
+            var uie = sender as UIElement;
+            if (uie != null)
+            {   // We'll set the CenterPoint so the SpringAnimation does not start from offset 0,0.
+                uie.CenterPoint = new System.Numerics.Vector3((float)(btn.ActualWidth / 2.0), (float)(btn.ActualHeight / 2.0), 1f);
+                uie.StartAnimation(_springAnimation);
+            }
+        }
+    }
+
+    /// <summary>
+    /// <see cref="SpringVector3NaturalMotionAnimation"/>
+    /// </summary>
+    void RunButtonOnPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        var btn = sender as Button;
+        if (btn != null)
+        {
+            CreateOrUpdateSpringAnimation(1.0f);
+            var uie = sender as UIElement;
+            if (uie != null)
+            {   // We'll set the CenterPoint so the SpringAnimation does not start from offset 0,0.
+                uie.CenterPoint = new System.Numerics.Vector3((float)(btn.ActualWidth / 2.0), (float)(btn.ActualHeight / 2.0), 1f);
+                uie.StartAnimation(_springAnimation);
+            }
+        }
     }
 
     #region [Events]
@@ -394,12 +469,30 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         var tb = sender as ToggleButton;
         if (this.Content != null) // use as "is loaded" check for the MainWindow
         {
-            UpdateInfoBar($"Toggle button {((bool)tb.IsChecked ? "checked" : "unchecked")}.", (bool)tb.IsChecked ? MessageLevel.Important : MessageLevel.Warning);
+            if ((bool)tb.IsChecked && !MessageSplitView.IsPaneOpen)
+                MessageSplitView.IsPaneOpen = true;
+            else
+                MessageSplitView.IsPaneOpen = false;
+        }
+    }
+
+    /// <summary>
+    /// The <see cref="SplitView"/> can be dismissed when the user clicks anywhere else on the 
+    /// page, so we'll make sure the <see cref="ToggleButton"/> reflects that current state.
+    /// </summary>
+    void OnPaneOpenedOrClosed(SplitView sender, object args)
+    {
+        Debug.WriteLine($"[INFO] {sender.Name} was {((MessageSplitView.IsPaneOpen) ? "opened" : "closed")}");
+        if (!MessageSplitView.IsPaneOpen && (bool)tbMessagePane.IsChecked)
+        {
+            tbMessagePane.IsChecked = false;
         }
     }
 
     async void OnSwitchToggled(object sender, RoutedEventArgs e)
     {
+        bool useImageControl = false;
+
         var ts = sender as ToggleSwitch;
         if (this.Content != null && ts != null) // use as "is loaded" check for the MainWindow
         {
@@ -409,37 +502,46 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 // Capture an image of the current page.
                 var bmp = await AppCapture.GetScreenshot(root);
-                if (bmp != null && _useSurfaceBrush)
+
+                if (useImageControl)
                 {
-                    string assetPath = string.Empty;
-
-                    Debug.WriteLine($"[INFO] We have a software bitmap with dimensions {bmp.PixelWidth},{bmp.PixelHeight}");
-
-                    // We'll need to force a new CompositionSurfaceBrush since we'll be replacing it with our new blurred screenshot.
-                    if (_blurVisual != null)
-                    {
-                        _blurVisual.Dispose();
-                        _blurVisual = null;
-                    }
-
-                    if (App.IsPackaged)
-                        assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurTest.png");
-                    else
-                        assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurTest.png");
-
-                    // Create a new blur image for the CompositionSurfaceBrush.
-                    var saved = await BlurHelper.ApplyBlurAndSaveAsync(bmp, assetPath, 5);
-
-                    // This works properly, but only because we use an Image control as an intermediate.
-                    // https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.imaging.bitmapimage?view=winrt-22621#examples
-                    //await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
-
-                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: saved, useImageForShadowMask: false);
+                    blurTest.Width = App.m_width; blurTest.Height = App.m_height;
+                    blurTest.Source = await BlurHelper.ApplyBlurAsync(bmp);
+                    blurTest.Visibility = Visibility.Visible;
                 }
                 else
                 {
-                    // Just use the "fog" effect if image routines are not needed - this effect is not as fancy, but it's much faster.
-                    AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: false, useImageForShadowMask: false);
+
+                    if (bmp != null && _useSurfaceBrush)
+                    {
+
+                        Debug.WriteLine($"[INFO] We have a software bitmap with dimensions {bmp.PixelWidth},{bmp.PixelHeight}");
+
+                        // We'll need to force a new CompositionSurfaceBrush since we'll be replacing it with our new blurred screenshot.
+                        if (_blurVisual != null)
+                        {
+                            _blurVisual.Dispose();
+                            _blurVisual = null;
+                        }
+#if IS_UNPACKAGED
+                        string assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurTest.png");
+#else
+                    string assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurTest.png");
+#endif
+                        // Create a new blur image for the CompositionSurfaceBrush.
+                        var saved = await BlurHelper.ApplyBlurAndSaveAsync(bmp, assetPath, 5);
+
+                        // This works properly, but only because we use an Image control as an intermediate.
+                        // https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.imaging.bitmapimage?view=winrt-22621#examples
+                        //await AppCapture.SaveImageSourceToFileAsync(root, blurTest, blurred, assetPath, App.m_width, App.m_height);
+
+                        AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: saved, useImageForShadowMask: false);
+                    }
+                    else
+                    {
+                        // Just use the "fog" effect if image routines are not needed - this effect is not as fancy, but it's much faster.
+                        AddBlurCompositionElement(root, new Windows.UI.Color() { A = 255, R = 20, G = 20, B = 32 }, useSurfaceBrush: false, useImageForShadowMask: false);
+                    }
                 }
             }
             else
@@ -447,7 +549,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 RemoveBlurCompositionElement(root);
             }
             UpdateInfoBar($"Blur composition {(ts.IsOn ? "activated" : "deactivated")}.", ts.IsOn ? MessageLevel.Important : MessageLevel.Warning);
-            
         }
     }
 
@@ -547,10 +648,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
 
             // Start channel test. (pub sub is the better option now)
-            _ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
+            //_ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
 
             // Subscribe to app-wide messages.
             PubSubService<ApplicationMessage>.Instance.Subscribe(OnPubSubReceived);
+
+            UpdateInfoBar($"Using {App.MachineAndUserVars["PROCESSOR_IDENTIFIER"]} with {App.MachineAndUserVars["NUMBER_OF_PROCESSORS"]} processors", MessageLevel.Information);
         }
         _loaded = true;
     }
@@ -706,7 +809,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             UpdateInfoBar($"Tag data is empty for this MenuFlyoutItem.", MessageLevel.Error);
         }
     }
-    #endregion
+#endregion
 
     #region [Helpers]
     void UpdateInfoBar(string msg, MessageLevel level = MessageLevel.Information)
@@ -1075,7 +1178,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             // Blocks until the channel receives a message or it canceled.
             await foreach (var message in App.CoreMessageChannel.Reader.ReadAllAsync(token))
             {
-                string formatted = $"🔔 {DateTime.Now:T} – {message} #{++count:D3}";
+                string formatted = $"📢 {DateTime.Now:T} – {message} #{++count:D3}";
                 _localDispatcher.TryEnqueue(() => _coreMessages?.Insert(0, new ApplicationMessage { MessageText = formatted }));
             }
 
@@ -1161,4 +1264,24 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
     #endregion
+
+    void CreateOrUpdateSpringAnimation(float finalValue)
+    {
+        if (_springAnimation == null && _compositor != null)
+        {
+            // When updating targets such as "Position" use a Vector3KeyFrameAnimation.
+            //var positionAnim = _compositor.CreateVector3KeyFrameAnimation();
+            // When updating targets such as "Opacity" use a ScalarKeyFrameAnimation.
+            //var sizeAnim = _compositor.CreateScalarKeyFrameAnimation();
+
+            _springAnimation = _compositor.CreateSpringVector3Animation();
+            _springAnimation.Target = "Scale";
+            _springAnimation.InitialVelocity = new System.Numerics.Vector3(_springMultiplier);
+            _springAnimation.DampingRatio = 0.4f;
+            _springAnimation.Period = TimeSpan.FromMilliseconds(50);
+        }
+
+        if (_springAnimation != null)
+            _springAnimation.FinalValue = new System.Numerics.Vector3(finalValue);
+    }
 }

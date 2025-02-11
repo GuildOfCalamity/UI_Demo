@@ -20,6 +20,7 @@ using Windows.Storage;
 using Windows.System;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.UI.ViewManagement;
+using System.Collections;
 
 namespace UI_Demo;
 
@@ -32,7 +33,7 @@ public partial class App : Application
     // NOTE: If you would like to deploy this app as "Packaged", then open the csproj and change
     //  <WindowsPackageType>None</WindowsPackageType> to <WindowsPackageType>MSIX</WindowsPackageType>
     // https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/#advantages-and-disadvantages-of-packaging-your-app
-#if IS_UNPACKAGED // We're using a custom PropertyGroup Condition we defined in the csproj to help us with the decision.
+#if IS_UNPACKAGED // We're using a custom PropertyGroup condition we defined in the csproj to help us with the decision.
     public static bool IsPackaged { get => false; }
 #else
     public static bool IsPackaged { get => true; }
@@ -54,6 +55,7 @@ public partial class App : Application
     static UISettings m_UISettings = new UISettings();
     static EasClientDeviceInformation m_deviceInfo = new EasClientDeviceInformation();
     public static List<string> ArgList = new();
+    public static Dictionary<string, string> MachineAndUserVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public static List<string>? AssemblyReferences { get; private set; }
     public static Action<Windows.Graphics.SizeInt32>? WindowSizeChanged { get; set; }
 
@@ -124,6 +126,11 @@ public partial class App : Application
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
         UnhandledException += ApplicationUnhandledException;
+        if (Debugger.IsAttached)
+        {
+            DebugSettings.BindingFailed += DebugOnBindingFailed;
+            DebugSettings.XamlResourceReferenceFailed += DebugOnXamlResourceReferenceFailed;
+        }
         #endregion
 
         // Is there more than one of us?
@@ -137,6 +144,8 @@ public partial class App : Application
             //InstanceMutex.Close();
             CloseExistingInstanceAlt();
         }
+        
+        GatherEnvironment();
 
         #region [System.Threading.Channels example]
         CoreMessageChannel = Channel.CreateUnbounded<ChannelMessageType>();
@@ -156,9 +165,46 @@ public partial class App : Application
         
         // PubSubService test
         _ = Task.Run(() => PubSubHeartbeat());
+    }
 
+    /// <summary>
+    /// EnvironmentVariableTarget has three options:
+    ///     1) Machine
+    ///     2) Process
+    ///     3) User
+    /// </summary>
+    void GatherEnvironment()
+    {
+        // Get the environment variables.
+        IDictionary procVars = GetEnvironmentVariablesWithErrorLog(EnvironmentVariableTarget.Process);
+        // Adding names and variables that exist.
+        foreach (DictionaryEntry pVar in procVars)
+        {
+            string? pVarKey = (string?)pVar.Key;
+            string? pVarValue = (string?)pVar.Value ?? "";
+            if (!string.IsNullOrEmpty(pVarKey) && !MachineAndUserVars.ContainsKey(pVarKey))
+            {
+                MachineAndUserVars.Add(pVarKey, pVarValue);
+            }
+        }
+    }
 
-        Debug.WriteLine($"[INFO] {Extensions.ToReadableTime(480000)}");
+    /// <summary>
+    /// Returns the variables for the specified target. Errors that occurs will be caught and logged.
+    /// </summary>
+    /// <param name="target">The target variable source of the type <see cref="EnvironmentVariableTarget"/> </param>
+    /// <returns>A dictionary with the variable or an empty dictionary on errors.</returns>
+    IDictionary GetEnvironmentVariablesWithErrorLog(EnvironmentVariableTarget target)
+    {
+        try
+        {
+            return Environment.GetEnvironmentVariables(target);
+        }
+        catch (Exception ex)
+        {
+            DebugLog($"Exception while getting the environment variables for target '{target}': {ex.Message}");
+            return new Hashtable(); // HashTable inherits from IDictionary
+        }
     }
 
     public static void CloseExistingInstance()
@@ -786,33 +832,16 @@ public partial class App : Application
         e.Handled = true;
     }
 
-    void CurrentDomainOnProcessExit(object? sender, EventArgs e)
-    {
-        if (!IsClosing)
-            IsClosing = true;
-
-        if (sender is null)
-            return;
-
-        if (sender is AppDomain ad)
-        {
-            Debug.WriteLine($"[OnProcessExit]", $"{nameof(App)}");
-            Debug.WriteLine($"DomainID: {ad.Id}", $"{nameof(App)}");
-            Debug.WriteLine($"FriendlyName: {ad.FriendlyName}", $"{nameof(App)}");
-            Debug.WriteLine($"BaseDirectory: {ad.BaseDirectory}", $"{nameof(App)}");
-        }
-    }
-
     void CurrentDomainFirstChanceException(object? sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
     {
         Debug.WriteLine($"[ERROR] First chance exception from {sender?.GetType()}: {e.Exception.Message}");
-        // Ignore profile encryption property tests.
-        if (!string.IsNullOrEmpty(e.Exception.Message) && !e.Exception.Message.Contains("The input is not a valid Base-64 string"))
+        // Ignore profile encryption property tests and fake ItemsSourceProperty binding warnings.
+        if (!string.IsNullOrEmpty(e.Exception.Message) && !e.Exception.Message.Contains("The input is not a valid Base-64 string") && !e.Exception.Message.Contains("'WinRT.IInspectable' to type 'System.String'"))
         {
             DebugLog($"First chance exception from {sender?.GetType()}: {e.Exception.Message}");
             if (e.Exception.InnerException != null)
                 DebugLog($"  ⇨ InnerException: {e.Exception.InnerException.Message}");
-            DebugLog($"First chance exception StackTrace: {Environment.StackTrace}");
+            DebugLog($"  ⇨ StackTrace: {Environment.StackTrace}");
         }
     }
 
@@ -835,6 +864,35 @@ public partial class App : Application
             });
         }
         e.SetObserved(); // suppress and handle manually
+    }
+
+    void CurrentDomainOnProcessExit(object? sender, EventArgs e)
+    {
+        if (!IsClosing)
+            IsClosing = true;
+
+        if (sender is null)
+            return;
+
+        if (sender is AppDomain ad)
+        {
+            Debug.WriteLine($"[OnProcessExit]", $"{nameof(App)}");
+            Debug.WriteLine($"DomainID: {ad.Id}", $"{nameof(App)}");
+            Debug.WriteLine($"FriendlyName: {ad.FriendlyName}", $"{nameof(App)}");
+            Debug.WriteLine($"BaseDirectory: {ad.BaseDirectory}", $"{nameof(App)}");
+        }
+    }
+
+    void DebugOnXamlResourceReferenceFailed(DebugSettings sender, XamlResourceReferenceFailedEventArgs args)
+    {
+        Debug.WriteLine($"[WARNING] XamlResourceReferenceFailed: {args.Message}");
+        DebugLog($"OnXamlResourceReferenceFailed: {args.Message}");
+    }
+
+    void DebugOnBindingFailed(object sender, BindingFailedEventArgs args)
+    {
+        Debug.WriteLine($"[WARNING] BindingFailed: {args.Message}");
+        DebugLog($"OnBindingFailed: {args.Message}");
     }
 
     /// <summary>
@@ -1134,6 +1192,7 @@ public partial class App : Application
     }
     #endregion
 
+    #region [PubSub]
     public async Task PubSubHeartbeat()
     {
         try
@@ -1151,4 +1210,5 @@ public partial class App : Application
         }
         catch (Exception) { }
     }
+    #endregion
 }

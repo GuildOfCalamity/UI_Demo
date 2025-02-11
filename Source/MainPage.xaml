@@ -11,76 +11,170 @@
 
     <Grid x:Name="root">
 
-        <Image
-            x:Name="blurTest"
-            Width="1000"
-            Stretch="Uniform"
-            Visibility="Collapsed" />
-
-        <Grid
-            x:Name="host"
-            Background="#00111111"
-            PointerPressed="HostGridOnPointerPressed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <Grid.Resources>
-                <!--#region [Context Flyout Menu]-->
-                <MenuFlyout
-                    x:Name="TitlebarMenuFlyout"
-                    x:FieldModifier="public"
-                    Placement="BottomEdgeAlignedLeft">
-                    <MenuFlyoutItem
-                        Click="MenuFlyoutItemOnClick"
-                        IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
-                        Tag="{x:Bind TitlebarMenuFlyout}"
-                        Text="Hide this flyout">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="{StaticResource PointerHand}" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem
-                        Click="MenuFlyoutItemOnClick"
-                        IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
-                        Tag="ActionToken"
-                        Text="Signal cancel token">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="{StaticResource NoiseCancelation}" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem
-                        Click="MenuFlyoutItemOnClick"
-                        IsEnabled="{x:Bind local:App.Profile.FirstRun.Equals(x:True), Mode=OneWay}"
-                        Tag="ActionFirstRun"
-                        Text="Reset FirstRun">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="{StaticResource ActionCenter}" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutSeparator Width="200" />
-                    <MenuFlyoutItem
-                        Click="MenuFlyoutItemOnClick"
-                        IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
-                        Tag="ActionClose"
-                        Text="Close Application">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="{StaticResource PowerButton}" />
-                        </MenuFlyoutItem.Icon>
-                        <MenuFlyoutItem.KeyboardAccelerators>
-                            <KeyboardAccelerator Key="F4" Modifiers="Menu" />
-                        </MenuFlyoutItem.KeyboardAccelerators>
-                    </MenuFlyoutItem>
-                </MenuFlyout>
+        <SplitView
+            x:Name="MessageSplitView"
+            Margin="0,10,-10,0"
+            CompactPaneLength="96"
+            CornerRadius="6"
+            DisplayMode="Overlay"
+            IsPaneOpen="False"
+            OpenPaneLength="320"
+            PanePlacement="Right">
+            <SplitView.Pane>
+                <!--#region [PubSub Messages]-->
+                <Grid>
+                    <local:CompositionShadow
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        BlurRadius="4"
+                        OffsetX="14"
+                        OffsetY="15"
+                        ShadowOpacity="1"
+                        Color="#000000">
+                        <Image
+                            Width="150"
+                            Margin="10"
+                            Opacity="0.2"
+                            Source="ms-appx:///Assets/MessageIcon.png"
+                            Stretch="Uniform" />
+                    </local:CompositionShadow>
+                    <ScrollViewer VerticalScrollMode="Auto">
+                        <ListView
+                            x:Name="lvChannelMessages"
+                            Margin="0,0,10,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="Transparent"
+                            Opacity="1">
+                            <!--
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapGrid HorizontalChildrenAlignment="Left" Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
+                            -->
+                            <ListView.Transitions>
+                                <TransitionCollection>
+                                    <EdgeUIThemeTransition />
+                                </TransitionCollection>
+                            </ListView.Transitions>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="local:ApplicationMessage">
+                                    <Grid Margin="0,3,0,3">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+                                        <Grid Grid.Row="0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <local:CompositionShadow
+                                                Grid.Column="0"
+                                                Margin="2,2,4,2"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                BlurRadius="1"
+                                                OffsetX="2"
+                                                OffsetY="2"
+                                                ShadowOpacity="0.9"
+                                                Color="#000000">
+                                                <TextBlock
+                                                    FontSize="{StaticResource FontSizeNormal}"
+                                                    Foreground="{StaticResource PrimaryBrush}"
+                                                    Text="{x:Bind Module, Mode=OneWay}" />
+                                            </local:CompositionShadow>
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                Margin="4,2,2,2"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeNormal}"
+                                                Foreground="{StaticResource HeaderBrush}"
+                                                Text="{x:Bind MessageTime, Mode=OneWay, Converter={StaticResource StringToFormat}, ConverterParameter='{}{0:ddd, dd MMM yyyy – hh:mm:ss tt}'}" />
+                                        </Grid>
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Margin="2"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            FontSize="{StaticResource FontSizeNormal}"
+                                            Foreground="{StaticResource SecondaryBrush}"
+                                            Text="{x:Bind MessageText, Mode=OneWay}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </ScrollViewer>
+                </Grid>
                 <!--#endregion-->
-            </Grid.Resources>
+            </SplitView.Pane>
 
-            <!--<local:SeparatorLine
+            <Grid
+                x:Name="host"
+                Background="#00111111"
+                PointerPressed="HostGridOnPointerPressed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.Resources>
+                    <!--#region [Right-Click Context Flyout Menu]-->
+                    <MenuFlyout
+                        x:Name="TitlebarMenuFlyout"
+                        x:FieldModifier="public"
+                        Placement="BottomEdgeAlignedLeft">
+                        <MenuFlyoutItem
+                            Click="MenuFlyoutItemOnClick"
+                            IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
+                            Tag="{x:Bind TitlebarMenuFlyout}"
+                            Text="Hide this flyout">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="{StaticResource PointerHand}" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            Click="MenuFlyoutItemOnClick"
+                            IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
+                            Tag="ActionToken"
+                            Text="Signal cancel token">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="{StaticResource NoiseCancelation}" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            Click="MenuFlyoutItemOnClick"
+                            IsEnabled="{x:Bind local:App.Profile.FirstRun.Equals(x:True), Mode=OneWay}"
+                            Tag="ActionFirstRun"
+                            Text="Reset FirstRun">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="{StaticResource ActionCenter}" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator Width="200" />
+                        <MenuFlyoutItem
+                            Click="MenuFlyoutItemOnClick"
+                            IsEnabled="{x:Bind IsBusy.Equals(x:False), Mode=OneWay}"
+                            Tag="ActionClose"
+                            Text="Close Application">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="{StaticResource PowerButton}" />
+                            </MenuFlyoutItem.Icon>
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="F4" Modifiers="Menu" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                    <!--#endregion-->
+                </Grid.Resources>
+
+                <!--<local:SeparatorLine
                 Grid.Row="0"
                 Grid.ColumnSpan="2"
                 VerticalAlignment="Top"
@@ -88,7 +182,7 @@
                 Line2Brush="{StaticResource GradientLine2Brush}"
                 SeparatorThickness="2" />-->
 
-            <Rectangle
+                <!--<Rectangle
                 Grid.Row="0"
                 Grid.ColumnSpan="2"
                 Height="3"
@@ -97,335 +191,265 @@
                 VerticalAlignment="Top"
                 Fill="{StaticResource GradientHorizontalBrush}"
                 RadiusX="3"
-                RadiusY="3" />
+                RadiusY="3" />-->
 
-            <Rectangle
-                Grid.Row="0"
-                Grid.RowSpan="3"
-                Grid.Column="1"
-                Width="3"
-                Margin="0,10,0,5"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Stretch"
-                Fill="{StaticResource GradientVerticalBrush}"
-                RadiusX="3"
-                RadiusY="3" />
-
-            <!--
-            <local:GridSplitter
+                <!--<local:GridSplitter
                 x:Name="GridSplitterHorizontal"
                 Grid.RowSpan="3"
                 Grid.Column="1"
                 Width="5"
                 Margin="0,10,0,5"
                 HorizontalAlignment="Left"
-                Background="{StaticResource GradientHorizontalBrush}" />
-            -->
+                Background="{StaticResource GradientHorizontalBrush}" />-->
 
-            <!--#region [Channel Messages]-->
-            <ListView
-                x:Name="lvChannelMessages"
-                Grid.Row="1"
-                Grid.RowSpan="2"
-                Grid.Column="1"
-                Margin="0,0,10,0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Stretch"
-                Opacity="0.9">
-                <!--<ListView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapGrid HorizontalChildrenAlignment="Left" Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ListView.ItemsPanel>-->
-                <ListView.Transitions>
-                    <TransitionCollection>
-                        <EdgeUIThemeTransition />
-                    </TransitionCollection>
-                </ListView.Transitions>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="local:ApplicationMessage">
-                        <Grid Margin="0,3,0,3">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <Grid Grid.Row="0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    Margin="2,2,4,2"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"
-                                    FontSize="{StaticResource FontSizeNormal}"
-                                    Foreground="{StaticResource PrimaryBrush}"
-                                    Text="{x:Bind Module, Mode=OneWay}" />
-                                <TextBlock
-                                    Grid.Column="1"
-                                    Margin="4,2,2,2"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    FontSize="{StaticResource FontSizeNormal}"
-                                    Foreground="{StaticResource HeaderBrush}"
-                                    Text="{x:Bind MessageTime, Mode=OneWay, Converter={StaticResource StringToFormat}, ConverterParameter='{}{0:ddd, dd MMM yyyy – hh:mm:ss tt}'}" />
-                            </Grid>
-                            <TextBlock
-                                Grid.Row="1"
-                                Margin="2"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
-                                FontSize="{StaticResource FontSizeNormal}"
-                                Foreground="{StaticResource SecondaryBrush}"
-                                Text="{x:Bind MessageText, Mode=OneWay}" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-            <!--#endregion-->
-
-            <StackPanel
-                Grid.Row="1"
-                Grid.ColumnSpan="2"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Orientation="Vertical"
-                Spacing="20">
                 <StackPanel
+                    Grid.Row="1"
+                    Grid.ColumnSpan="2"
                     HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
                     Orientation="Vertical"
-                    Spacing="10">
-                    <TextBlock
-                        x:Name="tbMessages"
+                    Spacing="20">
+                    <StackPanel
                         HorizontalAlignment="Center"
-                        FontSize="32"
-                        Text="WindowsAppSDK v1.6.25" />
-                    <TextBlock
-                        x:Name="tbVersion"
+                        Orientation="Vertical"
+                        Spacing="10">
+                        <TextBlock
+                            x:Name="tbMessages"
+                            HorizontalAlignment="Center"
+                            FontSize="32"
+                            Text="WindowsAppSDK v1.6.25" />
+                        <TextBlock
+                            x:Name="tbVersion"
+                            HorizontalAlignment="Center"
+                            FontSize="20"
+                            Foreground="{StaticResource SecondaryBorderBrush}"
+                            Text="{x:Bind local:App.DeviceModel}" />
+                        <!--
+                            If you want indeterminate behavior for the ProgressButton, don't set ProgressValue.
+                        -->
+                        <local:ProgressButton
+                            x:Name="progressButton"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            ButtonBusy="{x:Bind IsBusy, Mode=OneWay}"
+                            ButtonCornerRadius="5"
+                            ButtonEvent="{x:Bind ProgressButtonClickEvent, Mode=OneWay}"
+                            ButtonHeight="40"
+                            ButtonText="Progress Button"
+                            ButtonWidth="150"
+                            ProgressValue="{x:Bind Amount, Mode=OneWay}" />
+                    </StackPanel>
+                    <Grid>
+                        <local:AnimatedCirclesControl
+                            x:Name="circles"
+                            AnimationDuration="0.7"
+                            AnimationFrequency="0.1"
+                            CircleSize="16"
+                            GradientColorOne="{StaticResource ACC2}"
+                            GradientColorTwo="{StaticResource ACC1}"
+                            IsRunning="False"
+                            ScaleFactor="1.4"
+                            UseRadialGradient="False" />
+                        <Image
+                            x:Name="imgSpin"
+                            Width="32"
+                            Height="32"
+                            Margin="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Opacity="1.0"
+                            Source="ms-appx:///Assets/Spinner2.png"
+                            Visibility="Collapsed">
+                            <Image.Resources>
+                                <Storyboard
+                                    x:Name="StoryboardSpin"
+                                    AutoReverse="False"
+                                    RepeatBehavior="Forever">
+                                    <DoubleAnimation
+                                        x:Name="dblAnimation"
+                                        Storyboard.TargetName="spinnerTransform"
+                                        Storyboard.TargetProperty="Angle"
+                                        From="0"
+                                        To="360"
+                                        Duration="0:00:00.9" />
+                                </Storyboard>
+                            </Image.Resources>
+                            <Image.RenderTransform>
+                                <RotateTransform x:Name="spinnerTransform" CenterX="16" CenterY="16" />
+                            </Image.RenderTransform>
+                        </Image>
+                        <Button
+                            x:Name="btnRun"
+                            Width="150"
+                            MinHeight="40"
+                            Padding="0,1,0,0"
+                            HorizontalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Click="ButtonOnClick"
+                            Content="Enhanced Button"
+                            IsEnabled="{x:Bind IsBusy, Mode=OneWay, Converter={StaticResource BooleanInverter}}"
+                            Style="{StaticResource EnhancedButton}" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="24">
+                        <ToggleSwitch
+                            x:Name="tsBlur"
+                            Margin="0,5,0,0"
+                            HorizontalAlignment="Center"
+                            Header=""
+                            IsOn="False"
+                            OffContent="Blur Composition Off"
+                            OnContent="Blur Composition On"
+                            Style="{StaticResource GlowSwitch}"
+                            Toggled="OnSwitchToggled" />
+                        <CheckBox
+                            x:Name="cbTest"
+                            Margin="0,-1,0,0"
+                            HorizontalAlignment="Center"
+                            Checked="CheckBoxChanged"
+                            Content="Use SurfaceBrush"
+                            IsChecked="True"
+                            Style="{StaticResource GlowCheckBox}"
+                            Unchecked="CheckBoxChanged" />
+                    </StackPanel>
+                    <Slider
+                        x:Name="sldrDays"
+                        MinWidth="120"
+                        Margin="10,6,10,2"
                         HorizontalAlignment="Center"
-                        FontSize="20"
-                        Foreground="{StaticResource SecondaryBorderBrush}"
-                        Text="{x:Bind local:App.DeviceModel}" />
+                        Maximum="365"
+                        Minimum="1"
+                        Style="{StaticResource GlowSlider}"
+                        ValueChanged="SliderDaysChanged"
+                        Value="180" />
                     <!--
-                        If you want indeterminate behavior, don't set ProgressValue.
+                        https://learn.microsoft.com/en-us/windows/apps/design/controls/flipview#specify-the-look-of-the-items
                     -->
-                    <local:ProgressButton
-                        x:Name="progressButton"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        ButtonBusy="{x:Bind IsBusy, Mode=OneWay}"
-                        ButtonCornerRadius="5"
-                        ButtonEvent="{x:Bind ProgressButtonClickEvent, Mode=OneWay}"
-                        ButtonHeight="40"
-                        ButtonText="Progress Button"
-                        ButtonWidth="150"
-                        ProgressValue="{x:Bind Amount, Mode=OneWay}" />
-                </StackPanel>
-                <Grid>
-                    <local:AnimatedCirclesControl
-                        x:Name="circles"
-                        AnimationDuration="0.7"
-                        AnimationFrequency="0.1"
-                        CircleSize="16"
-                        GradientColorOne="{StaticResource ACC2}"
-                        GradientColorTwo="{StaticResource ACC1}"
-                        IsRunning="False"
-                        ScaleFactor="1.4"
-                        UseRadialGradient="False" />
-                    <Image
-                        x:Name="imgSpin"
-                        Width="32"
-                        Height="32"
-                        Margin="0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Opacity="1.0"
-                        Source="ms-appx:///Assets/Spinner2.png"
-                        Visibility="Collapsed">
-                        <Image.Resources>
-                            <Storyboard
-                                x:Name="StoryboardSpin"
-                                AutoReverse="False"
-                                RepeatBehavior="Forever">
-                                <DoubleAnimation
-                                    x:Name="dblAnimation"
-                                    Storyboard.TargetName="spinnerTransform"
-                                    Storyboard.TargetProperty="Angle"
-                                    From="0"
-                                    To="360"
-                                    Duration="0:00:00.9" />
-                            </Storyboard>
-                        </Image.Resources>
-                        <Image.RenderTransform>
-                            <RotateTransform x:Name="spinnerTransform" CenterX="16" CenterY="16" />
-                        </Image.RenderTransform>
-                    </Image>
-                    <Button
-                        x:Name="btnRun"
-                        Width="150"
-                        MinHeight="40"
-                        Padding="0,1,0,0"
-                        HorizontalAlignment="Center"
-                        VerticalContentAlignment="Center"
-                        Click="ButtonOnClick"
-                        Content="Enhanced Button"
-                        IsEnabled="{x:Bind IsBusy, Mode=OneWay, Converter={StaticResource BooleanInverter}}"
-                        Style="{StaticResource EnhancedButton}" />
-                </Grid>
-                <CheckBox
-                    x:Name="cbTest"
-                    HorizontalAlignment="Center"
-                    Checked="CheckBoxChanged"
-                    Content="Use SurfaceBrush"
-                    IsChecked="True"
-                    Style="{StaticResource GlowCheckBox}"
-                    Unchecked="CheckBoxChanged" />
-                <ToggleSwitch
-                    x:Name="tsBlur"
-                    HorizontalAlignment="Center"
-                    Header=""
-                    IsOn="False"
-                    OffContent="Blur Composition Off"
-                    OnContent="Blur Composition On"
-                    Style="{StaticResource GlowSwitch}"
-                    Toggled="OnSwitchToggled" />
-                <Slider
-                    x:Name="sldrDays"
-                    MinWidth="120"
-                    Margin="10,6,10,2"
-                    HorizontalAlignment="Center"
-                    Maximum="365"
-                    Minimum="1"
-                    Style="{StaticResource GlowSlider}"
-                    ValueChanged="SliderDaysChanged"
-                    Value="180" />
-                <!--
-                    https://learn.microsoft.com/en-us/windows/apps/design/controls/flipview#specify-the-look-of-the-items
-                -->
-                <FlipView
-                    x:Name="Flipper"
-                    MaxWidth="200"
-                    MaxHeight="100"
-                    Background="Transparent">
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                    <FlipView.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="32" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-                                <local:CompositionShadow
-                                    Grid.Row="0"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    BlurRadius="2"
-                                    OffsetX="2"
-                                    OffsetY="2"
-                                    ShadowOpacity="0.7"
-                                    Color="#76b9ed">
-                                    <TextBlock
-                                        FontSize="{StaticResource FontSizeLarge}"
-                                        Foreground="{StaticResource PrimaryBrush}"
-                                        Style="{StaticResource TitleTextBlockStyle}"
-                                        Text="{x:Bind Mode=OneWay, Converter={StaticResource FullPathToFile}}" />
-                                </local:CompositionShadow>
-                                <Image
-                                    Grid.Row="1"
-                                    Source="{Binding}"
-                                    Stretch="Uniform" />
-                            </Grid>
-                        </DataTemplate>
-                    </FlipView.ItemTemplate>
-                </FlipView>
-                <!--  The SelectedPageIndex is bound to the FlipView to keep the PipsPager in sync.  -->
-                <PipsPager
-                    x:Name="FlipViewPipsPager"
-                    HorizontalAlignment="Center"
-                    MaxVisiblePips="10"
-                    NextButtonStyle="{StaticResource NextButtonStyle}"
-                    NextButtonVisibility="Visible"
-                    NumberOfPages="{x:Bind Pictures.Count}"
-                    PreviousButtonStyle="{StaticResource PreviousButtonStyle}"
-                    PreviousButtonVisibility="Visible"
-                    SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
-
-                <StackPanel Orientation="Horizontal" Spacing="20">
-                    <ToggleButton
-                        x:Name="tbTest"
-                        Checked="ToggleOnChanged"
-                        Style="{StaticResource ToolbarToggleButton}"
-                        Unchecked="ToggleOnChanged">
-                        <FontIcon FontSize="24" Glyph="{StaticResource Unlock}" />
-                    </ToggleButton>
-                    <Button
-                        x:Name="tbButton"
-                        Click="ToolbarButtonOnClick"
-                        Content="Toolbar Button"
-                        Style="{StaticResource ToolbarButton}">
-                        <Button.Flyout>
-                            <!--
-                                If LightDismissOverlayMode is "On", the Page background will be darkened when it's opened.
-                            -->
-                            <Flyout
-                                x:Name="flyoutText"
-                                AreOpenCloseAnimationsEnabled="True"
-                                LightDismissOverlayMode="Off"
-                                Opened="flyoutTextOnOpened"
-                                ShowMode="TransientWithDismissOnPointerMoveAway">
-                                <Flyout.FlyoutPresenterStyle>
-                                    <Style TargetType="FlyoutPresenter">
-                                        <Setter Property="BorderThickness" Value="0" />
-                                        <Setter Property="Background" Value="Transparent" />
-                                        <Setter Property="IsDefaultShadowEnabled" Value="True" />
-                                        <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled" />
-                                        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
-                                        <Setter Property="IsTabStop" Value="True" />
-                                        <Setter Property="TabNavigation" Value="Cycle" />
-                                    </Style>
-                                </Flyout.FlyoutPresenterStyle>
-                                <StackPanel
-                                    Margin="0"
-                                    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                                    BorderBrush="{StaticResource GradientFlyoutBrush}"
-                                    BorderThickness="3"
-                                    CornerRadius="5"
-                                    Orientation="Vertical">
+                    <FlipView
+                        x:Name="Flipper"
+                        MaxWidth="200"
+                        MaxHeight="100"
+                        Background="Transparent">
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                        <FlipView.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="32" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
                                     <local:CompositionShadow
-                                        Margin="16"
+                                        Grid.Row="0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         BlurRadius="2"
                                         OffsetX="2"
                                         OffsetY="2"
-                                        ShadowOpacity="0.8"
-                                        Color="#000000">
-                                        <TextBlock Text="I'm an example of a Flyout, I'll close myself in a few seconds." TextWrapping="Wrap" />
+                                        ShadowOpacity="0.7"
+                                        Color="#76b9ed">
+                                        <TextBlock
+                                            FontSize="{StaticResource FontSizeLarge}"
+                                            Foreground="{StaticResource PrimaryBrush}"
+                                            Style="{StaticResource TitleTextBlockStyle}"
+                                            Text="{x:Bind Mode=OneWay, Converter={StaticResource FullPathToFile}}" />
                                     </local:CompositionShadow>
-                                </StackPanel>
-                            </Flyout>
-                        </Button.Flyout>
-                    </Button>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="20">
-                    <TextBox
-                        MinWidth="200"
-                        MinHeight="28"
-                        Background="Transparent"
-                        KeyUp="TextBoxOnKeyUp"
-                        PlaceholderText="First name" />
-                    <TextBox
-                        MinWidth="200"
-                        MinHeight="28"
-                        Background="Transparent"
-                        KeyUp="TextBoxOnKeyUp"
-                        PlaceholderText="First name"
-                        Style="{StaticResource MinimalTextBox}" />
-                </StackPanel>
-                <!--<StackPanel
+                                    <Image
+                                        Grid.Row="1"
+                                        Source="{Binding}"
+                                        Stretch="Uniform" />
+                                </Grid>
+                            </DataTemplate>
+                        </FlipView.ItemTemplate>
+                    </FlipView>
+                    <!--  The SelectedPageIndex is bound to the FlipView to keep the PipsPager in sync.  -->
+                    <PipsPager
+                        x:Name="FlipViewPipsPager"
+                        HorizontalAlignment="Center"
+                        MaxVisiblePips="10"
+                        NextButtonStyle="{StaticResource NextButtonStyle}"
+                        NextButtonVisibility="Visible"
+                        NumberOfPages="{x:Bind Pictures.Count}"
+                        PreviousButtonStyle="{StaticResource PreviousButtonStyle}"
+                        PreviousButtonVisibility="Visible"
+                        SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
+
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="20">
+                        <ToggleButton
+                            x:Name="tbMessagePane"
+                            Checked="ToggleOnChanged"
+                            Style="{StaticResource ToolbarToggleButton}"
+                            Unchecked="ToggleOnChanged">
+                            <FontIcon FontSize="24" Glyph="{StaticResource Message}" />
+                        </ToggleButton>
+                        <Button
+                            x:Name="tbButton"
+                            Click="ToolbarButtonOnClick"
+                            Content="Toolbar Button"
+                            Style="{StaticResource ToolbarButton}">
+                            <Button.Flyout>
+                                <!--
+                                    If LightDismissOverlayMode is "On", the Page background will be darkened when it's opened.
+                                -->
+                                <Flyout
+                                    x:Name="flyoutText"
+                                    AreOpenCloseAnimationsEnabled="True"
+                                    LightDismissOverlayMode="Off"
+                                    Opened="flyoutTextOnOpened"
+                                    ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <Flyout.FlyoutPresenterStyle>
+                                        <Style TargetType="FlyoutPresenter">
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="IsDefaultShadowEnabled" Value="True" />
+                                            <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled" />
+                                            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+                                            <Setter Property="IsTabStop" Value="True" />
+                                            <Setter Property="TabNavigation" Value="Cycle" />
+                                        </Style>
+                                    </Flyout.FlyoutPresenterStyle>
+                                    <StackPanel
+                                        Margin="0"
+                                        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                                        BorderBrush="{StaticResource GradientFlyoutBrush}"
+                                        BorderThickness="3"
+                                        CornerRadius="5"
+                                        Orientation="Vertical">
+                                        <local:CompositionShadow
+                                            Margin="16"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            BlurRadius="2"
+                                            OffsetX="2"
+                                            OffsetY="2"
+                                            ShadowOpacity="0.8"
+                                            Color="#000000">
+                                            <TextBlock Text="I'm an example of a Flyout, I'll close myself in a few seconds." TextWrapping="Wrap" />
+                                        </local:CompositionShadow>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="20">
+                        <TextBox
+                            MinWidth="200"
+                            MinHeight="28"
+                            Background="Transparent"
+                            KeyUp="TextBoxOnKeyUp"
+                            PlaceholderText="First name" />
+                        <TextBox
+                            MinWidth="200"
+                            MinHeight="28"
+                            Background="Transparent"
+                            KeyUp="TextBoxOnKeyUp"
+                            PlaceholderText="First name"
+                            Style="{StaticResource MinimalTextBox}" />
+                    </StackPanel>
+                    <!--<StackPanel
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
@@ -443,29 +467,43 @@
                     <Image Source="ms-appx:///Assets/AltIcon4.png" />
                     <Image Source="ms-appx:///Assets/AltIcon5.png" />
                 </StackPanel>-->
-            </StackPanel>
+                </StackPanel>
 
-            <!--#region [InfoBar Content]-->
-            <StackPanel
-                Grid.Row="2"
-                Grid.ColumnSpan="2"
-                Margin="0"
-                VerticalAlignment="Bottom">
-                <!--
-                    Wrap this in a StackPanel/Grid to support AnimateUIElementOffset
-                    This is my "new & improved" version of the original AutoCloseInfoBar.
-                -->
-                <local:SlideBar
-                    x:Name="infoBar"
-                    AutoCloseInterval="5000"
-                    Background="{StaticResource GradientBarBrush}"
-                    Foreground="{StaticResource PrimaryBrush}"
-                    Severity="Informational"
-                    SlideUp="True" />
-            </StackPanel>
-            <!--#endregion-->
+                <!--#region [InfoBar Content]-->
+                <StackPanel
+                    Grid.Row="2"
+                    Grid.ColumnSpan="2"
+                    Margin="0"
+                    VerticalAlignment="Bottom">
+                    <!--
+                        Wrap this in a StackPanel/Grid to support AnimateUIElementOffset
+                        This is my "new & improved" version of the original AutoCloseInfoBar.
+                    -->
+                    <local:SlideBar
+                        x:Name="infoBar"
+                        AutoCloseInterval="5000"
+                        Background="{StaticResource GradientBarBrush}"
+                        Foreground="{StaticResource PrimaryBrush}"
+                        Severity="Informational"
+                        SlideUp="True" />
+                </StackPanel>
+                <!--#endregion-->
 
-        </Grid>
+            </Grid>
+
+
+        </SplitView>
+
+        <!--#region [blur test via control instead of compositor]-->
+        <Image
+            x:Name="blurTest"
+            Width="1000"
+            Margin="12,10,10,10"
+            IsHitTestVisible="False"
+            IsTabStop="False"
+            Stretch="Uniform"
+            Visibility="Collapsed" />
+        <!--#endregion-->
 
     </Grid>
 

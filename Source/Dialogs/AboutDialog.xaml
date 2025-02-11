@@ -137,7 +137,7 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Opacity="0.9"
-                Source="ms-appx:///Assets/Spinner17.png"
+                Source="ms-appx:///Assets/Spinner31.png"
                 Visibility="Visible">
                 <Image.Resources>
                     <Storyboard
