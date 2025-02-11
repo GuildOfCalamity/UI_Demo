@@ -13,7 +13,8 @@
 
 ## 🎛️ Description
 - A test application for changes and updates made to the WindowsAppSDK.
-- Ive added code examples for customizing `Microsoft.UI.Xaml.Controls.ContentDialog`, `Windows.UI.StartScreen.JumpList`, `Windows.ApplicationModel.Activation`, `Microsoft.UI.Windowing.AppWindow` and `Microsoft.UI.Windowing.DisplayArea` management, and creating gradient window backdrops via `Microsoft.UI.Composition.SpriteVisual`. The blur effects are created from scratch without the use of any 3rd party NuGets.
+- I've added code examples for customizing `Microsoft.UI.Xaml.Controls.ContentDialog`, `Windows.UI.StartScreen.JumpList`, `Windows.ApplicationModel.Activation`, `Microsoft.UI.Windowing.AppWindow` and `Microsoft.UI.Windowing.DisplayArea` management, and creating gradient window backdrops via `Microsoft.UI.Composition.SpriteVisual`. The blur effects are created from scratch without the use of any 3rd party NuGets.
+- This source also contains plenty of tips and tricks for any application, including but not limited to: TaskBar, PubSub, Toast, Channels, DispatcherQueue, Image Capture, Split View, Profile Settings, Machine Environment, Stylers, Converters, P/Invoke, Extensions, et al.
 - Don't forget to give a ⭐ if you find any of my code helpful or educational.
 
 ## 💻 Screenshots
