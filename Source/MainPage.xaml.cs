@@ -180,6 +180,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
 
+        #region [Button Animation]
         if (useSpringInsteadOfScalar)
         {   // SpringVector3NaturalMotionAnimation
             btnRun.PointerEntered += RunButtonOnPointerEntered;
@@ -199,8 +200,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             btnRun.PointerEntered += (s, e) => { AnimateButtonX(btnRun, btnOffsetX + 4f); };
             btnRun.PointerExited += (s, e) => { AnimateButtonX(btnRun, btnOffsetX); };
         }
+        #endregion
     }
 
+    #region [Events]
     /// <summary>
     /// <see cref="SpringVector3NaturalMotionAnimation"/>
     /// </summary>
@@ -231,7 +234,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
-    #region [Events]
     void SizeChangeEvent(Windows.Graphics.SizeInt32 newSize)
     {
         if (this.Content != null)

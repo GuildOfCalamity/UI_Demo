@@ -27,6 +27,7 @@ namespace UI_Demo;
 public sealed partial class ProgressButton : UserControl
 {
     Compositor? _compositor;
+    float ctrlOffsetX = 0; // Store the grid's initial offset for later animation.
 
     /// <summary>
     /// This control offers the flexibility for an <see cref="Action"/> to be bound to the control 
@@ -41,23 +42,23 @@ public sealed partial class ProgressButton : UserControl
 
         if (EnableSpringAnimation)
         {
-            float btnOffsetX = 0; // Store the grid's initial offset for later animation.
             ThisGrid.Loaded += (s, e) =>
             {   // It seems when the grid's offset is modified from Grid/Stack centering,
                 // we must force an animation to run to setup the initial starting conditions.
                 // If you skip this step then you'll have to mouse-over the grid twice to
                 // see the intended animation (for first run only).
-                btnOffsetX = ThisGrid.ActualOffset.X;
-                AnimateGridX(ThisGrid, btnOffsetX);
+                ctrlOffsetX = ThisGrid.ActualOffset.X;
+                AnimateGridX(ThisGrid, ctrlOffsetX);
             };
             ThisGrid.PointerEntered += (s, e) => 
             {
                 if (!ButtonBusy)
-                    AnimateGridX(ThisGrid, btnOffsetX + 4f); 
+                    AnimateGridX(ThisGrid, ctrlOffsetX + 4f); 
             };
             ThisGrid.PointerExited += (s, e) => 
             {
-                AnimateGridX(ThisGrid, btnOffsetX); 
+                if (!ButtonBusy)
+                    AnimateGridX(ThisGrid, ctrlOffsetX); 
             };
         }
     }
@@ -231,9 +232,15 @@ public sealed partial class ProgressButton : UserControl
     void OnBusyChanged(bool newValue)
     {
         if (newValue)
+        {
             ThisProgress.Visibility = Visibility.Visible;
+            if (EnableSpringAnimation) // force a return to original position
+                AnimateGridX(ThisGrid, ctrlOffsetX);
+        }
         else
+        {
             ThisProgress.Visibility = Visibility.Collapsed;
+        }
     }
 
     /// <summary>
