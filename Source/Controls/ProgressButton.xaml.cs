@@ -27,6 +27,8 @@ namespace UI_Demo;
 public sealed partial class ProgressButton : UserControl
 {
     Compositor? _compositor;
+    long? _ieToken;
+    double originalOpacity = 1d;
     float ctrlOffsetX = 0; // Store the grid's initial offset for later animation.
 
     /// <summary>
@@ -38,7 +40,11 @@ public sealed partial class ProgressButton : UserControl
     {
         this.InitializeComponent();
         this.Loaded += ProgressButton_Loaded;
+        this.Unloaded += ProgressButton_Unloaded;
         this.SizeChanged += ProgressButton_SizeChanged;
+
+        // Testing the IsEnabled property change via register property changed callback.
+        _ieToken = this.RegisterPropertyChangedCallback(UserControl.IsEnabledProperty, EnabledPropertyChanged);
     }
 
     #region [Dependency Properties]
@@ -556,6 +562,8 @@ public sealed partial class ProgressButton : UserControl
         // Get rid of the single line that appears when using the non-indeterminate mode.
         ThisProgress.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
+        originalOpacity = ThisGrid.Opacity;
+
         // Keep this in the control's loaded event and not the constructor.
         if (EnableSpringAnimation)
         {
@@ -579,6 +587,32 @@ public sealed partial class ProgressButton : UserControl
             };
         }
     }
+
+    /// <summary>
+    /// Callback for our control's property change.
+    /// This method is called, but for some reason the IsEnabled value is not being updated properly.
+    /// </summary>
+    void EnabledPropertyChanged(DependencyObject o, DependencyProperty p)
+    {
+        var obj = o as ProgressButton;
+        if (obj == null || p != UserControl.IsEnabledProperty)
+            return;
+
+        // Get the new value of the IsEnabledProperty
+        bool isEnabled = (bool)obj.GetValue(p);
+        //bool isEnabled = obj.IsEnabled;
+        
+        Debug.WriteLine($"[INFO] '{obj.GetType()}' IsEnabledProperty is '{isEnabled}'.");
+        //ThisGrid.Opacity = obj.IsEnabled ? originalOpacity : 0.6d;
+        ThisGrid.Opacity = isEnabled ? originalOpacity : 0.6d;
+    }
+
+    void ProgressButton_Unloaded(object sender, RoutedEventArgs e)
+    {
+        if (_ieToken != null)
+            this.UnregisterPropertyChangedCallback(UserControl.IsEnabledProperty, (long)_ieToken);
+    }
+
 
     void ProgressButton_SizeChanged(object sender, SizeChangedEventArgs e)
     {

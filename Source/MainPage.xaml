@@ -8,7 +8,105 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="Transparent"
     mc:Ignorable="d">
-
+    <Page.Resources>
+        <!--
+            === Settings Flyout ===
+        -->
+        <Flyout
+            x:Key="SettingsFlyout"
+            x:Name="SettingsFlyout"
+            OverlayInputPassThroughElement="{x:Bind SettingsBar}"
+            Placement="LeftEdgeAlignedBottom">
+            <Flyout.FlyoutPresenterStyle>
+                <Style TargetType="FlyoutPresenter">
+                    <Setter Property="CornerRadius" Value="5" />
+                    <Setter Property="Background" Value="#99202020" />
+                    <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled" />
+                    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+                    <Setter Property="IsTabStop" Value="True" />
+                    <Setter Property="TabNavigation" Value="Cycle" />
+                </Style>
+            </Flyout.FlyoutPresenterStyle>
+            <StackPanel
+                Padding="20,14,20,14"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="2"
+                CornerRadius="4"
+                Orientation="Vertical"
+                Spacing="4">
+                <TextBlock
+                    Margin="0,0,0,6"
+                    HorizontalAlignment="Left"
+                    FontSize="16"
+                    FontWeight="Medium"
+                    Foreground="#FF76B9ED"
+                    Text="Execution Delay Time" />
+                <!--#region[DividerBar]-->
+                <Grid
+                    Margin="0,0,0,6"
+                    ColumnSpacing="0"
+                    RowSpacing="0">
+                    <Rectangle
+                        Height="2"
+                        Margin="0,2,0,0"
+                        HorizontalAlignment="Stretch"
+                        RadiusX="4"
+                        RadiusY="4">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="1,0" EndPoint="1,1">
+                                <LinearGradientBrush.GradientStops>
+                                    <GradientStop Offset="0" Color="#FF76B9ED" />
+                                    <GradientStop Offset="0.2" Color="#6F76B9ED" />
+                                    <GradientStop Offset="1" Color="#2F76B9ED" />
+                                </LinearGradientBrush.GradientStops>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <Rectangle
+                        Height="2"
+                        Margin="0,-2,0,0"
+                        HorizontalAlignment="Stretch"
+                        Fill="Gray"
+                        RadiusX="4"
+                        RadiusY="4" />
+                </Grid>
+                <!--#endregion-->
+                <StackPanel Orientation="Vertical" Spacing="2">
+                    <RadioButton
+                        Command="{x:Bind SwitchDelayCommand}"
+                        Content="Long"
+                        GroupName="AppDelay"
+                        IsChecked="{x:Bind Delay, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Long}"
+                        IsEnabled="{Binding SwitchDelayCommand.CanExecute, Mode=OneWay}">
+                        <RadioButton.CommandParameter>
+                            <x:String>Long</x:String>
+                        </RadioButton.CommandParameter>
+                    </RadioButton>
+                    <RadioButton
+                        Command="{x:Bind SwitchDelayCommand}"
+                        Content="Medium"
+                        GroupName="AppDelay"
+                        IsChecked="{x:Bind Delay, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Medium}"
+                        IsEnabled="{Binding SwitchDelayCommand.CanExecute, Mode=OneWay}">
+                        <RadioButton.CommandParameter>
+                            <x:String>Medium</x:String>
+                        </RadioButton.CommandParameter>
+                    </RadioButton>
+                    <RadioButton
+                        Command="{x:Bind SwitchDelayCommand}"
+                        Content="Short"
+                        GroupName="AppDelay"
+                        IsChecked="{x:Bind Delay, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Short}"
+                        IsEnabled="{Binding SwitchDelayCommand.CanExecute, Mode=OneWay}">
+                        <RadioButton.CommandParameter>
+                            <x:String>Short</x:String>
+                        </RadioButton.CommandParameter>
+                    </RadioButton>
+                </StackPanel>
+            </StackPanel>
+        </Flyout>
+    </Page.Resources>
     <Grid x:Name="root">
 
         <SplitView
@@ -376,9 +474,16 @@
                         SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
 
                     <StackPanel
+                        x:Name="SettingsBar"
                         HorizontalAlignment="Center"
                         Orientation="Horizontal"
                         Spacing="20">
+                        <Button
+                            x:Name="SettingsButton"
+                            Content="{StaticResource Settings}"
+                            Flyout="{StaticResource SettingsFlyout}"
+                            FontFamily="Segoe MDL2 Assets"
+                            FontSize="{StaticResource FontSizeLarge}" />
                         <ToggleButton
                             x:Name="tbMessagePane"
                             Checked="ToggleOnChanged"

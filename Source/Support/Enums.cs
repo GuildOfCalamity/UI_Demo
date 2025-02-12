@@ -23,3 +23,11 @@ public enum ChannelMessageType
     AppClose = 3,
     AppException = 4
 }
+
+public enum DelayTime
+{
+    None = 0,
+    Short = 1,
+    Medium = 3,
+    Long = 5
+}

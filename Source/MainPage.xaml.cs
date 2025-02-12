@@ -2,32 +2,33 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Diagnostics;
+using System.Windows.Input;
 
 using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Hosting;
 
 using Windows.Foundation;
-using Windows.UI.StartScreen;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using Windows.UI.StartScreen;
 
 using WinRT.Interop;
-using Microsoft.UI.Windowing;
 
 namespace UI_Demo;
 
@@ -79,6 +80,16 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             NotifyPropertyChanged(nameof(Amount));
         }
     }
+    DelayTime _delay = DelayTime.Medium;
+    public DelayTime Delay
+    {
+        get => _delay;
+        set
+        {
+            _delay = value;
+            NotifyPropertyChanged(nameof(Delay));
+        }
+    }
     public ObservableCollection<string> LogMessages { get; private set; } = new();
     public ObservableCollection<string> Pictures = new();
     public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
@@ -119,6 +130,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
     #endregion
 
+    public ICommand SwitchDelayCommand { get; private set; }
+
     public MainPage()
     {
         this.InitializeComponent();
@@ -138,7 +151,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             for (int i = 0; i < 100; i++)
             {
                 Amount += 1;
-                await Task.Delay(18);
+                switch (Delay)
+                {
+                    case DelayTime.Short: await Task.Delay(6); break;
+                    case DelayTime.Medium: await Task.Delay(18); break;
+                    case DelayTime.Long: await Task.Delay(40); break;
+                    default: await Task.Delay(10); break;
+                }
             }
             tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Finished");
             IsBusy = false;
@@ -207,6 +226,29 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             btnRun.PointerExited += (s, e) => { AnimateButtonX(btnRun, btnOffsetX); };
         }
         #endregion
+
+        // Configure delay time relay command.
+        SwitchDelayCommand = new AsyncRelayCommand(async (param) =>
+        {
+            if (param is string str)
+            {
+                if (Enum.IsDefined(typeof(DelayTime), str))
+                {
+                    // For testing IsEnabled="{Binding SwitchDelayCommand.CanExecute}"
+                    await Task.Delay(250);
+
+                    Delay = (DelayTime)Enum.Parse(typeof(DelayTime), str);
+                }
+                else
+                {
+                    Debug.WriteLine($"[WARNING] Parameter is not of type '{nameof(DelayTime)}'.");
+                }
+            }
+            else
+            {
+                Debug.WriteLine($"[WARNING] Parameter was not a string, nothing to do.");
+            }
+        });
     }
 
     #region [Events]
@@ -270,6 +312,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         
         _ctsTask = new CancellationTokenSource();
 
+        var delay = Delay;
         IsBusy = false;
         UpdateInfoBar("Starting task…", MessageLevel.Information);
         btnRun.IsEnabled = false;
@@ -286,8 +329,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 IsBusy = true;
                 ToggleAnimation(IsBusy);
-                await Task.Delay(3500);
-
+                switch (delay)
+                {
+                    case DelayTime.Short: await Task.Delay(1500); break;
+                    case DelayTime.Medium: await Task.Delay(3000); break;
+                    case DelayTime.Long: await Task.Delay(5000); break;
+                    default: await Task.Delay(500); break;
+                }
             }, _ctsTask.Token);
 
             /** 
@@ -416,8 +464,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 for (int i = 1; i < 101; i++)
                 {
                     list.Add($"Item {i}");
-                    
-                    await Task.Delay(50);
+                  
+                    switch (delay)
+                    {
+                        case DelayTime.Short: await Task.Delay(20); break;
+                        case DelayTime.Medium: await Task.Delay(50); break;
+                        case DelayTime.Long: await Task.Delay(100); break;
+                        default: await Task.Delay(10); break;
+                    }
 
                     int diceRoll = Random.Shared.Next(100);
                     

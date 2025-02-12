@@ -15,34 +15,33 @@
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
 	<TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
 	<!-- 
-        [for SDK v1.5 specifically]
+        [for SDK v1.5+ specifically]
         https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/stable-channel#other-new-features-from-across-the-winappsdk
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/stable-channel#known-issues
         <ShouldComputeInputPris>true</ShouldComputeInputPris>
     -->
-	  <LangVersion>latest</LangVersion>
-	  <Version>1.0.0.0</Version>
-	  <FileVersion>1.0.0.0</FileVersion>
-	  <AssemblyVersion>1.0.0.0</AssemblyVersion>
-	  <PackageId>UIDemo2025</PackageId>
-	  <Title>UI_Demo</Title>
-	  <Authors>The Guild</Authors>
+	<LangVersion>latest</LangVersion>
+	<Version>1.0.0.0</Version>
+	<FileVersion>1.0.0.0</FileVersion>
+	<AssemblyVersion>1.0.0.0</AssemblyVersion>
+	<PackageId>UIDemo2025</PackageId>
+	<Title>UI_Demo</Title>
+	<Authors>The Guild</Authors>
 	<!-- 
       WindowsPackageType defines whether your app is packaged (MSIX) or unpackaged (None) 
     -->
-	  <WindowsPackageType>None</WindowsPackageType>
-	  <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+	<WindowsPackageType>None</WindowsPackageType>
+	<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
 	<!-- 
       Get rid of all the unnecessary pathing that MS adds and 
       makes the output match the traditional .NET Framework builds.
     -->
-	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	<!-- 
          https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#generatedocumentationfile
     -->
@@ -50,14 +49,18 @@
 	<!-- 
          https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#optimizeimplicitlytriggeredbuild 
     -->
-	  <OptimizeImplicitlyTriggeredBuild>true</OptimizeImplicitlyTriggeredBuild>
+	<OptimizeImplicitlyTriggeredBuild>true</OptimizeImplicitlyTriggeredBuild>
 	<!-- 
       If true, this will create a subfolder named "refs" which contains all of the possible framework dependencies. The default value is false.
       https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#preservecompilationcontext
     -->
-	  <PreserveCompilationContext>false</PreserveCompilationContext>
-  
-</PropertyGroup>
+	<PreserveCompilationContext>false</PreserveCompilationContext>
+    <!-- 
+	    NOTE: When AOT is true, it breaks all RelayCommands! 
+      AOT can strip dynamic bindings for XAML projects.
+    -->
+	<PublishAot>false</PublishAot>
+ </PropertyGroup>
 
   <!-- 
      Define "IS_UNPACKAGED" constant if the app is an unpackaged app. 
@@ -401,7 +404,13 @@
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+	  
+	<!-- 
+	    NOTE: For CsWinRT 2.2.0 if this is false then any simple source binding will cause: Unable to cast object of type 'WinRT.IInspectable' to type 'System.String[]'
+		https://github.com/microsoft/CsWinRT/issues/1906#issuecomment-2640570068 
+	-->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  
   </PropertyGroup>
 
   <!-- 

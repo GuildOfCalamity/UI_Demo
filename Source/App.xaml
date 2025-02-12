@@ -30,6 +30,7 @@
             <local:BooleanToVisibilityInverseConverter x:Key="BooleanVisibilityInverse" />
             <local:FullPathToFileConverter x:Key="FullPathToFile" />
             <local:StringFormatConverter x:Key="StringToFormat" />
+            <local:EnumToBooleanConverter x:Key="EnumToBoolean" />
             <!--#endregion-->
 
             <!--#region [Font Sizes]-->
