@@ -48,7 +48,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     DispatcherTimer? _flyoutTimer;
     CancellationTokenSource _ctsTask;
 
-    bool useSpringInsteadOfScalar = false;
+    bool useSpringInsteadOfScalar = true;
     float _springMultiplier = 1.05f;
     SpringVector3NaturalMotionAnimation? _springVectorAnimation;
     SpringScalarNaturalMotionAnimation? _springScalarAnimation;
@@ -181,13 +181,19 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
 
         #region [Button Animation]
+        // You could also use Behaviors for this, but I wanted to
+        // keep this solution "pure" and not use any additional NuGets
+        // apart from the core SDK that's required for a WinUI3 app.
+
         if (useSpringInsteadOfScalar)
-        {   // SpringVector3NaturalMotionAnimation
+        {   
+            // SpringVector3NaturalMotionAnimation
             btnRun.PointerEntered += RunButtonOnPointerEntered;
             btnRun.PointerExited += RunButtonOnPointerExited;
         }
         else
-        {   // SpringScalarNaturalMotionAnimation
+        {   
+            // SpringScalarNaturalMotionAnimation
             float btnOffsetX = 0; // Store the button's initial offset for later animations.
             btnRun.Loaded += (s, e) => 
             {   // It seems when the button's offset is modified from Grid/Stack centering,

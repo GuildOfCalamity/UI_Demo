@@ -39,28 +39,6 @@ public sealed partial class ProgressButton : UserControl
         this.InitializeComponent();
         this.Loaded += ProgressButton_Loaded;
         this.SizeChanged += ProgressButton_SizeChanged;
-
-        if (EnableSpringAnimation)
-        {
-            ThisGrid.Loaded += (s, e) =>
-            {   // It seems when the grid's offset is modified from Grid/Stack centering,
-                // we must force an animation to run to setup the initial starting conditions.
-                // If you skip this step then you'll have to mouse-over the grid twice to
-                // see the intended animation (for first run only).
-                ctrlOffsetX = ThisGrid.ActualOffset.X;
-                AnimateGridX(ThisGrid, ctrlOffsetX);
-            };
-            ThisGrid.PointerEntered += (s, e) => 
-            {
-                if (!ButtonBusy)
-                    AnimateGridX(ThisGrid, ctrlOffsetX + 4f); 
-            };
-            ThisGrid.PointerExited += (s, e) => 
-            {
-                if (!ButtonBusy)
-                    AnimateGridX(ThisGrid, ctrlOffsetX); 
-            };
-        }
     }
 
     #region [Dependency Properties]
@@ -577,6 +555,29 @@ public sealed partial class ProgressButton : UserControl
         }
         // Get rid of the single line that appears when using the non-indeterminate mode.
         ThisProgress.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+
+        // Keep this in the control's loaded event and not the constructor.
+        if (EnableSpringAnimation)
+        {
+            ThisGrid.Loaded += (s, e) =>
+            {   // It seems when the grid's offset is modified from Grid/Stack centering,
+                // we must force an animation to run to setup the initial starting conditions.
+                // If you skip this step then you'll have to mouse-over the grid twice to
+                // see the intended animation (for first run only).
+                ctrlOffsetX = ThisGrid.ActualOffset.X;
+                AnimateGridX(ThisGrid, ctrlOffsetX);
+            };
+            ThisGrid.PointerEntered += (s, e) =>
+            {
+                if (!ButtonBusy)
+                    AnimateGridX(ThisGrid, ctrlOffsetX + 4f);
+            };
+            ThisGrid.PointerExited += (s, e) =>
+            {
+                if (!ButtonBusy)
+                    AnimateGridX(ThisGrid, ctrlOffsetX);
+            };
+        }
     }
 
     void ProgressButton_SizeChanged(object sender, SizeChangedEventArgs e)
