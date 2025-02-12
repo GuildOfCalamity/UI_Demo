@@ -237,6 +237,7 @@
                             ButtonHeight="40"
                             ButtonText="Progress Button"
                             ButtonWidth="150"
+                            EnableSpringAnimation="True"
                             ProgressValue="{x:Bind Amount, Mode=OneWay}" />
                     </StackPanel>
                     <Grid>

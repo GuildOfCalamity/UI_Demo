@@ -189,14 +189,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {   // SpringScalarNaturalMotionAnimation
             float btnOffsetX = 0; // Store the button's initial offset for later animations.
             btnRun.Loaded += (s, e) => 
-            {   // It seems when the button's offset is modified from Grid/Stack centering, we
-                // must force an animation to run to setup the initial starting conditions.
+            {   // It seems when the button's offset is modified from Grid/Stack centering,
+                // we must force an animation to run to setup the initial starting conditions.
                 // If you skip this step then you'll have to mouse-over the button twice to
-                // see the intended animation.
+                // see the intended animation (for first run only).
                 btnOffsetX = btnRun.ActualOffset.X;
                 AnimateButtonX(btnRun, btnOffsetX);
             };
-            btnRun.PointerEntered += (s, e) => { AnimateButtonX(btnRun, btnOffsetX + 8f); };
+            btnRun.PointerEntered += (s, e) => { AnimateButtonX(btnRun, btnOffsetX + 4f); };
             btnRun.PointerExited += (s, e) => { AnimateButtonX(btnRun, btnOffsetX); };
         }
     }
@@ -1291,7 +1291,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             _springVectorAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
             _springVectorAnimation.Target = "Scale";
             _springVectorAnimation.InitialVelocity = new System.Numerics.Vector3(_springMultiplier);
-            _springVectorAnimation.DampingRatio = 0.4f;
+            _springVectorAnimation.DampingRatio = 0.3f;  // Lower values are more "springy"
             _springVectorAnimation.Period = TimeSpan.FromMilliseconds(50);
         }
 
@@ -1304,10 +1304,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     /// </summary>
     public void InitializeButtonOffsetY(Button button)
     {
+        if (button == null) { return; }
         Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
         buttonVisual.Offset = new Vector3(buttonVisual.Offset.X, 0, buttonVisual.Offset.Z);
     }
-
     public void AnimateButtonY(Button button, float offset)
     {
         if (button == null)
@@ -1322,7 +1322,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         _springAnimation.Target = "Offset.Y";   // Move vertically
         _springAnimation.InitialVelocity = 50f; // Adjust movement speed
         _springAnimation.FinalValue = offset;   // Set the final target Y position
-        _springAnimation.DampingRatio = 0.4f;
+        _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
         _springAnimation.Period = TimeSpan.FromMilliseconds(50);
 
         // Get the button's visual and apply the animation
@@ -1335,6 +1335,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     /// </summary>
     public void InitializeButtonOffsetX(Button button)
     {
+        if (button == null) { return; }
         Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
         buttonVisual.Offset = new Vector3(0, buttonVisual.Offset.Y, buttonVisual.Offset.Z);
     }
@@ -1346,18 +1347,49 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         if (_compositor == null)
             _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
 
-        // Create a Spring Animation for Y offset
+        // Create a Spring Animation for X offset
         SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
         _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
         _springAnimation.Target = "Offset.X";   // Move vertically
         _springAnimation.InitialVelocity = 50f; // Adjust movement speed
-        _springAnimation.FinalValue = offset;   // Set the final target Y position
-        _springAnimation.DampingRatio = 0.4f;
+        _springAnimation.FinalValue = offset;   // Set the final target X position
+        _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
         _springAnimation.Period = TimeSpan.FromMilliseconds(50);
 
         // Get the button's visual and apply the animation
         Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
         buttonVisual.StartAnimation("Offset.X", _springAnimation);
+    }
+
+    /// <summary>
+    /// Ensures the grid starts with Offset.X = 0
+    /// </summary>
+    public void InitializeGridOffsetX(Grid grid)
+    {
+        if (grid == null) { return; }
+        Visual gridVisual = ElementCompositionPreview.GetElementVisual(grid);
+        gridVisual.Offset = new System.Numerics.Vector3(0, gridVisual.Offset.Y, gridVisual.Offset.Z);
+    }
+    public void AnimateGridX(Grid grid, float offset)
+    {
+        if (grid == null)
+            return;
+
+        if (_compositor == null)
+            _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
+
+        // Create a Spring Animation for X offset
+        SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
+        _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
+        _springAnimation.Target = "Offset.X";   // Move vertically
+        _springAnimation.InitialVelocity = 50f; // Adjust movement speed
+        _springAnimation.FinalValue = offset;   // Set the final target X position
+        _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
+        _springAnimation.Period = TimeSpan.FromMilliseconds(50);
+
+        // Get the button's visual and apply the animation
+        Visual gridVisual = ElementCompositionPreview.GetElementVisual(grid);
+        gridVisual.StartAnimation("Offset.X", _springAnimation);
     }
     #endregion
 }

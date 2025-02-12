@@ -5,10 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Windows.Input;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
@@ -24,6 +26,8 @@ namespace UI_Demo;
 /// </summary>
 public sealed partial class ProgressButton : UserControl
 {
+    Compositor? _compositor;
+
     /// <summary>
     /// This control offers the flexibility for an <see cref="Action"/> to be bound to the control 
     /// or an <see cref="ICommand"/>. The <see cref="ButtonBusy"/> property determines if the
@@ -34,6 +38,28 @@ public sealed partial class ProgressButton : UserControl
         this.InitializeComponent();
         this.Loaded += ProgressButton_Loaded;
         this.SizeChanged += ProgressButton_SizeChanged;
+
+        if (EnableSpringAnimation)
+        {
+            float btnOffsetX = 0; // Store the grid's initial offset for later animation.
+            ThisGrid.Loaded += (s, e) =>
+            {   // It seems when the grid's offset is modified from Grid/Stack centering,
+                // we must force an animation to run to setup the initial starting conditions.
+                // If you skip this step then you'll have to mouse-over the grid twice to
+                // see the intended animation (for first run only).
+                btnOffsetX = ThisGrid.ActualOffset.X;
+                AnimateGridX(ThisGrid, btnOffsetX);
+            };
+            ThisGrid.PointerEntered += (s, e) => 
+            {
+                if (!ButtonBusy)
+                    AnimateGridX(ThisGrid, btnOffsetX + 4f); 
+            };
+            ThisGrid.PointerExited += (s, e) => 
+            {
+                AnimateGridX(ThisGrid, btnOffsetX); 
+            };
+        }
     }
 
     #region [Dependency Properties]
@@ -184,7 +210,7 @@ public sealed partial class ProgressButton : UserControl
         nameof(ButtonBusy),
         typeof(bool),
         typeof(ProgressButton),
-        new PropertyMetadata(null, OnButtonBusyPropertyChanged));
+        new PropertyMetadata(false, OnButtonBusyPropertyChanged));
     /// <summary>
     /// Upon trigger, the <see cref="DependencyObject"/> will be the control itself (<see cref="ProgressButton"/>)
     /// and the <see cref="DependencyPropertyChangedEventArgs"/> will be the <see cref="bool"/> object contained within.
@@ -488,6 +514,44 @@ public sealed partial class ProgressButton : UserControl
     {
         ThisButton.Height = newValue;
     }
+
+    /// <summary>
+    /// If true, the <see cref="SpringScalarNaturalMotionAnimation"/> is active.
+    /// </summary>
+    public bool EnableSpringAnimation
+    {
+        get => (bool)GetValue(EnableSpringAnimationProperty);
+        set => SetValue(EnableSpringAnimationProperty, value);
+    }
+    /// <summary>
+    /// Backing property for EnabledSpringAnimation
+    /// </summary>
+    public static readonly DependencyProperty EnableSpringAnimationProperty = DependencyProperty.Register(
+        nameof(EnableSpringAnimation),
+        typeof(bool),
+        typeof(ProgressButton),
+        new PropertyMetadata(true, OnEnableSpringAnimationPropertyChanged));
+    /// <summary>
+    /// Upon trigger, the <see cref="DependencyObject"/> will be the control itself (<see cref="ProgressButton"/>)
+    /// and the <see cref="DependencyPropertyChangedEventArgs"/> will be the <see cref="bool"/> object contained within.
+    /// </summary>
+    static void OnEnableSpringAnimationPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue != null && e.NewValue is bool bl)
+        {
+            // A "cheat" so we can use non-static local control variables.
+            ((ProgressButton)d).OnEnableSpringAnimationChanged((bool)e.NewValue);
+        }
+        else if (e.NewValue != null)
+        {
+            Debug.WriteLine($"[WARNING] Wrong type => {e.NewValue?.GetType()}");
+            Debugger.Break();
+        }
+    }
+    void OnEnableSpringAnimationChanged(bool newValue)
+    {
+        Debug.WriteLine($"[INFO] SpringAnimationChanged => {newValue}");
+    }
     #endregion
 
     #region [Control Events]
@@ -529,7 +593,6 @@ public sealed partial class ProgressButton : UserControl
     /// </summary>
     void ThisButton_Click(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine($"** I've been clicked **");
         try
         {
             // Has the user bound an Action to the click event?
@@ -547,6 +610,99 @@ public sealed partial class ProgressButton : UserControl
             Debug.WriteLine($"[CLICK_ERROR] => {ex.Message}");
             //Debugger.Break();
         }
+    }
+
+    /// <summary>
+    /// Ensures the button starts with Offset.Y = 0
+    /// </summary>
+    public void InitializeButtonOffsetY(Button button)
+    {
+        if (button == null) { return; }
+        Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
+        buttonVisual.Offset = new System.Numerics.Vector3(buttonVisual.Offset.X, 0, buttonVisual.Offset.Z);
+    }
+    public void AnimateButtonY(Button button, float offset)
+    {
+        if (button == null)
+            return;
+
+        if (_compositor == null)
+            _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
+
+        // Create a Spring Animation for Y offset
+        SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
+        _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
+        _springAnimation.Target = "Offset.Y";   // Move vertically
+        _springAnimation.InitialVelocity = 50f; // Adjust movement speed
+        _springAnimation.FinalValue = offset;   // Set the final target Y position
+        _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
+        _springAnimation.Period = TimeSpan.FromMilliseconds(50);
+
+        // Get the button's visual and apply the animation
+        Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
+        buttonVisual.StartAnimation("Offset.Y", _springAnimation);
+    }
+
+    /// <summary>
+    /// Ensures the button starts with Offset.X = 0
+    /// </summary>
+    public void InitializeButtonOffsetX(Button button)
+    {
+        if (button == null) { return; }
+        Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
+        buttonVisual.Offset = new System.Numerics.Vector3(0, buttonVisual.Offset.Y, buttonVisual.Offset.Z);
+    }
+    public void AnimateButtonX(Button button, float offset)
+    {
+        if (button == null)
+            return;
+
+        if (_compositor == null)
+            _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
+
+        // Create a Spring Animation for X offset
+        SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
+        _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
+        _springAnimation.Target = "Offset.X";   // Move vertically
+        _springAnimation.InitialVelocity = 50f; // Adjust movement speed
+        _springAnimation.FinalValue = offset;   // Set the final target X position
+        _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
+        _springAnimation.Period = TimeSpan.FromMilliseconds(50);
+
+        // Get the button's visual and apply the animation
+        Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
+        buttonVisual.StartAnimation("Offset.X", _springAnimation);
+    }
+
+    /// <summary>
+    /// Ensures the grid starts with Offset.X = 0
+    /// </summary>
+    public void InitializeGridOffsetX(Grid grid)
+    {
+        if (grid == null) { return; }
+        Visual gridVisual = ElementCompositionPreview.GetElementVisual(grid);
+        gridVisual.Offset = new System.Numerics.Vector3(0, gridVisual.Offset.Y, gridVisual.Offset.Z);
+    }
+    public void AnimateGridX(Grid grid, float offset)
+    {
+        if (grid == null)
+            return;
+
+        if (_compositor == null)
+            _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
+
+        // Create a Spring Animation for X offset
+        SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
+        _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
+        _springAnimation.Target = "Offset.X";   // Move vertically
+        _springAnimation.InitialVelocity = 50f; // Adjust movement speed
+        _springAnimation.FinalValue = offset;   // Set the final target X position
+        _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
+        _springAnimation.Period = TimeSpan.FromMilliseconds(50);
+
+        // Get the button's visual and apply the animation
+        Visual gridVisual = ElementCompositionPreview.GetElementVisual(grid);
+        gridVisual.StartAnimation("Offset.X", _springAnimation);
     }
     #endregion
 }

@@ -95,7 +95,7 @@
 
     </UserControl.Resources>
 
-    <Grid>
+    <Grid x:Name="ThisGrid">
         <!--
             Some of the properties will be set through the styler above, however, in the
             event that the styler is removed I am reinforcing them in the control below.
