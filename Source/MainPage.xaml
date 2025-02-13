@@ -8,10 +8,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="Transparent"
     mc:Ignorable="d">
+
     <Page.Resources>
-        <!--
-            === Settings Flyout ===
-        -->
+        <!--#region [Settings Flyout]-->
         <Flyout
             x:Key="SettingsFlyout"
             x:Name="SettingsFlyout"
@@ -106,7 +105,9 @@
                 </StackPanel>
             </StackPanel>
         </Flyout>
+        <!--#endregion-->
     </Page.Resources>
+
     <Grid x:Name="root">
 
         <SplitView
@@ -133,7 +134,7 @@
                             Width="150"
                             Margin="10"
                             Opacity="0.2"
-                            Source="ms-appx:///Assets/MessageIcon.png"
+                            Source="ms-appx:///Assets/MessageIcon11.png"
                             Stretch="Uniform" />
                     </local:CompositionShadow>
                     <ScrollViewer VerticalScrollMode="Auto">
@@ -181,7 +182,8 @@
                                                 <TextBlock
                                                     FontSize="{StaticResource FontSizeNormal}"
                                                     Foreground="{StaticResource PrimaryBrush}"
-                                                    Text="{x:Bind Module, Mode=OneWay}" />
+                                                    Text="{x:Bind Module, Mode=OneWay}"
+                                                    TextWrapping="NoWrap" />
                                             </local:CompositionShadow>
                                             <TextBlock
                                                 Grid.Column="1"
@@ -190,7 +192,8 @@
                                                 VerticalAlignment="Center"
                                                 FontSize="{StaticResource FontSizeNormal}"
                                                 Foreground="{StaticResource HeaderBrush}"
-                                                Text="{x:Bind MessageTime, Mode=OneWay, Converter={StaticResource StringToFormat}, ConverterParameter='{}{0:ddd, dd MMM yyyy – hh:mm:ss tt}'}" />
+                                                Text="{x:Bind MessageTime, Mode=OneWay, Converter={StaticResource StringToFormat}, ConverterParameter='{}{0:ddd, dd MMM yyyy – hh:mm:ss tt}'}"
+                                                TextWrapping="NoWrap" />
                                         </Grid>
                                         <TextBlock
                                             Grid.Row="1"
@@ -199,7 +202,8 @@
                                             VerticalAlignment="Center"
                                             FontSize="{StaticResource FontSizeNormal}"
                                             Foreground="{StaticResource SecondaryBrush}"
-                                            Text="{x:Bind MessageText, Mode=OneWay}" />
+                                            Text="{x:Bind MessageText, Mode=OneWay}"
+                                            TextWrapping="Wrap" />
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
@@ -468,7 +472,7 @@
                         MaxVisiblePips="10"
                         NextButtonStyle="{StaticResource NextButtonStyle}"
                         NextButtonVisibility="Visible"
-                        NumberOfPages="{x:Bind Pictures.Count}"
+                        NumberOfPages="{x:Bind Assets.Count}"
                         PreviousButtonStyle="{StaticResource PreviousButtonStyle}"
                         PreviousButtonVisibility="Visible"
                         SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
@@ -494,7 +498,6 @@
                         <Button
                             x:Name="tbButton"
                             Click="ToolbarButtonOnClick"
-                            Content="Toolbar Button"
                             Style="{StaticResource ToolbarButton}">
                             <Button.Flyout>
                                 <!--
@@ -505,7 +508,7 @@
                                     AreOpenCloseAnimationsEnabled="True"
                                     LightDismissOverlayMode="Off"
                                     Opened="flyoutTextOnOpened"
-                                    ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    ShowMode="Standard">
                                     <Flyout.FlyoutPresenterStyle>
                                         <Style TargetType="FlyoutPresenter">
                                             <Setter Property="BorderThickness" Value="0" />
@@ -525,19 +528,44 @@
                                         CornerRadius="5"
                                         Orientation="Vertical">
                                         <local:CompositionShadow
-                                            Margin="16"
-                                            HorizontalAlignment="Center"
+                                            Margin="15,15,15,5"
+                                            HorizontalAlignment="Left"
                                             VerticalAlignment="Center"
                                             BlurRadius="2"
                                             OffsetX="2"
                                             OffsetY="2"
                                             ShadowOpacity="0.8"
                                             Color="#000000">
-                                            <TextBlock Text="I'm an example of a Flyout, I'll close myself in a few seconds." TextWrapping="Wrap" />
+                                            <TextBlock Text="🔔 I'm an example of a Flyout, I'll close myself in a few seconds." TextWrapping="Wrap" />
+                                        </local:CompositionShadow>
+                                        <local:CompositionShadow
+                                            Margin="15,5,15,15"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            BlurRadius="2"
+                                            OffsetX="2"
+                                            OffsetY="2"
+                                            ShadowOpacity="0.8"
+                                            Color="#000000">
+                                            <TextBlock Text="🔔 Or you can click somewhere else to dismiss me." TextWrapping="Wrap" />
                                         </local:CompositionShadow>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
+                            <Button.Content>
+                                <Grid>
+                                    <Image
+                                        Height="30"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Source="ms-appx:///Assets/SettingsIcon2.png" />
+                                    <!--<TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Foreground="{StaticResource PrimaryBrush}"
+                                        Text="Toolbar Button" />-->
+                                </Grid>
+                            </Button.Content>
                         </Button>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="20">
@@ -604,7 +632,7 @@
         <Image
             x:Name="blurTest"
             Width="1000"
-            Margin="12,10,10,10"
+            Margin="5,5,0,0"
             IsHitTestVisible="False"
             IsTabStop="False"
             Stretch="Uniform"

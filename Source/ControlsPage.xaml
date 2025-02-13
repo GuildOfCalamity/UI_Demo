@@ -32,14 +32,14 @@
             <RowDefinition
                 Height="200"
                 MinHeight="100"
-                MaxHeight="500" />
+                MaxHeight="600" />
             <RowDefinition />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition
                 Width="200"
                 MinWidth="100"
-                MaxWidth="500" />
+                MaxWidth="600" />
             <ColumnDefinition />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
@@ -75,6 +75,13 @@
             HorizontalAlignment="Left"
             Background="{StaticResource GradientHorizontalBrush}"
             CornerRadius="3" />
+
+        <!--<local:GridSplitterAlt
+            x:Name="GridSplitterHorizontal"
+            Grid.Column="1"
+            HorizontalAlignment="Left"
+            Background="{StaticResource GradientHorizontalBrush}"
+            CornerRadius="3" />-->
 
         <!--  Example Row Grid Splitter  -->
         <local:GridSplitter

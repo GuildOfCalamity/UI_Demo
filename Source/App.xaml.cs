@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,11 +17,10 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.AppLifecycle;
 
 using Windows.ApplicationModel.Activation;
+using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
 using Windows.System;
-using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.UI.ViewManagement;
-using System.Collections;
 
 namespace UI_Demo;
 
@@ -55,7 +55,7 @@ public partial class App : Application
     static UISettings m_UISettings = new UISettings();
     static EasClientDeviceInformation m_deviceInfo = new EasClientDeviceInformation();
     public static List<string> ArgList = new();
-    public static Dictionary<string, string> MachineAndUserVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    public static Dictionary<string, string> MachineEnvironment = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public static List<string>? AssemblyReferences { get; private set; }
     public static Action<Windows.Graphics.SizeInt32>? WindowSizeChanged { get; set; }
 
@@ -182,9 +182,9 @@ public partial class App : Application
         {
             string? pVarKey = (string?)pVar.Key;
             string? pVarValue = (string?)pVar.Value ?? "";
-            if (!string.IsNullOrEmpty(pVarKey) && !MachineAndUserVars.ContainsKey(pVarKey))
+            if (!string.IsNullOrEmpty(pVarKey) && !MachineEnvironment.ContainsKey(pVarKey))
             {
-                MachineAndUserVars.Add(pVarKey, pVarValue);
+                MachineEnvironment.Add(pVarKey, pVarValue);
             }
         }
     }
@@ -1200,10 +1200,18 @@ public partial class App : Application
             while (!IsClosing)
             {
                 await Task.Delay(5000);
+                
+                //PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+                //{
+                //    Module = ModuleId.App,
+                //    MessageText = $"🔔 Heartbeat",
+                //    MessageType = typeof(string),
+                //});
+
                 PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
                 {
                     Module = ModuleId.App,
-                    MessageText = $"🔔 Heartbeat",
+                    MessageText = $"🔔 {Extensions.GenerateSentence()}",
                     MessageType = typeof(string),
                 });
             }

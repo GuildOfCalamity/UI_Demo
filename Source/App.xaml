@@ -34,12 +34,14 @@
             <!--#endregion-->
 
             <!--#region [Font Sizes]-->
-            <x:Double x:Key="FontSizeHuge">30</x:Double>
-            <x:Double x:Key="FontSizeLarge">18</x:Double>
-            <x:Double x:Key="FontSizeMedium">15</x:Double>
-            <x:Double x:Key="FontSizeNormal">13</x:Double>
-            <x:Double x:Key="FontSizeSmall">11</x:Double>
             <x:Double x:Key="FontSizeTiny">9</x:Double>
+            <x:Double x:Key="FontSizeSmall">11</x:Double>
+            <x:Double x:Key="FontSizeNormal">13</x:Double>
+            <x:Double x:Key="FontSizeMedium">15</x:Double>
+            <x:Double x:Key="FontSizeLarge">18</x:Double>
+            <x:Double x:Key="FontSizeHuge">30</x:Double>
+            <x:Double x:Key="FontSizeEnormous">48</x:Double>
+            <x:Double x:Key="FontSizeMastodonic">72</x:Double>
             <!--#endregion-->
 
             <!--#region [Colors]-->
@@ -121,6 +123,12 @@
                 <GradientStop Offset="0.0" Color="#F066a9dd" />
                 <GradientStop Offset="0.3" Color="#F0305D7A" />
                 <GradientStop Offset="1.0" Color="#F0304050" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GradientSplitterHoverBrush" StartPoint="0,1" EndPoint="1,1">
+                <GradientStop Offset="0.0" Color="#F0304050" />
+                <GradientStop Offset="0.3" Color="#F0305D7A" />
+                <GradientStop Offset="1.0" Color="#F066a9dd" />
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="GradientHorizontalBrush" StartPoint="0,1" EndPoint="1,1">

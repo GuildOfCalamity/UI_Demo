@@ -14,7 +14,7 @@ using System.Windows.Input;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.Windowing;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -26,7 +26,6 @@ using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-using Windows.UI.StartScreen;
 
 using WinRT.Interop;
 
@@ -47,7 +46,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Brush? _lvl4;
     static Brush? _lvl5;
     DispatcherTimer? _flyoutTimer;
-    CancellationTokenSource _ctsTask;
+    CancellationTokenSource? _ctsTask;
 
     bool useSpringInsteadOfScalar = true;
     float _springMultiplier = 1.05f;
@@ -91,7 +90,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
     public ObservableCollection<string> LogMessages { get; private set; } = new();
-    public ObservableCollection<string> Pictures = new();
+    public ObservableCollection<string> Assets = new();
     public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
     {
         if (string.IsNullOrEmpty(propertyName)) { return; }
@@ -105,7 +104,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             try
             {
-                return App.MachineAndUserVars["NUMBER_OF_PROCESSORS"] switch
+                return App.MachineEnvironment["NUMBER_OF_PROCESSORS"] switch
                 {
                     "64" => 64,
                     "32" => 32,
@@ -140,7 +139,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         MessageSplitView.PaneOpened += OnPaneOpenedOrClosed;
         MessageSplitView.PaneClosed += OnPaneOpenedOrClosed;
         App.WindowSizeChanged += SizeChangeEvent;
-        PopulatePictures();
+        PopulateAssets();
 
         #region [Action example for our ProgressButton control]
         ProgressButtonClickEvent += async () =>
@@ -235,7 +234,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 if (Enum.IsDefined(typeof(DelayTime), str))
                 {
                     // For testing IsEnabled="{Binding SwitchDelayCommand.CanExecute}"
-                    await Task.Delay(250);
+                    await Task.Delay(250 * (IsCapsLockOn() ? 8 : 1));
 
                     Delay = (DelayTime)Enum.Parse(typeof(DelayTime), str);
                 }
@@ -579,16 +578,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
                 if (useImageControl)
                 {
-                    blurTest.Width = App.m_width; blurTest.Height = App.m_height;
+                    blurTest.Width = root.ActualWidth;
+                    blurTest.Height = root.ActualHeight;
                     blurTest.Source = await BlurHelper.ApplyBlurAsync(bmp);
                     blurTest.Visibility = Visibility.Visible;
                 }
                 else
                 {
-
                     if (bmp != null && _useSurfaceBrush)
                     {
-
                         Debug.WriteLine($"[INFO] We have a software bitmap with dimensions {bmp.PixelWidth},{bmp.PixelHeight}");
 
                         // We'll need to force a new CompositionSurfaceBrush since we'll be replacing it with our new blurred screenshot.
@@ -600,7 +598,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 #if IS_UNPACKAGED
                         string assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets", "BlurTest.png");
 #else
-                    string assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurTest.png");
+                        string assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets", "BlurTest.png");
 #endif
                         // Create a new blur image for the CompositionSurfaceBrush.
                         var saved = await BlurHelper.ApplyBlurAndSaveAsync(bmp, assetPath, 5);
@@ -636,6 +634,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
             if (((int)e.NewValue == sld.Minimum || (int)e.NewValue == sld.Maximum) && _loaded)
             {
+                //ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.RecreationDialog(), this.Content as FrameworkElement);
                 ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.AboutDialog(), this.Content as FrameworkElement);
                 if (result is ContentDialogResult.Primary) { UpdateInfoBar("User clicked 'OK'", MessageLevel.Important); }
                 else if (result is ContentDialogResult.None) { UpdateInfoBar("User clicked 'Cancel'", MessageLevel.Warning); }
@@ -712,10 +711,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             // This only worked after adding <AllowUnsafeBlocks> to the csproj.
             //Flipper.ItemsSource = Pictures;
 
-            if (Pictures.Count > 0)
+            if (Assets.Count > 0)
             {
                 // We can also create a binding in code-behind.
-                Binding binding = new Binding { Mode = BindingMode.OneWay, Source = Pictures };
+                Binding binding = new Binding { Mode = BindingMode.OneWay, Source = Assets };
                 BindingOperations.SetBinding(Flipper, FlipView.ItemsSourceProperty, binding);
             }
             else
@@ -727,7 +726,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             // Subscribe to app-wide messages.
             PubSubService<ApplicationMessage>.Instance.Subscribe(OnPubSubReceived);
 
-            UpdateInfoBar($"Using {App.MachineAndUserVars["PROCESSOR_IDENTIFIER"]} with {App.MachineAndUserVars["NUMBER_OF_PROCESSORS"]} processors", MessageLevel.Information);
+            try
+            {
+                var tag1 = App.MachineEnvironment["PROCESSOR_IDENTIFIER"];
+                var tag2 = App.MachineEnvironment["NUMBER_OF_PROCESSORS"];
+                //Debug.WriteLine($"[INFO] User profile is located here: '{App.MachineEnvironment["USERPROFILE"]}'");
+                UpdateInfoBar($"Using {tag1} with {tag2} processors", MessageLevel.Information);
+            }
+            catch (KeyNotFoundException) { }
         }
         _loaded = true;
     }
@@ -767,7 +773,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
             string tag = App.GetCurrentNamespace() ?? "WinUI Demo";
 
-            SecondaryTile secondaryTile = new SecondaryTile($"WinUI_{tag}");
+            Windows.UI.StartScreen.SecondaryTile secondaryTile = new Windows.UI.StartScreen.SecondaryTile($"WinUI_{tag}");
             secondaryTile.DisplayName = App.GetCurrentNamespace() ?? "WinUI Demo";
             secondaryTile.Arguments = $"SecondaryTile {tag}";
 
@@ -815,6 +821,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     {
                         flyoutText.Hide();
                         ToastHelper.ShowStandardToast(App.GetCurrentAssemblyName() ?? "WinUI3", "Flyout was closed via timer event.");
+                    }
+                    else
+                    {
+                        PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+                        {
+                            Module = ModuleId.MainPage,
+                            MessageText = $"🔔 Notification toast was skipped",
+                            MessageType = typeof(string),
+                        });
                     }
                 });
                 if (_flyoutTimer != null) { _flyoutTimer.Stop(); }
@@ -967,21 +982,36 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
-    void PopulatePictures()
+    void PopulateAssets()
     {
-        string assetPath = string.Empty;
-
-        if (App.IsPackaged)
-            assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets");
-        else
-            assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets");
-
-        Pictures.Clear();
-
+#if IS_UNPACKAGED
+        string assetPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "Assets");
+#else
+        string assetPath = System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets");
+#endif
+        Assets.Clear();
         foreach (var f in Directory.GetFiles(assetPath, "*.png", SearchOption.TopDirectoryOnly))
         {
-            Pictures.Add(f);
+            Assets.Add(f);
         }
+    }
+
+    bool IsCtrlKeyDown()
+    {
+        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+    }
+
+    bool IsAltKeyDown()
+    {
+        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+    }
+
+    bool IsCapsLockOn()
+    {
+        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.CapitalLock);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Locked);
     }
     #endregion
 
@@ -1062,7 +1092,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         // Create the destination sprite, sized to cover the entire page.
         _blurVisual = _compositor.CreateSpriteVisual();
         if (fe.ActualSize != Vector2.Zero)
-            _blurVisual.Size = new Vector2((float)fe.ActualWidth, (float)fe.ActualHeight);
+            _blurVisual.Size = new Vector2((float)fe.ActualWidth+10, (float)fe.ActualHeight+14);
         else
             _blurVisual.Size = new Vector2((float)App.m_width, (float)App.m_height);
 

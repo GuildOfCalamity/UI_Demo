@@ -64,8 +64,10 @@ public class ApplicationMessage
 
 public enum ModuleId
 {
-    App = 0,
-    MainWindow = 1,
-    MainPage = 2,
-    ControlsPage = 3,
+    Undefined = 0,
+    App = 1,
+    MainWindow = 2,
+    MainPage = 3,
+    ControlsPage = 4,
+    ToastHelper = 5
 }
