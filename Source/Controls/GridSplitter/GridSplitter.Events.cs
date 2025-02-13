@@ -43,6 +43,7 @@ public partial class GridSplitter
                 _resizeDirection,
                 GripperCursor,
                 GripperCustomCursorResource);
+
             ManipulationStarted += hoverWrapper.SplitterManipulationStarted;
             ManipulationCompleted += hoverWrapper.SplitterManipulationCompleted;
 
@@ -50,7 +51,7 @@ public partial class GridSplitter
         }
     }
 
-    private void CreateGripperDisplay()
+    void CreateGripperDisplay()
     {
         if (_gripperDisplay == null)
         {
@@ -68,13 +69,8 @@ public partial class GridSplitter
         }
     }
 
-    private bool IsCtrlDown()
+    bool IsCtrlDown()
     {
-        if (Window.Current == null)
-        {
-            return false;
-        }
-
         var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control);
         return ctrl.HasFlag(CoreVirtualKeyStates.Down);
     }

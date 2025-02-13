@@ -603,6 +603,7 @@ public sealed partial class ProgressButton : UserControl
         //bool isEnabled = obj.IsEnabled;
         
         Debug.WriteLine($"[INFO] '{obj.GetType()}' IsEnabledProperty is '{isEnabled}'.");
+
         //ThisGrid.Opacity = obj.IsEnabled ? originalOpacity : 0.6d;
         ThisGrid.Opacity = isEnabled ? originalOpacity : 0.6d;
     }

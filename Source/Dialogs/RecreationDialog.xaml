@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="UI_Demo.Dialogs.RecreationDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:UI_Demo.Dialogs"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:root="using:UI_Demo"
+    BorderBrush="{StaticResource GradientBarBrush}"
+    BorderThickness="1"
+    CloseButtonText=""
+    CornerRadius="5"
+    DefaultButton="Primary"
+    PrimaryButtonText="OK"
+    SecondaryButtonText=""
+    mc:Ignorable="d">
+
+    <!--
+        NOTE: Absolutely DO NOT set the button styles in the ContentDialog header above.
+        e.g. PrimaryButtonStyle="{ThemeResource AccentButtonStyle}", this will cause
+        unhandled exceptions that will lead you to believe the issue is the XamlRoot.
+        This appears to only be an issue when invoking ContentDialogs from outside
+        of the MainWindow's XAML VisualTree.
+        I have added a note about this under the Microsoft-UI-XAML Issues:
+        https://github.com/microsoft/microsoft-ui-xaml/issues/2504#issuecomment-2612751024
+    -->
+    <ContentDialog.PrimaryButtonStyle>
+        <Style TargetType="Button">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+    </ContentDialog.PrimaryButtonStyle>
+    <ContentDialog.SecondaryButtonStyle>
+        <Style TargetType="Button">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+    </ContentDialog.SecondaryButtonStyle>
+    <ContentDialog.CloseButtonStyle>
+        <Style TargetType="Button">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+    </ContentDialog.CloseButtonStyle>
+    <ContentDialog.Title>
+        <Grid MinWidth="500" HorizontalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel
+                Grid.Column="0"
+                Margin="0,4,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Orientation="Horizontal"
+                Spacing="12">
+                <root:CompositionShadow
+                    Grid.Row="1"
+                    BlurRadius="2"
+                    OffsetX="2"
+                    OffsetY="2"
+                    ShadowOpacity="0.9"
+                    Color="#000000">
+                    <TextBlock
+                        FontSize="{StaticResource FontSizeEnormous}"
+                        Foreground="{StaticResource SecondaryBrush}"
+                        Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                        Text="Testing" />
+                </root:CompositionShadow>
+            </StackPanel>
+            <Image
+                Grid.Column="1"
+                Height="50"
+                Margin="0,1,3,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Source="ms-appx:///Assets/SettingsIcon.png" />
+        </Grid>
+
+    </ContentDialog.Title>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid.Resources>
+            <Style TargetType="Image">
+                <Setter Property="Width" Value="60" />
+                <Setter Property="Height" Value="60" />
+                <Setter Property="Margin" Value="12" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+        </Grid.Resources>
+        <!--  Image #1  -->
+        <Image
+            Grid.Column="0"
+            Source="ms-appx:///Assets/Spinner3.png"
+            Visibility="Visible">
+            <Image.Resources>
+                <Storyboard
+                    x:Name="StoryboardSpin1"
+                    AutoReverse="False"
+                    RepeatBehavior="Forever">
+                    <DoubleAnimation
+                        Storyboard.TargetName="spinnerTransform1"
+                        Storyboard.TargetProperty="Angle"
+                        From="0"
+                        To="360"
+                        Duration="0:00:01.8" />
+                </Storyboard>
+            </Image.Resources>
+            <Image.RenderTransform>
+                <RotateTransform x:Name="spinnerTransform1" CenterX="30" CenterY="30" />
+            </Image.RenderTransform>
+        </Image>
+        <!--  Image #2  -->
+        <Image
+            Grid.Column="1"
+            Source="ms-appx:///Assets/Spinner30.png"
+            Visibility="Visible">
+            <Image.Resources>
+                <Storyboard
+                    x:Name="StoryboardSpin2"
+                    AutoReverse="False"
+                    RepeatBehavior="Forever">
+                    <DoubleAnimation
+                        Storyboard.TargetName="spinnerTransform2"
+                        Storyboard.TargetProperty="Angle"
+                        From="0"
+                        To="360"
+                        Duration="0:00:01.8" />
+                </Storyboard>
+            </Image.Resources>
+            <Image.RenderTransform>
+                <RotateTransform x:Name="spinnerTransform2" CenterX="30" CenterY="30" />
+            </Image.RenderTransform>
+        </Image>
+        <!--  Image #3  -->
+        <Image
+            Grid.Column="2"
+            Source="ms-appx:///Assets/Spinner7.png"
+            Visibility="Visible">
+            <Image.Resources>
+                <Storyboard
+                    x:Name="StoryboardSpin3"
+                    AutoReverse="False"
+                    RepeatBehavior="Forever">
+                    <DoubleAnimation
+                        Storyboard.TargetName="spinnerTransform3"
+                        Storyboard.TargetProperty="Angle"
+                        From="0"
+                        To="360"
+                        Duration="0:00:01.8" />
+                </Storyboard>
+            </Image.Resources>
+            <Image.RenderTransform>
+                <RotateTransform x:Name="spinnerTransform3" CenterX="30" CenterY="30" />
+            </Image.RenderTransform>
+        </Image>
+        <!--  Image #4  -->
+        <Image
+            Grid.Column="3"
+            Source="ms-appx:///Assets/Spinner4.png"
+            Visibility="Visible">
+            <Image.Resources>
+                <Storyboard
+                    x:Name="StoryboardSpin4"
+                    AutoReverse="False"
+                    RepeatBehavior="Forever">
+                    <DoubleAnimation
+                        Storyboard.TargetName="spinnerTransform4"
+                        Storyboard.TargetProperty="Angle"
+                        From="0"
+                        To="360"
+                        Duration="0:00:01.8" />
+                </Storyboard>
+            </Image.Resources>
+            <Image.RenderTransform>
+                <RotateTransform x:Name="spinnerTransform4" CenterX="30" CenterY="30" />
+            </Image.RenderTransform>
+        </Image>
+        <!--  Image #5  -->
+        <Image
+            Grid.Column="4"
+            Source="ms-appx:///Assets/Spinner35.png"
+            Visibility="Visible">
+            <Image.Resources>
+                <Storyboard
+                    x:Name="StoryboardSpin5"
+                    AutoReverse="False"
+                    RepeatBehavior="Forever">
+                    <DoubleAnimation
+                        Storyboard.TargetName="spinnerTransform5"
+                        Storyboard.TargetProperty="Angle"
+                        From="0"
+                        To="360"
+                        Duration="0:00:01.8" />
+                </Storyboard>
+            </Image.Resources>
+            <Image.RenderTransform>
+                <RotateTransform x:Name="spinnerTransform5" CenterX="30" CenterY="30" />
+            </Image.RenderTransform>
+        </Image>
+        <!--  Image #6  -->
+        <Image
+            Grid.Column="5"
+            Source="ms-appx:///Assets/Spinner36.png"
+            Visibility="Visible">
+            <Image.Resources>
+                <Storyboard
+                    x:Name="StoryboardSpin6"
+                    AutoReverse="False"
+                    RepeatBehavior="Forever">
+                    <DoubleAnimation
+                        Storyboard.TargetName="spinnerTransform6"
+                        Storyboard.TargetProperty="Angle"
+                        From="0"
+                        To="360"
+                        Duration="0:00:01.8" />
+                </Storyboard>
+            </Image.Resources>
+            <Image.RenderTransform>
+                <RotateTransform x:Name="spinnerTransform6" CenterX="30" CenterY="30" />
+            </Image.RenderTransform>
+        </Image>
+    </Grid>
+</ContentDialog>

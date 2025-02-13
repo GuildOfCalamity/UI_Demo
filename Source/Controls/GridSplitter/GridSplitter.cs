@@ -6,6 +6,52 @@ using Microsoft.UI.Xaml.Input;
 
 namespace UI_Demo;
 
+/** [EXAMPLE STYLER]
+<SolidColorBrush x:Key="SystemControlSplitterPointerOver" Color="{ThemeResource SystemBaseLowColor}" />
+<SolidColorBrush x:Key="SystemControlSplitterPressed" Color="{ThemeResource SystemBaseHighColor}" />
+<Style TargetType="local:GridSplitter">
+    <Setter Property="IsTabStop" Value="True" />
+    <Setter Property="UseSystemFocusVisuals" Value="True" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="IsFocusEngagementEnabled" Value="True" />
+    <Setter Property="MinWidth" Value="16" />
+    <Setter Property="MinHeight" Value="16" />
+    <Setter Property="Background" Value="{ThemeResource SystemControlHighlightChromeHighBrush}" />
+    <Setter Property="GripperForeground" Value="{ThemeResource SystemControlForegroundAltHighBrush}" />
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="local:GridSplitter">
+                <Grid
+                    x:Name="RootGrid"
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+                    <ContentPresenter
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch"
+                        Content="{TemplateBinding Element}" />
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup x:Name="GridSplitterStates">
+                            <VisualState x:Name="Normal" />
+                            <VisualState x:Name="PointerOver">
+                                <VisualState.Setters>
+                                    <Setter Target="RootGrid.Background" Value="{ThemeResource SystemControlSplitterPointerOver}" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Target="RootGrid.Background" Value="{ThemeResource SystemControlSplitterPressed}" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                </Grid>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
+**/
+
 /// <summary>
 ///   Represents the control that redistributes space between columns or rows of a Grid control.
 /// </summary>
@@ -20,17 +66,18 @@ public partial class GridSplitter : Control
     internal static readonly InputCursor RowSplitterCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeNorthSouth);
     internal static readonly InputCursor SplitterCursorHover = InputSystemCursor.Create(InputSystemCursorShape.Hand);
 
-    internal InputCursor PreviousCursor { get; set; }
+    internal InputCursor? PreviousCursor { get; set; }
 
     private GridResizeDirection _resizeDirection;
     private GridResizeBehavior _resizeBehavior;
-    private GripperHoverWrapper _hoverWrapper;
-    private TextBlock _gripperDisplay;
+    private GripperHoverWrapper? _hoverWrapper;
+    private TextBlock? _gripperDisplay;
 
     private bool _pressed = false;
     private bool _dragging = false;
     private bool _pointerEntered = false;
 
+    #region [Props]
     /// <summary>
     /// Gets the target parent grid from level
     /// </summary>
@@ -133,6 +180,7 @@ public partial class GridSplitter : Control
             return null;
         }
     }
+    #endregion
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GridSplitter"/> class.
@@ -140,7 +188,7 @@ public partial class GridSplitter : Control
     public GridSplitter()
     {
         DefaultStyleKey = typeof(GridSplitter);
-        Loaded += GridSplitter_Loaded;
+        //Loaded += GridSplitter_Loaded; // doubled subscription?
         AutomationProperties.SetName(this, "GridSplitter");
     }
 

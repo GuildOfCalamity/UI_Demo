@@ -9,14 +9,11 @@
     HorizontalAlignment="Stretch"
     VerticalAlignment="Stretch"
     Background="Gray"
-    Loaded="OnControlLoaded"
-    PointerExited="OnPointerReleased"
-    PointerMoved="OnPointerMoved"
-    PointerPressed="OnPointerPressed"
     mc:Ignorable="d">
     <Rectangle
-        Width="6"
+        x:Name="Grabber"
+        Width="14"
         Fill="{StaticResource GradientSplitterBrush}"
-        RadiusX="2"
-        RadiusY="2" />
+        RadiusX="4"
+        RadiusY="4" />
 </UserControl>

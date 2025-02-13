@@ -1,8 +1,9 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
-
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -15,15 +16,34 @@ public sealed partial class GridSplitterAlt : UserControl
 {
     bool _initialized = false;
     bool _isDragging = false;
+    bool _isPressed = false;
     Point _startPoint;
     ColumnDefinition? _column;
     RowDefinition? _row;
 
+    internal InputCursor? PreviousCursor { get; set; }
+    internal static readonly InputCursor ColumnsSplitterCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
+    internal static readonly InputCursor RowSplitterCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeNorthSouth);
+    internal static readonly InputCursor SplitterCursorHover = InputSystemCursor.Create(InputSystemCursorShape.Hand);
+
+
     public GridSplitterAlt()
     {
         this.InitializeComponent();
-        //this.PointerReleased += OnPointerReleased;
-        this.PointerCaptureLost += OnPointerReleased; // Ensure pointer stays captured
+        AutomationProperties.SetName(this, "GridSplitterAlt");
+
+        this.Loaded += OnControlLoaded;
+        this.PointerMoved += OnPointerMoved;
+        this.PointerPressed += OnPointerPressed;
+        this.PointerReleased += OnPointerReleased;
+        this.PointerEntered += OnPointerEntered;
+        this.PointerExited += OnPointerExited;
+        this.PointerReleased += OnPointerReleased;
+        this.PointerCaptureLost += OnPointerReleased;
+        this.ManipulationStarted += OnManipulationStarted;
+        this.ManipulationCompleted += OnManipulationCompleted;
+
+        ManipulationMode = ManipulationModes.TranslateX | ManipulationModes.TranslateY;
     }
 
     /// <inheritdoc />
@@ -40,9 +60,7 @@ public sealed partial class GridSplitterAlt : UserControl
 
     void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        _isDragging = true;
-
-        //_startPoint = e.GetCurrentPoint(Window.Current.Content).Position;
+        _isPressed = true;
         _startPoint = e.GetCurrentPoint(this).Position;
 
         // Get parent Grid
@@ -67,39 +85,79 @@ public sealed partial class GridSplitterAlt : UserControl
         CapturePointer(e.Pointer);
     }
 
+    void OnPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        _isPressed = false;
+        Debug.WriteLine($"[INFO] GridSplitter releasing pointer.");
+        ReleasePointerCapture(e.Pointer);
+    }
+
     void OnPointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (!_isDragging) return;
+        if (!_isDragging) { return; }
 
-        //Point currentPoint = e.GetCurrentPoint(Window.Current.Content).Position;
         Point currentPoint = e.GetCurrentPoint(this).Position;
-
         double deltaX = currentPoint.X - _startPoint.X;
         double deltaY = currentPoint.Y - _startPoint.Y;
+
+        Debug.WriteLine($"[INFO] GridSplitter pointer moved: {currentPoint}.  DeltaX={deltaX}  DeltaY={deltaY}");
 
         // Adjust column width
         if (_column != null && _column.Width.IsStar)
         {
             double newWidth = Math.Max(20, _column.ActualWidth + deltaX);
-            _column.Width = new GridLength(newWidth, GridUnitType.Star);
             Debug.WriteLine($"[INFO] Adjusting column width to {newWidth}.");
+            _column.Width = new GridLength(newWidth, GridUnitType.Star);
+        }
+        else if (_column != null)
+        {
+            Debug.WriteLine($"[WARNING] Did not detect Column.Width.IsStar");
         }
 
         // Adjust row height
         if (_row != null && _row.Height.IsStar)
         {
             double newHeight = Math.Max(20, _row.ActualHeight + deltaY);
-            _row.Height = new GridLength(newHeight, GridUnitType.Star);
             Debug.WriteLine($"[INFO] Adjusting row height to {newHeight}.");
+            _row.Height = new GridLength(newHeight, GridUnitType.Star);
+        }
+        else if (_row != null)
+        {
+            Debug.WriteLine($"[WARNING] Did not detect Row.Height.IsStar");
         }
 
         _startPoint = currentPoint;
     }
 
-    void OnPointerReleased(object sender, PointerRoutedEventArgs e)
+    void OnPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (App.Current.Resources.TryGetValue("GradientSplitterHoverBrush", out object _))
+        {
+            Grabber.Fill = (Microsoft.UI.Xaml.Media.Brush)App.Current.Resources["GradientSplitterHoverBrush"];
+        }
+        ProtectedCursor = SplitterCursorHover;
+    }
+
+    void OnPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        if (App.Current.Resources.TryGetValue("GradientSplitterBrush", out object _))
+        {
+            Grabber.Fill = (Microsoft.UI.Xaml.Media.Brush)App.Current.Resources["GradientSplitterBrush"];
+        }
+    }
+
+    void OnManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e)
+    {
+        _isDragging = true;
+        PreviousCursor = ProtectedCursor;
+        Debug.WriteLine($"[INFO] Manipulation started:  IsDragging={_isDragging}  IsPressed={_isPressed}");
+    }
+
+    void OnManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
     {
         _isDragging = false;
-        Debug.WriteLine($"[INFO] GridSplitter releasing pointer.");
-        ReleasePointerCapture(e.Pointer);
+        ProtectedCursor = PreviousCursor;
+        Debug.WriteLine($"[INFO] Manipulation completed:  IsDragging={_isDragging}  IsPressed={_isPressed}");
     }
+
 }
