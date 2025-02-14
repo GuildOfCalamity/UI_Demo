@@ -142,7 +142,7 @@ public static class ToastHelper
             //else
             tnm.Show(toast);
 
-            PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+            PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
             {
                 Module = ModuleId.ToastHelper,
                 MessageText = $"🔔 Notification toast was shown",

@@ -2073,10 +2073,11 @@ public static class Extensions
         string[] conjunction = { "and", "for", /* "so", "but", "or", "yet" */ };
         string[] superlative = { "biggest", "blackest", "boldest", "bravest", "brightest", "cheapest", "cleanest", "cleverest", "coldest", "dullest", "drunkest", "faintest", "fewest", "gentlest", "grandest", "gravest", "greatest", "highest", "kindest", "loudest", "moistest", "narrowest", "nicest", "oddest", "proudest", "purest", "quietest", "rarest", "richest", "ripest", "roughest", "rudest", "safest", "shallowest", "simplest", "smoothest", "strangest", "strictest", "truest", "weirdest", "youngest", };
         string[] adjective = { "steamy", "gentle", "grand", "cheap", "young", "old", "bright", "bold", "loud", "ripe", "powerful", "sticky", "spicy", "strange", "illegal", "crazy", "smelly", "wet", "bad", "hairy", "radiant", "meaningless", "nicer", "adorable", "part-time", "open-minded", "well-behaved", "cold-blooded", "beautiful", "breakable", "mathematical", "homeless", "wooden", "biological", "inedible", "incomprehensible", "inquisitive", "weird", };
-        string[] noun = { "person", "garden", "dog", "town", "car", "container", "house", "bird", "hose", "horse", "statue", "game", "community", "team", "teacher", "room", "book", "job", "building", "spouse", "company", "student", "state", "world", "planet", "system", "service", "thing", "problem", "toothache", "hand", "part", "place", "alligator", "weasel", "animal", "moose", "ostrich", "cheetah", "monkey", "snake", "platypus", };
-        string[] pastverb = { "toasted", "watched", "scuttled", "drove", "jumped", "ran", "walked", "skipped", "flew", "cranked", "barked", "sprayed", "owned", "dreamed", "asked", "accelerated", "soaked", "broke", "burned", "grew", "remained", "asked", "growled", "helped", "opened", "started", "buzzed", "kicked", "licked", "rolled", "laughed", "lived", "enjoyed", "needed", "fixed", "spilled", "yelled", "failed", "finished", "cooked", "talked", "stayed", "worked", "scratched", "showed", "destroyed", "missed", "offered", "spied", "erupted", "sizzled", };
-        string[] presentverb = { "toast", "watch", "boast", "scuttle", "drive", "jump", "run", "walk", "skip", "fly", "crank", "bark", "spray", "own", "dream", "ask", "accelerate", "soak", "brake", "burn", "grow", "remain", "ask", "growl", "help", "open", "start", "buzz", "kick", "lick", "roll", "laugh", "live", "enjoy", "need", "fix", "spill", "yell", "fail", "finish", "cook", "talk", "stay", "work", "scratch", "show", "destroy", "miss", "offer", "spy", "erupt", "sizzle", };
+        string[] noun = { "person", "cheese", "ham-bone", "garden", "dog", "town", "car", "container", "house", "bird", "hose", "horse", "statue", "game", "community", "team", "teacher", "room", "book", "job", "building", "spouse", "company", "student", "state", "world", "planet", "system", "service", "thing", "problem", "toothache", "hand", "part", "place", "alligator", "weasel", "animal", "moose", "ostrich", "cheetah", "monkey", "snake", "platypus", };
+        string[] pastverb = { "toasted", "watched", "scuttled", "drove", "jumped", "ran", "walked", "skipped", "flew", "cranked", "barked", "sprayed", "owned", "dreamed", "asked", "accelerated", "soaked", "broke", "burned", "grew", "remained", "asked", "growled", "helped", "opened", "started", "buzzed", "kicked", "licked", "rolled", "laughed", "lived", "enjoyed", "needed", "fixed", "spilled", "yelled", "failed", "finished", "cooked", "talked", "stayed", "worked", "scratched", "showed", "barfed", "destroyed", "missed", "offered", "spied", "erupted", "sizzled", };
+        string[] presentverb = { "toast", "watch", "boast", "scuttle", "drive", "jump", "run", "walk", "skip", "fly", "crank", "bark", "spray", "own", "dream", "ask", "accelerate", "soak", "brake", "burn", "grow", "remain", "ask", "growl", "help", "open", "start", "buzz", "punch", "kick", "lick", "roll", "laugh", "live", "enjoy", "need", "fix", "spill", "yell", "fail", "finish", "cook", "talk", "stay", "work", "scratch", "show", "destroy", "miss", "offer", "spy", "erupt", "sizzle", "swim", "barf", "thump" };
         string[] preposition = { "above", "across", "after", "at", "around", "by", "before", "behind", "below", "beside", "between", "during", "off of", "out of", "to", "from", "for", "over", "under", "on", "onto", "with", "inside", "through", "in", "up", "down" };
+        string[] gerund = { "driving", "jumping", "running", "skipping", "flying", "cranking", "barking", "spraying", "dreaming", "asking", "breaking", "soaking", "burning", "growing", "asking", "growling", "helping", "opening", "starting", "buzzing", "punching", "kicking", "licking", "rolling", "laughing", "living", "enjoying", "needing", "fixing", "spilling", "yelling", "failing", "finishing", "cooking", "talking", "working", "scratching", "showing", "destroying", "missing", "spying", "erupting", "sizzling", "swimming", "barfing", "thumping", "falling" };
 
         #region [Random Statements]
 
@@ -2115,7 +2116,7 @@ public static class Extensions
             "I heard about your [ADJ1] [NOUN1], I hope it's still [ADJ2].",
             "A [NOUN1] can always be found [PREP1] [ADJ1] [NOUN2]s.",
             "Let's hop in my [ADJ1] [NOUN1] and go for a ride!",
-            "Today is the day to get some [ADJ1] [NOUN1]s and go [PRESVERB1]ing.",
+            "Today is the day to get some [ADJ1] [NOUN1]s and go [GER1].",
             "I currently run a business that sells [ADJ1] [NOUN1]s.",
             "I'm starting to [PRESVERB1] [ADJ1] [NOUN1]s.",
             "I think I'll bring my [SUPER1], most [SUPER2] [NOUN1] to show & tell tomorrow.",
@@ -2125,9 +2126,15 @@ public static class Extensions
             "I've updated my wardrobe to include [ADJ1] [NOUN1]s.",
             "We should get [PASTVERB1] and [PASTVERB2] immediately.",
             "I'm lost, can you give me directions to your [NOUN1]?",
-            "Are you from Tennessee? Because you're the only [NOUN1] I see!",
+            "Are you from Tennessee? Because you're the only [ADJ1] [NOUN1] I see!",
             "I'm like a Rubik's Cube, the more you [PRESVERB1] me, the more [ADJ1] I get.",
             "You sound like a [ADJ1] [NOUN1], so maybe you should [PRESVERB1] a little more.",
+            "I'm going to be perfecting my [GER1] tomorrow, want to join me?",
+            "[GER1] is my favorite way to exercise.",
+            "I'm going to [PRESVERB1] my way to the top by [GER1] you over my [ADJ1] [NOUN1].",
+            "I just made a huge investment in [ADJ1] [NOUN1]s, let's hope it pays off.",
+            "I have some questions regarding the article you wrote about [ADJ1] [NOUN1]s that practice [GER1].",
+            "I'm trading in my old car for some [ADJ1] [NOUN1]s.",
         };
 
         // Pick a sentence to use 
@@ -2148,6 +2155,7 @@ public static class Extensions
         output = output.Replace("[PRESVERB1]", presentverb[Random.Shared.Next(presentverb.Length)]).Replace("[PRESVERB2]", presentverb[Random.Shared.Next(presentverb.Length)]).Replace("[PRESVERB3]", presentverb[Random.Shared.Next(presentverb.Length)]);
         output = output.Replace("[PASTVERB1]", pastverb[Random.Shared.Next(pastverb.Length)]).Replace("[PASTVERB2]", pastverb[Random.Shared.Next(pastverb.Length)]).Replace("[PASTVERB3]", pastverb[Random.Shared.Next(pastverb.Length)]);
         output = output.Replace("[PREP1]", preposition[Random.Shared.Next(preposition.Length)]).Replace("[PREP2]", preposition[Random.Shared.Next(preposition.Length)]).Replace("[PREP3]", preposition[Random.Shared.Next(preposition.Length)]);
+        output = output.Replace("[GER1]", gerund[Random.Shared.Next(gerund.Length)]).Replace("[GER2]", gerund[Random.Shared.Next(gerund.Length)]).Replace("[GER3]", gerund[Random.Shared.Next(gerund.Length)]);
 
         #endregion
 

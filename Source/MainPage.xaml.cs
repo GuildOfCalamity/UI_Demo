@@ -234,7 +234,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 if (Enum.IsDefined(typeof(DelayTime), str))
                 {
                     // For testing IsEnabled="{Binding SwitchDelayCommand.CanExecute}"
-                    await Task.Delay(250 * (IsCapsLockOn() ? 8 : 1));
+                    await Task.Delay(250 * (App.IsCapsLockOn() ? 8 : 1));
 
                     Delay = (DelayTime)Enum.Parse(typeof(DelayTime), str);
                 }
@@ -724,7 +724,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             //_ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
 
             // Subscribe to app-wide messages.
-            PubSubService<ApplicationMessage>.Instance.Subscribe(OnPubSubReceived);
+            PubSubEnhanced<ApplicationMessage>.Instance.Subscribe(OnPubSubReceived);
 
             try
             {
@@ -740,11 +740,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     void MainPageOnUnloaded(object sender, RoutedEventArgs e)
     {
-        PubSubService<ApplicationMessage>.Instance.Unsubscribe(OnPubSubReceived);
+        PubSubEnhanced<ApplicationMessage>.Instance.Unsubscribe(OnPubSubReceived);
     }
 
     /// <summary>
-    /// <see cref="PubSubService{T}"> testing.
+    /// <see cref="PubSubEnhanced{T}"> testing.
     /// </summary>
     void OnPubSubReceived(ApplicationMessage msg)
     {
@@ -824,7 +824,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     }
                     else
                     {
-                        PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+                        PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
                         {
                             Module = ModuleId.MainPage,
                             MessageText = $"🔔 Notification toast was skipped",
@@ -994,24 +994,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             Assets.Add(f);
         }
-    }
-
-    bool IsCtrlKeyDown()
-    {
-        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
-        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-    }
-
-    bool IsAltKeyDown()
-    {
-        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu);
-        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-    }
-
-    bool IsCapsLockOn()
-    {
-        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.CapitalLock);
-        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Locked);
     }
     #endregion
 

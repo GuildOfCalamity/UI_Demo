@@ -117,7 +117,7 @@
             CornerRadius="6"
             DisplayMode="Overlay"
             IsPaneOpen="False"
-            OpenPaneLength="320"
+            OpenPaneLength="400"
             PanePlacement="Right">
             <SplitView.Pane>
                 <!--#region [PubSub Messages]-->
@@ -558,7 +558,7 @@
                                         Height="30"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        Source="ms-appx:///Assets/SettingsIcon2.png" />
+                                        Source="ms-appx:///Assets/MessageIcon12.png" />
                                     <!--<TextBlock
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"

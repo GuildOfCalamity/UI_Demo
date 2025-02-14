@@ -397,7 +397,7 @@ public partial class App : Application
                                 Debug.WriteLine($"[INFO] Ignoring position saving (window maximized or restored)");
                             }
 
-                            PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
+                            PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
                             {
                                 Module = ModuleId.App,
                                 MessageText = $"🔔 AppWin PositionChange Detected",
@@ -821,6 +821,26 @@ public partial class App : Application
     }
     #endregion
 
+    #region [Key State Helpers]
+    public static bool IsCtrlKeyDown()
+    {
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+    }
+
+    public static bool IsAltKeyDown()
+    {
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+    }
+
+    public static bool IsCapsLockOn()
+    {
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.CapitalLock);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Locked);
+    }
+    #endregion
+
     #region [Domain Events]
     void ApplicationUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
@@ -1200,20 +1220,10 @@ public partial class App : Application
             while (!IsClosing)
             {
                 await Task.Delay(5000);
-                
-                //PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
-                //{
-                //    Module = ModuleId.App,
-                //    MessageText = $"🔔 Heartbeat",
-                //    MessageType = typeof(string),
-                //});
-
-                PubSubService<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage
-                {
-                    Module = ModuleId.App,
-                    MessageText = $"🔔 {Extensions.GenerateSentence()}",
-                    MessageType = typeof(string),
-                });
+                if (IsCapsLockOn())
+                    PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage { Module = ModuleId.Extensions, MessageText = $"🔔 {Extensions.GenerateSentence()}", MessageType = typeof(string) });
+                else
+                    PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage { Module = ModuleId.App, MessageText = $"🔔 Heartbeat", MessageType = typeof(string) });
             }
         }
         catch (Exception) { }
