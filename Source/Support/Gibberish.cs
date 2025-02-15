@@ -9,21 +9,21 @@ namespace UI_Demo;
 
 public static class Gibberish
 {
-    const int HistoryLimit = 5; // make sure this is less than the prefab amount
+    const int _historyLimit = 5; // make sure this is less than the prefab amount
     static readonly Queue<string> _recentSentences = new();
 
-    public static string GenerateSentence()
+    public static string GenerateSentence(bool prefab = true)
     {
         string sentence = string.Empty;
         do
         {
-            sentence = GeneratePickupSentence();
+            sentence = GeneratePickupSentence(prefab);
         }
-        while (IsSimilarToRecent(sentence));
+        while (IsSimilarUsingJaccard(sentence)); // while (IsSimilarUsingLevenshtein(sentence));
 
         // Add to history and remove oldest if over limit
         _recentSentences.Enqueue(sentence);
-        if (_recentSentences.Count > HistoryLimit)
+        if (_recentSentences.Count > _historyLimit)
         {
             _recentSentences.Dequeue();
         }
@@ -75,7 +75,6 @@ public static class Gibberish
     /// <summary>
     /// This is a simplified version of my pickup line generator.
     /// </summary>
-    /// <returns>jibber-jabber</returns>
     static string GeneratePickupSentence(bool prefab = true)
     {
         /*
@@ -185,6 +184,8 @@ public static class Gibberish
         output = output.Replace("[PREP1]", preposition[Random.Shared.Next(preposition.Length)]).Replace("[PREP2]", preposition[Random.Shared.Next(preposition.Length)]).Replace("[PREP3]", preposition[Random.Shared.Next(preposition.Length)]);
         output = output.Replace("[GER1]", gerund[Random.Shared.Next(gerund.Length)]).Replace("[GER2]", gerund[Random.Shared.Next(gerund.Length)]).Replace("[GER3]", gerund[Random.Shared.Next(gerund.Length)]);
 
+        // Set the first letter of the first word in the sentence to uppercase
+        output = char.ToUpper(output[0]) + output.Substring(1);
         #endregion
 
         if (prefab)
@@ -194,9 +195,14 @@ public static class Gibberish
     }
 
     #region [Helpers]
-    static bool IsSimilarToRecent(string newSentence)
+    static bool IsSimilarUsingJaccard(string newSentence, double score = 0.56)
     {
-        return _recentSentences.Any(sentence => GetJaccardSimilarity(sentence, newSentence) >= 0.7);
+        return _recentSentences.Any(sentence => GetJaccardSimilarity(sentence, newSentence) >= score);
+    }
+
+    static bool IsSimilarUsingLevenshtein(string newSentence, double score = 40)
+    {
+        return _recentSentences.Any(sentence => GetDamerauLevenshteinDistance(sentence, newSentence) <= score);
     }
 
     static double GetJaccardSimilarity(string s1, string s2)
@@ -208,6 +214,102 @@ public static class Gibberish
         var score = (double)intersection / (double)union;
         Debug.WriteLine($"[INFO] Similarity score: {score:N3}");
         return score;
+    }
+
+    /// <summary>
+    /// Determines if two passwords are similar based on the Levenshtein Distance.
+    /// </summary>
+    public static bool ArePasswordsSimilarBasic(string password1, string password2, double similarityThreshold = 0.7)
+    {
+        if (string.IsNullOrEmpty(password1) || string.IsNullOrEmpty(password2))
+            return false;
+
+        int maxLength = Math.Max(password1.Length, password2.Length);
+        if (maxLength == 0) return false; // Prevent division by zero
+
+        int distance = GetLevenshteinDistance(password1, password2);
+        double similarity = 1.0 - ((double)distance / maxLength);
+
+        return similarity >= similarityThreshold;
+    }
+
+    /// <summary>
+    /// Determines if two passwords are similar based on the Damerau-Levenshtein Distance.
+    /// The lower the score the closer they are to being identical, e.g. 0 = identical
+    /// </summary>
+    public static bool ArePasswordsSimilarAdvanced(string password1, string password2, double similarityThreshold = 0.7)
+    {
+        if (string.IsNullOrEmpty(password1) || string.IsNullOrEmpty(password2))
+            return false;
+
+        int maxLength = Math.Max(password1.Length, password2.Length);
+        if (maxLength == 0) return false; // Prevent division by zero
+
+        int distance = GetDamerauLevenshteinDistance(password1, password2);
+        double similarity = 1.0 - ((double)distance / maxLength);
+
+        return similarity >= similarityThreshold;
+    }
+
+    /// <summary>
+    /// Computes the Levenshtein Distance between two strings.
+    /// The lower the score the closer they are to being identical, e.g. 0 = identical
+    /// </summary>
+    static int GetLevenshteinDistance(string s1, string s2)
+    {
+        int len1 = s1.Length;
+        int len2 = s2.Length;
+        int[,] dp = new int[len1 + 1, len2 + 1];
+
+        for (int i = 0; i <= len1; i++)
+            dp[i, 0] = i;
+
+        for (int j = 0; j <= len2; j++)
+            dp[0, j] = j;
+
+        for (int i = 1; i <= len1; i++)
+        {
+            for (int j = 1; j <= len2; j++)
+            {
+                int cost = s1[i - 1] == s2[j - 1] ? 0 : 1;
+
+                dp[i, j] = Math.Min(Math.Min(dp[i - 1, j] + 1, dp[i, j - 1] + 1), dp[i - 1, j - 1] + cost);
+            }
+        }
+        Debug.WriteLine($"[INFO] Levenshtein score: {dp[len1, len2]}");
+        return dp[len1, len2];
+    }
+
+    /// <summary>
+    /// Computes the Damerau-Levenshtein Distance between two strings.
+    /// </summary>
+    static int GetDamerauLevenshteinDistance(string s1, string s2)
+    {
+        int len1 = s1.Length;
+        int len2 = s2.Length;
+        int[,] dp = new int[len1 + 1, len2 + 1];
+
+        for (int i = 0; i <= len1; i++) 
+            dp[i, 0] = i;
+
+        for (int j = 0; j <= len2; j++) 
+            dp[0, j] = j;
+
+        for (int i = 1; i <= len1; i++)
+        {
+            for (int j = 1; j <= len2; j++)
+            {
+                int cost = s1[i - 1] == s2[j - 1] ? 0 : 1;
+                
+                dp[i, j] = Math.Min(Math.Min(dp[i - 1, j] + 1, dp[i, j - 1] + 1), dp[i - 1, j - 1] + cost);
+                
+                // Check for transpositions
+                if (i > 1 && j > 1 && s1[i - 1] == s2[j - 2] && s1[i - 2] == s2[j - 1])
+                    dp[i, j] = Math.Min(dp[i, j], dp[i - 2, j - 2] + cost);
+            }
+        }
+        Debug.WriteLine($"[INFO] Damerau-Levenshtein score: {dp[len1, len2]}");
+        return dp[len1, len2];
     }
     #endregion
 }

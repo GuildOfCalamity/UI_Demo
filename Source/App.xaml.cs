@@ -1221,7 +1221,7 @@ public partial class App : Application
             {
                 await Task.Delay(5000);
                 if (IsCapsLockOn())
-                    PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage { Module = ModuleId.Extensions, MessageText = $"🔔 {Gibberish.GenerateSentence()}", MessageType = typeof(string) });
+                    PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage { Module = ModuleId.Gibberish, MessageText = $"🔔 {Gibberish.GenerateSentence()}", MessageType = typeof(string) });
                 else
                     PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage { Module = ModuleId.App, MessageText = $"🔔 Heartbeat", MessageType = typeof(string) });
             }

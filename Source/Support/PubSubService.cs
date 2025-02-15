@@ -304,5 +304,6 @@ public enum ModuleId
     AppCapture = 27,
     MessageService = 28,
     Extensions = 29,
+    Gibberish = 30,
 }
 #endregion
