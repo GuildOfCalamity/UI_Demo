@@ -11,24 +11,36 @@ public static class Gibberish
 {
     const int _historyLimit = 5; // make sure this is less than the prefab amount
     static readonly Queue<string> _recentSentences = new();
+    static readonly Queue<string> _recentNames = new();
 
     public static string GenerateSentence(bool prefab = true)
     {
         string sentence = string.Empty;
-        do
-        {
-            sentence = GeneratePickupSentence(prefab);
-        }
+
+        do { sentence = GeneratePickupSentence(prefab); }
         while (IsSimilarUsingJaccard(sentence)); // while (IsSimilarUsingLevenshtein(sentence));
 
         // Add to history and remove oldest if over limit
         _recentSentences.Enqueue(sentence);
         if (_recentSentences.Count > _historyLimit)
-        {
             _recentSentences.Dequeue();
-        }
 
         return sentence;
+    }
+
+    public static string GenerateName()
+    {
+        string name = string.Empty;
+
+        do { name = NameList[Random.Shared.Next(NameList.Count)].Trim(); }
+        while (IsSimilarUsingJaccard(name)); // while (IsSimilarUsingLevenshtein(name));
+
+        // Add to history and remove oldest if over limit
+        _recentNames.Enqueue(name);
+        if (_recentNames.Count > _historyLimit)
+            _recentNames.Dequeue();
+
+        return name;
     }
 
     /// <summary>
@@ -312,4 +324,66 @@ public static class Gibberish
         return dp[len1, len2];
     }
     #endregion
+
+    static List<string> NameList = new() {
+          "Olivia   ","Liam       ","Emma     ","Noah       ",
+          "Amelia   ","Oliver     ","Ava      ","Elijah     ",
+          "Sophia   ","Lucas      ","Charlotte","Levi       ",
+          "Isabella ","Mason      ","Mia      ","Asher      ",
+          "Luna     ","James      ","Harper   ","Ethan      ",
+          "Gianna   ","Mateo      ","Evelyn   ","Leo        ",
+          "Aria     ","Jack       ","Ella     ","Benjamin   ",
+          "Ellie    ","Aiden      ","Mila     ","Logan      ",
+          "Layla    ","Grayson    ","Avery    ","Jackson    ",
+          "Camila   ","Henry      ","Lily     ","Wyatt      ",
+          "Scarlett ","Sebastian  ","Sofia    ","Carter     ",
+          "Nova     ","Daniel     ","Aurora   ","William    ",
+          "Chloe    ","Alexander  ","Betty    ","Amy        ",
+          "Margaret ","Peggy      ","Paula    ","Steve      ",
+          "Esteban  ","Stephen    ","Riley    ","Ezra       ",
+          "Nora     ","Owen       ","Hazel    ","Michael    ",
+          "Abigail  ","Muhammad   ","Rylee    ","Julian     ",
+          "Penelope ","Hudson     ","Elena    ","Luke       ",
+          "Paul     ","Johan      ","Zoey     ","Samuel     ",
+          "Isla     ","Jacob      ","Eleanor  ","Lincoln    ",
+          "Elizabeth","Gabriel    ","Madison  ","Jayden     ",
+          "Willow   ","Luca       ","Emilia   ","Maverick   ",
+          "Violet   ","David      ","Emily    ","Josiah     ",
+          "Eliana   ","Elias      ","Stella   ","Jaxon      ",
+          "Maya     ","Kai        ","Paisley  ","Anthony    ",
+          "Everly   ","Isaiah     ","Addison  ","Eli        ",
+          "Ryleigh  ","John       ","Ivy      ","Joseph     ",
+          "Grace    ","Matthew    ","Hannah   ","Ezekiel    ",
+          "Bella    ","Adam       ","Naomi    ","Caleb      ",
+          "Zoe      ","Isaac      ","Aaliyah  ","Theodore   ",
+          "Kinsley  ","Nathan     ","Lucy     ","Theo       ",
+          "Delilah  ","Thomas     ","Skylar   ","Nolan      ",
+          "Leilani  ","Waylon     ","Ayla     ","Ryan       ",
+          "Victoria ","Easton     ","Alice    ","Roman      ",
+          "Aubrey   ","Adrian     ","Savannah ","Miles      ",
+          "Serenity ","Greyson    ","Autumn   ","Cameron    ",
+          "Leah     ","Colton     ","Sophie   ","Landon     ",
+          "Natalie  ","Santiago   ","Athena   ","Andrew     ",
+          "Lillian  ","Hunter     ","Hailey   ","Jameson    ",
+          "Audrey   ","Joshua     ","Eva      ","Jace       ",
+          "Everleigh","Cooper     ","Kennedy  ","Dylan      ",
+          "Maria    ","Jeremy     ","Natalia  ","Kingston   ",
+          "Nevaeh   ","Xavier     ","Brooklyn ","Christian  ",
+          "Raelynn  ","Christopher","Arya     ","Kayden     ",
+          "Ariana   ","Charlie    ","Madelyn  ","Aaron      ",
+          "Claire   ","Jaxson     ","Valentina","Silas      ",
+          "Kris     ","Eion       ","Sadie    ","Ryder      ",
+          "Gabriella","Austin     ","Ruby     ","Dominic    ",
+          "Anna     ","Amir       ","Iris     ","Carson     ",
+          "Charlie  ","Jordan     ","Brielle  ","Weston     ",
+          "Emery    ","Micah      ","Melody   ","Rowan      ",
+          "Amara    ","Beau       ","Piper    ","Declan     ",
+          "Eric     ","Nick       ","Jason    ","Evan       ",
+          "Quinn    ","Everett    ","Rebecca  ","Stuart     ",
+          "Mark     ","Nathan     ","Gloria   ","Wilma      ",
+          "Peter    ","Scott      ","Byron    ","Stephanie  ",
+          "Fred     ","Frederick  ","Bill     ","Robert     ",
+          "Frank    ","Jade       ","Alex     ","Bart       ",
+          "Carol    ","Sarah      ","Joan     ","Jose       "
+    };
 }
