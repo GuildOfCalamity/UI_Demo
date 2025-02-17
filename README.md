@@ -8,11 +8,11 @@
 | Assembly | Version |
 | ---- | ---- |
 | .NET Core | 8.0.11 |
-| Microsoft.WindowsAppSDK | 1.6.250108002 |
+| Microsoft.WindowsAppSDK | 1.6.250205002 |
 | Microsoft.Windows.SDK.BuildTools | 10.0.26100.1742 |
 
 ## 🎛️ Description
-- A test application for changes and updates made to the WindowsAppSDK.
+- A test application for changes and updates made to the [WindowsAppSDK](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/stable-channel).
 - I've added code examples for customizing `Microsoft.UI.Xaml.Controls.ContentDialog`, `Windows.UI.StartScreen.JumpList`, `Windows.ApplicationModel.Activation`, `Microsoft.UI.Windowing.AppWindow` and `Microsoft.UI.Windowing.DisplayArea` management, and creating gradient window backdrops via `Microsoft.UI.Composition.SpriteVisual`. The blur effects are created from scratch without the use of any 3rd party NuGets.
 - This source also contains plenty of tips and tricks for any application, including but not limited to: TaskBar, PubSub, Toast, Channels, DispatcherQueue, Image Capture, Split View, Profile Settings, Machine Environment, Stylers, Converters, P/Invoke, Extensions, et al.
 - There's a hidden surprise if you're watching the `SplitView` PubSub message queue while **CapsLock** is on.
