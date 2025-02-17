@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -23,6 +24,7 @@ using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.Windows.Widgets.Providers;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -902,18 +904,20 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     void ButtonCompositePointerEntered(object sender, PointerRoutedEventArgs e)
     {
+        // [Immediate using no animation]
         //var transform = ((Button)sender).RenderTransform as CompositeTransform;
         //if (transform != null)
         //{
         //    transform.ScaleX = 1.111;
         //    transform.ScaleY = 1.111;
-        //    transform.Rotation = 10;
+        //    transform.Rotation = 90;
         //}
         StartComboAnimation((Button)sender, 1.111, 200);
     }
 
     void ButtonCompositePointerExited(object sender, PointerRoutedEventArgs e)
     {
+        // [Immediate using no animation]
         //var transform = ((Button)sender).RenderTransform as CompositeTransform;
         //if (transform != null)
         //{
@@ -924,6 +928,22 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         StartComboAnimation((Button)sender, 1.0, 200);
     }
 
+    void ButtonCompositeTapped(object sender, TappedRoutedEventArgs e)
+    {
+        // [Immediate using no animation]
+        //var transform = ((Button)sender).RenderTransform as CompositeTransform;
+        //if (transform != null)
+        //{
+        //    transform.ScaleX = 0.9;
+        //    transform.ScaleY = 0.9;
+        //    transform.Rotation = 160;
+        //}
+        StartComboAnimation((Button)sender, 0.999, 100);
+    }
+
+    /// <summary>
+    /// Uses the given scale to determine the angle of rotation.
+    /// </summary>
     void StartComboAnimation(Button button, double scale, double ms)
     {
         bool tryColorAnimation = false;
@@ -944,7 +964,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             To = scale,
             Duration = TimeSpan.FromMilliseconds(ms),
             EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
-            EnableDependentAnimation = true
+            EnableDependentAnimation = true,
+            AutoReverse = false
         };
 
         // Y scale animation.
@@ -953,14 +974,16 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             To = scale,
             Duration = TimeSpan.FromMilliseconds(ms),
             EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
-            EnableDependentAnimation = true
+            EnableDependentAnimation = true,
+            AutoReverse = false
         };
 
         // Angle animation
         DoubleAnimation rotateAnimation = new DoubleAnimation
         {
-            To = scale == 1.0 ? 0 : 90,
+            To = scale switch { 1.0 => 0, > 1.0 => 90, < 1.0 => 160, _ => 0 },
             Duration = TimeSpan.FromMilliseconds(ms),
+            AutoReverse = scale < 1.0 ? true : false,
             EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
             EnableDependentAnimation = true
         };
@@ -969,7 +992,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             ColorAnimation colorAnimation = new ColorAnimation
             {
-                To = scale == 1.0 ? ((SolidColorBrush)prevBackground).Color : Colors.DodgerBlue,
+                To = scale switch { 1.0 => ((SolidColorBrush)prevBackground).Color, > 1.0 => Colors.DodgerBlue, < 1.0 => Colors.Orchid, _ => ((SolidColorBrush)prevBackground).Color },
                 Duration = TimeSpan.FromMilliseconds(ms),
                 EnableDependentAnimation = true
             };
@@ -1558,4 +1581,35 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         gridVisual.StartAnimation("Offset.X", _springAnimation);
     }
     #endregion
+
+    /// <summary>
+    ///   https://learn.microsoft.com/en-us/windows/apps/develop/widgets/implement-widget-provider-cs
+    ///   https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.windows.widgets.providers.widgetmanager?view=windows-app-sdk-1.6
+    /// </summary>
+    /// <param name="widgetId"></param>
+    /// <remarks>
+    ///   The <see cref="WidgetManager"/> class can only perform operations on existing widgets.
+    /// </remarks>
+    public void UpdateExistingWidgets(string widgetId)
+    {
+        try
+        {
+            WidgetManager widgetManager = WidgetManager.GetDefault();
+            var widgetInfos = widgetManager.GetWidgetInfos();
+            foreach (var widgetInfo in widgetInfos)
+            {
+                if (widgetInfo.WidgetContext.IsActive)
+                {
+                    WidgetUpdateRequestOptions options = new WidgetUpdateRequestOptions(widgetId);
+                    options.Template = "({ \"type\": \"AdaptiveCard\", \"version\": \"1.5\", \"body\": [{ \"type\": \"TextBlock\", \"text\": \"${greeting}\" }]})";
+                    options.Data = "({ \"greeting\": \"Hello\" })";
+                    widgetManager.UpdateWidget(options);
+                }
+            }
+        }
+        catch (COMException ex)
+        {
+            Debug.WriteLine($"[ERROR] HRESULT={ex.HResult}: {ex.Message}");
+        }
+    }
 }

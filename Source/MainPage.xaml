@@ -616,10 +616,13 @@
                                 CornerRadius="20"
                                 PointerEntered="ButtonCompositePointerEntered"
                                 PointerExited="ButtonCompositePointerExited"
-                                RenderTransformOrigin="0.5,0.5">
+                                RenderTransformOrigin="0.5,0.5"
+                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                Style="{StaticResource EnhancedButton}"
+                                Tapped="ButtonCompositeTapped">
                                 <Button.RenderTransform>
                                     <CompositeTransform
-                                        x:Name="ButtonTransform"
+                                        x:Name="ButtonTransform1"
                                         ScaleX="1"
                                         ScaleY="1" />
                                 </Button.RenderTransform>
@@ -631,6 +634,33 @@
                                         RenderTransformOrigin="0.5,0.5"
                                         Symbol="HangUp" />-->
                                     <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
+                                </Button.Content>
+                            </Button>
+                            <Button
+                                Width="40"
+                                Height="40"
+                                Padding="0"
+                                CornerRadius="20"
+                                PointerEntered="ButtonCompositePointerEntered"
+                                PointerExited="ButtonCompositePointerExited"
+                                RenderTransformOrigin="0.5,0.5"
+                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                Style="{StaticResource EnhancedButton}"
+                                Tapped="ButtonCompositeTapped">
+                                <Button.RenderTransform>
+                                    <CompositeTransform
+                                        x:Name="ButtonTransform2"
+                                        ScaleX="1"
+                                        ScaleY="1" />
+                                </Button.RenderTransform>
+                                <Button.Content>
+                                    <!--<SymbolIcon
+                                        Margin="0"
+                                        VerticalAlignment="Bottom"
+                                        Foreground="{ThemeResource GradientLine2Brush}"
+                                        RenderTransformOrigin="0.5,0.5"
+                                        Symbol="HangUp" />-->
+                                    <Image Width="30" Source="ms-appx:///Assets/SettingsIcon5.png" />
                                 </Button.Content>
                             </Button>
                         </StackPanel>

@@ -268,7 +268,7 @@
                 <Setter Property="Foreground" Value="{ThemeResource PrimaryBrush}" />
                 <Setter Property="Background" Value="{ThemeResource BorderBrush}" />
                 <Setter Property="BackgroundSizing" Value="OuterBorderEdge" />
-                <Setter Property="MinWidth" Value="100" />
+                <Setter Property="MinWidth" Value="40" />
                 <Setter Property="BorderBrush" Value="{ThemeResource AccentButtonBorderBrush}" />
                 <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
                 <Setter Property="Template">
