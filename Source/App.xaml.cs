@@ -464,6 +464,8 @@ public partial class App : Application
         }
 
         InitializeJumpList(Windows.UI.StartScreen.JumpListSystemGroupKind.None);
+
+        //SentenceGeneratorAlt.RunTest();
     }
 
     public static string GetAppRuntime()

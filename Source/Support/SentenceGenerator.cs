@@ -188,7 +188,8 @@ public class SentenceGenerator
 
     static string CapitalizeFirstLetter(string sentence)
     {
-        if (string.IsNullOrEmpty(sentence)) return sentence;
+        if (string.IsNullOrEmpty(sentence)) 
+            return sentence;
         return char.ToUpper(sentence[0], CultureInfo.CurrentCulture) + sentence.Substring(1);
     }
 }
@@ -201,24 +202,19 @@ public enum SentencePattern { Simple, Compound, Interrogative, Conditional, Nega
 /// </summary>
 public class SentenceGeneratorAlt
 {
+    static readonly Random _random = new Random();
     static readonly string[] NounSubjects = { "the cat", "a dog", "the scientist", "an artist", "the teacher", "the student" };
     static readonly string[] PronounSubjects = { "she", "he", "they" };
     static readonly string[] Objects = { "the book", "a cake", "the ball", "a letter", "the chair", "a song", "a masterpiece" };
     static readonly string[] Adjectives = { "happy", "angry", "excited", "sleepy", "brilliant", "curious", "brave", "lazy" };
-    static readonly string[] Adverbs = { "quickly", "slowly", "carefully", "elegantly", "silently", "enthusiastically", "gracefully" };
-    static readonly string[] Conjunctions = { "and then", "but", "so", "because", "while", "although" };
     static readonly string[] QuestionStarters = { "Why", "When", "How", "Where", "Who" };
     static readonly Dictionary<string, (string past, string future, string pastPassive, string futurePassive, string[] validObjects)> VerbConjugations = new()
     {
         { "eat", ("ate", "will eat", "was eaten", "will be eaten", new[] { "a cake" }) },
         { "run", ("ran", "will run", "was run", "will be run", new[] { "on the field" }) },
         { "jump", ("jumped", "will jump", "was jumped", "will be jumped", new[] { "over the hurdle" }) },
-        { "sleep", ("slept", "will sleep", "was slept", "will be slept", new[] { "on the chair" }) },
         { "write", ("wrote", "will write", "was written", "will be written", new[] { "a letter", "a book" }) },
-        { "draw", ("drew", "will draw", "was drawn", "will be drawn", new[] { "a masterpiece", "a song" }) },
-        { "teach", ("taught", "will teach", "was taught", "will be taught", new[] { "the student" }) },
-        { "read", ("read", "will read", "was read", "will be read", new[] { "a book", "a letter" }) },
-        { "create", ("created", "will create", "was created", "will be created", new[] { "a masterpiece", "a song" }) }
+        { "read", ("read", "will read", "was read", "will be read", new[] { "a book", "a letter" }) }
     };
 
     /// <summary>
@@ -245,8 +241,6 @@ public class SentenceGeneratorAlt
         Debug.WriteLine(GenerateSentence(VerbTense.Past, SentencePattern.Passive));
     }
 
-    static string GetRandom(string[] words) => words[Random.Shared.Next(words.Length)];
-
     public static string GenerateSentence(VerbTense tense, SentencePattern pattern)
     {
         string sentence = pattern switch
@@ -261,47 +255,6 @@ public class SentenceGeneratorAlt
         };
 
         return CapitalizeFirstLetter(sentence);
-    }
-
-    static string GenerateSimpleSentence(VerbTense tense)
-    {
-        string subject = GetFormattedSubject();
-        var (verb, validObjects) = GetRandomVerb(tense);
-        string obj = GetValidObject(validObjects);
-
-        return $"{subject} {verb} {obj}.";
-    }
-
-    static string GenerateCompoundSentence(VerbTense tense)
-    {
-        string sentence1 = GenerateSimpleSentence(tense);
-        string conjunction = GetRandom(Conjunctions);
-        string sentence2 = GenerateSimpleSentence(tense).ToLower();
-
-        return $"{sentence1} {conjunction}, {sentence2}";
-    }
-
-    static string GenerateInterrogativeSentence(VerbTense tense)
-    {
-        string questionStarter = GetRandom(QuestionStarters);
-        string subject = GetFormattedSubject();
-        var (verb, validObjects) = GetRandomVerb(tense);
-        string obj = GetValidObject(validObjects);
-
-        return $"{questionStarter} does {subject} {verb} {obj}?";
-    }
-
-    static string GenerateConditionalSentence(VerbTense tense)
-    {
-        string subject1 = GetFormattedSubject();
-        var (verb1, validObjects1) = GetRandomVerb(tense);
-        string obj1 = GetValidObject(validObjects1);
-
-        string subject2 = GetFormattedSubject();
-        var (verb2, validObjects2) = GetRandomVerb(tense);
-        string obj2 = GetValidObject(validObjects2);
-
-        return $"If {subject1} {verb1} {obj1}, then {subject2} {verb2} {obj2}.";
     }
 
     static string GenerateNegativeSentence(VerbTense tense)
@@ -322,15 +275,78 @@ public class SentenceGeneratorAlt
         return $"{obj} {verb} by {subject}.";
     }
 
-    static string GetFormattedSubject()
+    private static string GenerateSimpleSentence(VerbTense tense)
     {
-        bool useNoun = Random.Shared.Next(2) == 0;
+        string subject = GetFormattedSubject();
+        var (verb, validObjects) = GetRandomVerb(tense);
+        string obj = GetValidObject(validObjects);
+
+        return $"{subject} {verb} {obj}.";
+    }
+
+    private static string GenerateInterrogativeSentence(VerbTense tense)
+    {
+        string questionStarter = GetRandom(QuestionStarters);
+        string subject = GetFormattedSubject();
+        var (verb, _) = GetRandomVerb(tense);
+
+        // Fix verb auxiliary rules
+        string auxVerb = tense switch
+        {
+            VerbTense.Present => "does",
+            VerbTense.Past => "did",
+            VerbTense.Future => "will",
+            _ => "does"
+        };
+
+        // Ensure correct verb form (no past/future after "does"/"did")
+        string fixedVerb = (tense == VerbTense.Present || tense == VerbTense.Past) ? ConvertToBaseForm(verb) : verb;
+
+        return $"{questionStarter} {auxVerb} {subject} {fixedVerb}?";
+    }
+
+    private static string GenerateCompoundSentence(VerbTense tense)
+    {
+        string sentence1 = GenerateSimpleSentence(tense);
+        string sentence2 = GenerateSimpleSentence(tense).ToLower();
+        return $"{sentence1}, but {sentence2}";
+    }
+
+    private static string GenerateConditionalSentence(VerbTense tense)
+    {
+        string subject1 = GetFormattedSubject();
+        var (verb1, validObjects1) = GetRandomVerb(tense);
+        string obj1 = GetValidObject(validObjects1);
+
+        string subject2 = GetFormattedSubject();
+        var (verb2, validObjects2) = GetRandomVerb(tense);
+        string obj2 = GetValidObject(validObjects2);
+
+        return $"If {subject1} {verb1} {obj1}, then {subject2} {verb2} {obj2}.";
+    }
+
+    private static string ConvertToBaseForm(string verb)
+    {
+        return verb switch
+        {
+            "ate" => "eat",
+            "ran" => "run",
+            "jumped" => "jump",
+            "wrote" => "write",
+            "read" => "read", // Present and past spellings are the same
+            _ => verb
+        };
+    }
+
+    private static string GetFormattedSubject()
+    {
+        bool useNoun = _random.Next(2) == 0;
         string subject = useNoun ? GetRandom(NounSubjects) : GetRandom(PronounSubjects);
         string adjective = useNoun ? GetRandom(Adjectives) : ""; // Only nouns get adjectives
         return useNoun ? $"{subject.Split(' ')[0]} {adjective} {subject.Split(' ', 2)[1]}" : subject;
     }
 
-    static (string, string[]) GetRandomVerb(VerbTense tense)
+    private static (string, string[]) GetRandomVerb(VerbTense tense)
     {
         var verbPair = GetRandomPair(VerbConjugations);
         string verb = tense switch
@@ -343,14 +359,14 @@ public class SentenceGeneratorAlt
         return (verb, verbPair.Value.validObjects);
     }
 
-    static string GetValidObject(string[] validObjects)
+    private static string GetValidObject(string[] validObjects)
     {
         return GetRandom(validObjects);
     }
 
-    static KeyValuePair<string, (string past, string future, string pastPassive, string futurePassive, string[] validObjects)> GetRandomPair(Dictionary<string, (string past, string future, string pastPassive, string futurePassive, string[] validObjects)> dict)
+    private static KeyValuePair<string, (string past, string future, string pastPassive, string futurePassive, string[] validObjects)> GetRandomPair(Dictionary<string, (string past, string future, string pastPassive, string futurePassive, string[] validObjects)> dict)
     {
-        int index = Random.Shared.Next(dict.Count);
+        int index = _random.Next(dict.Count);
         foreach (var pair in dict)
         {
             if (index-- == 0) return pair;
@@ -358,8 +374,9 @@ public class SentenceGeneratorAlt
         return default;
     }
 
-    static string CapitalizeFirstLetter(string sentence)
-    {
-        return char.ToUpper(sentence[0], CultureInfo.CurrentCulture) + sentence.Substring(1);
-    }
+    static string GetRandom(string[] words) => words[_random.Next(words.Length)];
+
+    static string CapitalizeFirstLetter(string sentence) => char.ToUpper(sentence[0], CultureInfo.CurrentCulture) + sentence.Substring(1);
 }
+
+

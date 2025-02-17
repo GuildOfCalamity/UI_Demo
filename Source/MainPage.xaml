@@ -119,8 +119,8 @@
             IsPaneOpen="False"
             OpenPaneLength="400"
             PanePlacement="Right">
+            <!--#region [PubSub Messages]-->
             <SplitView.Pane>
-                <!--#region [PubSub Messages]-->
                 <Grid>
                     <local:CompositionShadow
                         HorizontalAlignment="Center"
@@ -146,11 +146,11 @@
                             Background="Transparent"
                             Opacity="1">
                             <!--
-                    <ListView.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapGrid HorizontalChildrenAlignment="Left" Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapGrid HorizontalChildrenAlignment="Left" Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
                             -->
                             <ListView.Transitions>
                                 <TransitionCollection>
@@ -210,8 +210,8 @@
                         </ListView>
                     </ScrollViewer>
                 </Grid>
-                <!--#endregion-->
             </SplitView.Pane>
+            <!--#endregion-->
 
             <Grid
                 x:Name="host"
@@ -609,6 +609,28 @@
                                         TranslateY="-2" />
                                 </FontIcon.RenderTransform>
                             </FontIcon>-->
+                            <Button
+                                Width="40"
+                                Height="40"
+                                Padding="0"
+                                PointerEntered="ButtonCompositePointerEntered"
+                                PointerExited="ButtonCompositePointerExited"
+                                RenderTransformOrigin="0.5,0.5">
+                                <Button.RenderTransform>
+                                    <CompositeTransform
+                                        x:Name="ButtonTransform"
+                                        ScaleX="1"
+                                        ScaleY="1" />
+                                </Button.RenderTransform>
+                                <Button.Content>
+                                    <SymbolIcon
+                                        Margin="0"
+                                        VerticalAlignment="Bottom"
+                                        Foreground="{ThemeResource GradientLine2Brush}"
+                                        RenderTransformOrigin="0.5,0.5"
+                                        Symbol="HangUp" />
+                                </Button.Content>
+                            </Button>
                         </StackPanel>
                     </local:GroupBox>
                     <StackPanel Orientation="Horizontal" Spacing="20">

@@ -22,7 +22,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -251,6 +251,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     #region [Events]
+ 
     /// <summary>
     /// <see cref="SpringVector3NaturalMotionAnimation"/>
     /// </summary>
@@ -898,7 +899,98 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             UpdateInfoBar($"Tag data is empty for this MenuFlyoutItem.", MessageLevel.Error);
         }
     }
-#endregion
+
+    void ButtonCompositePointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        //var transform = ((Button)sender).RenderTransform as CompositeTransform;
+        //if (transform != null)
+        //{
+        //    transform.ScaleX = 1.111;
+        //    transform.ScaleY = 1.111;
+        //    transform.Rotation = 10;
+        //}
+        StartComboAnimation((Button)sender, 1.111, 200);
+    }
+
+    void ButtonCompositePointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        //var transform = ((Button)sender).RenderTransform as CompositeTransform;
+        //if (transform != null)
+        //{
+        //    transform.ScaleX = 1.0;
+        //    transform.ScaleY = 1.0;
+        //    transform.Rotation = 0;
+        //}
+        StartComboAnimation((Button)sender, 1.0, 200);
+    }
+
+    void StartComboAnimation(Button button, double scale, double ms)
+    {
+        bool tryColorAnimation = false;
+
+        CompositeTransform transform = button.RenderTransform as CompositeTransform;
+
+        if (transform is null)
+            return;
+
+        Brush? prevBackground = button.Background;
+
+        // This could be reused by making a static global.
+        Storyboard storyboard = new Storyboard();
+
+        // X scale animation
+        DoubleAnimation scaleXAnimation = new DoubleAnimation
+        {
+            To = scale,
+            Duration = TimeSpan.FromMilliseconds(ms),
+            EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
+            EnableDependentAnimation = true
+        };
+
+        // Y scale animation.
+        DoubleAnimation scaleYAnimation = new DoubleAnimation
+        {
+            To = scale,
+            Duration = TimeSpan.FromMilliseconds(ms),
+            EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
+            EnableDependentAnimation = true
+        };
+
+        // Angle animation
+        DoubleAnimation rotateAnimation = new DoubleAnimation
+        {
+            To = scale == 1.0 ? 0 : 90,
+            Duration = TimeSpan.FromMilliseconds(ms),
+            EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
+            EnableDependentAnimation = true
+        };
+
+        if (tryColorAnimation && prevBackground != null)
+        {
+            ColorAnimation colorAnimation = new ColorAnimation
+            {
+                To = scale == 1.0 ? ((SolidColorBrush)prevBackground).Color : Colors.DodgerBlue,
+                Duration = TimeSpan.FromMilliseconds(ms),
+                EnableDependentAnimation = true
+            };
+            Storyboard.SetTarget(colorAnimation, button);
+            Storyboard.SetTargetProperty(colorAnimation, "(Control.Background).(SolidColorBrush.Color)");
+        }
+
+        Storyboard.SetTarget(scaleXAnimation, transform);
+        Storyboard.SetTargetProperty(scaleXAnimation, "ScaleX");
+        Storyboard.SetTarget(scaleYAnimation, transform);
+        Storyboard.SetTargetProperty(scaleYAnimation, "ScaleY");
+        Storyboard.SetTarget(rotateAnimation, transform);
+        Storyboard.SetTargetProperty(rotateAnimation, "Rotation");
+
+        //storyboard.Children.Add(colorAnimation);
+        storyboard.Children.Add(scaleXAnimation);
+        storyboard.Children.Add(scaleYAnimation);
+        storyboard.Children.Add(rotateAnimation);
+        storyboard.Begin();
+    }
+    #endregion
 
     #region [Helpers]
     void UpdateInfoBar(string msg, MessageLevel level = MessageLevel.Information)
