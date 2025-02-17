@@ -613,6 +613,7 @@
                                 Width="40"
                                 Height="40"
                                 Padding="0"
+                                CornerRadius="20"
                                 PointerEntered="ButtonCompositePointerEntered"
                                 PointerExited="ButtonCompositePointerExited"
                                 RenderTransformOrigin="0.5,0.5">
@@ -623,12 +624,13 @@
                                         ScaleY="1" />
                                 </Button.RenderTransform>
                                 <Button.Content>
-                                    <SymbolIcon
+                                    <!--<SymbolIcon
                                         Margin="0"
                                         VerticalAlignment="Bottom"
                                         Foreground="{ThemeResource GradientLine2Brush}"
                                         RenderTransformOrigin="0.5,0.5"
-                                        Symbol="HangUp" />
+                                        Symbol="HangUp" />-->
+                                    <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
                                 </Button.Content>
                             </Button>
                         </StackPanel>
