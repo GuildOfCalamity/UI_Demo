@@ -610,6 +610,7 @@
                                 </FontIcon.RenderTransform>
                             </FontIcon>-->
                             <Button
+                                x:Name="WinUIButton"
                                 Width="40"
                                 Height="40"
                                 Padding="0"
@@ -618,7 +619,6 @@
                                 PointerExited="ButtonCompositePointerExited"
                                 RenderTransformOrigin="0.5,0.5"
                                 Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
-                                Style="{StaticResource EnhancedButton}"
                                 Tapped="ButtonCompositeTapped">
                                 <Button.RenderTransform>
                                     <CompositeTransform

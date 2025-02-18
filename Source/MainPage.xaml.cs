@@ -257,18 +257,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
         });
 
-        SettingsButton.PointerEntered += (s, e) =>
-        {
-            if (_clrBtnAnim is (null, null))
-                _clrBtnAnim = CreateUIElementColorAnimation(SettingsButton, Colors.WhiteSmoke, Colors.DodgerBlue, TimeSpan.FromSeconds(0.7), "linear");
-
-            _clrBtnAnim.Item1?.StartAnimation("Color", _clrBtnAnim.Item2);
-        };
-        SettingsButton.PointerExited += (s, e) =>
-        {
-            if (_clrBtnAnim is not (null, null))
-                _clrBtnAnim.Item1?.StopAnimation("Color");
-        };
+        SettingsButton.PointerEntered += (s, e) => ColorAnimationHelper.CreateOrStartAnimation(s as Button, Colors.WhiteSmoke, Colors.DodgerBlue, TimeSpan.FromSeconds(0.9));
+        SettingsButton.PointerExited += (s, e) => ColorAnimationHelper.StopAnimation(s as Button);
+        WinUIButton.PointerEntered += (s, e) => ColorAnimationHelper.CreateOrStartAnimation(s as Button, Colors.WhiteSmoke, Colors.DodgerBlue, TimeSpan.FromSeconds(0.9));
+        WinUIButton.PointerExited += (s, e) => ColorAnimationHelper.StopAnimation(s as Button);
     }
 
     #region [Events]
@@ -333,7 +325,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 _pointLight.Targets.Add(_btnLightRoot);
                 _pointLight?.StartAnimation("Color", _ckfAnimation);
             }
-            #endregion       
+            #endregion
         }
         _loaded = true;
     }
@@ -1034,6 +1026,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             EnableDependentAnimation = true
         };
 
+        // NOTE: Use "ColorAnimationHelper.cs" for color animations.
         //ColorAnimation colorAnimation = new ColorAnimation
         //{
         //    To = scale switch { 1.0 => ((SolidColorBrush)button.Background).Color, > 1.1 => ((SolidColorBrush)button.Background).Color.LighterBy(0.25f), > 1.0 => ((SolidColorBrush)button.Background).Color.LighterBy(0.75f), _ => ((SolidColorBrush)button.Background).Color },
@@ -1064,63 +1057,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         storyboard.Children.Add(scaleYAnimation);
         storyboard.Children.Add(rotateAnimation);
         storyboard.Begin();
-    }
-
-    /// <summary>
-    /// Only a <see cref="Microsoft.UI.Composition.CompositionColorBrush"/> can be animated.
-    /// https://github.com/MicrosoftDocs/winrt-api/blob/docs/windows.ui.composition/compositionobject_startanimation_709050842.md
-    /// </summary>
-    (CompositionColorBrush?, ColorKeyFrameAnimation?) CreateUIElementColorAnimation(UIElement element, Windows.UI.Color from, Windows.UI.Color to, TimeSpan duration, string ease)
-    {
-        Microsoft.UI.Composition.CompositionEasingFunction easer;
-        var targetVisual = ElementCompositionPreview.GetElementVisual(element);
-        if (targetVisual is null) { return (null, null); }
-        
-        var compositor = targetVisual.Compositor;
-        ColorKeyFrameAnimation? colorAnimation = compositor.CreateColorKeyFrameAnimation();
-        colorAnimation.StopBehavior = Microsoft.UI.Composition.AnimationStopBehavior.SetToInitialValue;
-        colorAnimation.DelayBehavior = Microsoft.UI.Composition.AnimationDelayBehavior.SetInitialValueBeforeDelay;
-        colorAnimation.Duration = duration;
-        colorAnimation.IterationBehavior = AnimationIterationBehavior.Forever;
-        colorAnimation.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
-
-
-        if (string.IsNullOrEmpty(ease) || ease.Contains("linear", StringComparison.CurrentCultureIgnoreCase))
-            easer = compositor.CreateLinearEasingFunction();
-        else
-            easer = Extensions.CreatePennerEquation(compositor, ease);
-
-        colorAnimation.InsertKeyFrame(0, from, easer);
-        colorAnimation.InsertKeyFrame(1, to, easer);
-
-        // Set the interpolation to go through the RGB/HSL space.
-        colorAnimation.InterpolationColorSpace = Microsoft.UI.Composition.CompositionColorSpace.Rgb;
-        //colorAnimation.Target = "Color";
-        var spriteVisual = compositor.CreateSpriteVisual();
-        if (spriteVisual is null) { return (null, null); }
-        /*
-            The ColorKeyFrameAnimation class is one of the supported types of KeyFrameAnimations 
-            that is used to animate the Color property off of the Brush property on a SpriteVisual. 
-            When working with ColorKeyFrameAnimations, utilize Windows.UI.Color objects for the 
-            values of keyframes. Utilize the InterpolationColorSpace property to define which color 
-            space the system will interpolate through for the animation.
-            https://github.com/MicrosoftDocs/winrt-api/blob/docs//windows.ui.composition/colorkeyframeanimation.md
-        */
-        CompositionColorBrush? ccb = compositor.CreateColorBrush();
-        spriteVisual.CompositeMode = Microsoft.UI.Composition.CompositionCompositeMode.MinBlend;
-        // Set the size of the sprite visual to cover the element.
-        spriteVisual.RelativeSizeAdjustment = System.Numerics.Vector2.One;
-        // Or you can be more specific:
-        //spriteVisual.Offset = new System.Numerics.Vector3(1, 1, 0);
-        //spriteVisual.Size = new System.Numerics.Vector2((float)element.ActualSize.X-2, (float)element.ActualSize.Y-2);
-        spriteVisual.Brush = ccb;
-        // When using a sprite, the animation will not work unless the child visual is set.
-        ElementCompositionPreview.SetElementChildVisual(element, spriteVisual);
-        
-        //ccb?.StartAnimation("Color", colorAnimation);
-        //ccb?.StopAnimation("Color");
-        
-        return (ccb, colorAnimation);
     }
     #endregion
 
