@@ -28,7 +28,6 @@ using Microsoft.Windows.Widgets.Providers;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-
 using WinRT.Interop;
 
 namespace UI_Demo;
@@ -40,7 +39,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 {
     #region [Props]
     bool _loaded = false;
-    bool _useSpinner = false;
+    bool _useSpinner = true;
     bool _useSurfaceBrush = true;
     static Brush? _lvl1;
     static Brush? _lvl2;
@@ -54,6 +53,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     float _springMultiplier = 1.05f;
     SpringVector3NaturalMotionAnimation? _springVectorAnimation;
     SpringScalarNaturalMotionAnimation? _springScalarAnimation;
+    
+    PointLight? _pointLight;
+    ColorKeyFrameAnimation? _ckfAnimation;
+    Visual? _btnLightRoot;
+
+    (CompositionColorBrush?, ColorKeyFrameAnimation?) _clrBtnAnim;
 
     readonly int _maxMessages = 50;
     readonly ObservableCollection<ApplicationMessage>? _coreMessages;
@@ -199,6 +204,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         BindingOperations.SetBinding(lvChannelMessages, ListView.ItemsSourceProperty, binding);
 
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
+        _pointLight = _compositor?.CreatePointLight();
 
         #region [Button Animation]
         // You could also use Behaviors for this, but I wanted to
@@ -250,10 +256,100 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 Debug.WriteLine($"[WARNING] Parameter was not a string, nothing to do.");
             }
         });
+
+        SettingsButton.PointerEntered += (s, e) =>
+        {
+            if (_clrBtnAnim is (null, null))
+                _clrBtnAnim = CreateUIElementColorAnimation(SettingsButton, Colors.WhiteSmoke, Colors.DodgerBlue, TimeSpan.FromSeconds(0.7), "linear");
+
+            _clrBtnAnim.Item1?.StartAnimation("Color", _clrBtnAnim.Item2);
+        };
+        SettingsButton.PointerExited += (s, e) =>
+        {
+            if (_clrBtnAnim is not (null, null))
+                _clrBtnAnim.Item1?.StopAnimation("Color");
+        };
     }
 
     #region [Events]
- 
+    void MainPageOnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded && this.Content != null)
+        {
+            sldrDays.Value = App.Profile!.LastCount;
+            if (App.ArgList.Count > 0)
+            {
+                UpdateInfoBar($"Received startup argument ⇒ {App.ArgList[0]}");
+                if (App.ArgList[0].Contains("JumpList-OpenLog"))
+                {
+                    OpenDebugLog();
+                }
+            }
+            else
+                UpdateInfoBar($"App.ArgList.Count ⇒ {App.ArgList.Count}");
+
+            // This only worked after adding <AllowUnsafeBlocks> to the csproj.
+            //Flipper.ItemsSource = Pictures;
+
+            if (Assets.Count > 0)
+            {
+                // We can also create a binding in code-behind.
+                Binding binding = new Binding { Mode = BindingMode.OneWay, Source = Assets };
+                BindingOperations.SetBinding(Flipper, FlipView.ItemsSourceProperty, binding);
+            }
+            else
+                UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
+
+            // Start channel test. (pub sub is the better option now)
+            //_ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
+
+            // Subscribe to app-wide messages.
+            PubSubEnhanced<ApplicationMessage>.Instance.Subscribe(OnPubSubReceived);
+
+            try
+            {
+                var tag1 = App.MachineEnvironment["PROCESSOR_IDENTIFIER"];
+                var tag2 = App.MachineEnvironment["NUMBER_OF_PROCESSORS"];
+                //Debug.WriteLine($"[INFO] User profile is located here: '{App.MachineEnvironment["USERPROFILE"]}'");
+                UpdateInfoBar($"Using {tag1} with {tag2} processors", MessageLevel.Information);
+            }
+            catch (KeyNotFoundException) { }
+
+            #region [PointLight animation for button color]
+            if (_pointLight != null)
+            {
+                _ckfAnimation = _compositor?.CreateColorKeyFrameAnimation();
+                _ckfAnimation.InsertKeyFrame(0f, Colors.LightGray);
+                _ckfAnimation.InsertKeyFrame(.33f, Colors.DodgerBlue);
+                _ckfAnimation.InsertKeyFrame(.66f, Colors.LightBlue);
+                _ckfAnimation.InsertKeyFrame(1f, Colors.White);
+                _ckfAnimation.Duration = TimeSpan.FromSeconds(3);
+                _ckfAnimation.IterationBehavior = AnimationIterationBehavior.Forever;
+                _ckfAnimation.DelayTime = TimeSpan.FromSeconds(0);
+                _ckfAnimation.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
+
+                _btnLightRoot = ElementCompositionPreview.GetElementVisual(tbMessagePane);
+                _pointLight.CoordinateSpace = _btnLightRoot;
+                _pointLight.Targets.Add(_btnLightRoot);
+                _pointLight?.StartAnimation("Color", _ckfAnimation);
+            }
+            #endregion       
+        }
+        _loaded = true;
+    }
+
+    void MainPageOnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_pointLight != null)
+        {
+            _pointLight?.StopAnimation("Color");
+            if (_pointLight.Targets.Count > 0)
+                _pointLight.Targets.RemoveAll();
+        }
+
+        PubSubEnhanced<ApplicationMessage>.Instance.Unsubscribe(OnPubSubReceived);
+    }
+
     /// <summary>
     /// <see cref="SpringVector3NaturalMotionAnimation"/>
     /// </summary>
@@ -425,8 +521,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             #region [*************** Technique #2 ***************]
 
+            ToggleAnimation(true);
+
             var dummyTask = SampleAsyncMethod(_ctsTask.Token);
 
+            #region [ContinueWith]
             /** Happens when successful **/
             dummyTask.ContinueWith(task =>
             {
@@ -457,7 +556,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             dummyTask.ContinueWith(task =>
             {
                 IsBusy = false;
+                ToggleAnimation(false);
             }, TaskScheduler.FromCurrentSynchronizationContext());
+            #endregion
 
             // Just a place-holder for this demo.
             async Task<List<string>> SampleAsyncMethod(CancellationToken cancelToken)
@@ -475,11 +576,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         default: await Task.Delay(10); break;
                     }
 
-                    int diceRoll = Random.Shared.Next(100);
+                    int diceRoll = Random.Shared.Next(200);
                     
-                    if (diceRoll == 99)
+                    if (diceRoll == 199)
                         _ctsTask.Cancel();
-                    else if (diceRoll == 98)
+                    else if (diceRoll == 198)
                         throw new Exception("This is a fake exception");
 
                     cancelToken.ThrowIfCancellationRequested();
@@ -695,57 +796,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
-    void MainPageOnLoaded(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded && this.Content != null)
-        {
-            sldrDays.Value = App.Profile!.LastCount;
-            if (App.ArgList.Count > 0)
-            {
-                UpdateInfoBar($"Received startup argument ⇒ {App.ArgList[0]}");
-                if (App.ArgList[0].Contains("JumpList-OpenLog"))
-                {
-                    OpenDebugLog();
-                }
-            }
-            else
-                UpdateInfoBar($"App.ArgList.Count ⇒ {App.ArgList.Count}");
-
-            // This only worked after adding <AllowUnsafeBlocks> to the csproj.
-            //Flipper.ItemsSource = Pictures;
-
-            if (Assets.Count > 0)
-            {
-                // We can also create a binding in code-behind.
-                Binding binding = new Binding { Mode = BindingMode.OneWay, Source = Assets };
-                BindingOperations.SetBinding(Flipper, FlipView.ItemsSourceProperty, binding);
-            }
-            else
-                UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
-
-            // Start channel test. (pub sub is the better option now)
-            //_ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
-
-            // Subscribe to app-wide messages.
-            PubSubEnhanced<ApplicationMessage>.Instance.Subscribe(OnPubSubReceived);
-
-            try
-            {
-                var tag1 = App.MachineEnvironment["PROCESSOR_IDENTIFIER"];
-                var tag2 = App.MachineEnvironment["NUMBER_OF_PROCESSORS"];
-                //Debug.WriteLine($"[INFO] User profile is located here: '{App.MachineEnvironment["USERPROFILE"]}'");
-                UpdateInfoBar($"Using {tag1} with {tag2} processors", MessageLevel.Information);
-            }
-            catch (KeyNotFoundException) { }
-        }
-        _loaded = true;
-    }
-
-    void MainPageOnUnloaded(object sender, RoutedEventArgs e)
-    {
-        PubSubEnhanced<ApplicationMessage>.Instance.Unsubscribe(OnPubSubReceived);
-    }
-
     /// <summary>
     /// <see cref="PubSubEnhanced{T}"> testing.
     /// </summary>
@@ -912,7 +962,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    transform.ScaleY = 1.111;
         //    transform.Rotation = 90;
         //}
-        StartComboAnimation((Button)sender, 1.111, 200);
+        StartComboAnimation((Button)sender, 1.1, 200);
     }
 
     void ButtonCompositePointerExited(object sender, PointerRoutedEventArgs e)
@@ -938,7 +988,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    transform.ScaleY = 0.9;
         //    transform.Rotation = 160;
         //}
-        StartComboAnimation((Button)sender, 0.999, 100);
+        StartComboAnimation((Button)sender, 1.11, 100);
     }
 
     /// <summary>
@@ -946,14 +996,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     /// </summary>
     void StartComboAnimation(Button button, double scale, double ms)
     {
-        bool tryColorAnimation = false;
-
         CompositeTransform transform = button.RenderTransform as CompositeTransform;
 
         if (transform is null)
             return;
-
-        Brush? prevBackground = button.Background;
 
         // This could be reused by making a static global.
         Storyboard storyboard = new Storyboard();
@@ -981,24 +1027,30 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         // Angle animation
         DoubleAnimation rotateAnimation = new DoubleAnimation
         {
-            To = scale switch { 1.0 => 0, > 1.0 => 90, < 1.0 => 160, _ => 0 },
+            To = scale switch { 1.0 => 0, > 1.1 => 160, > 1.0 => 90, _ => 0 },
             Duration = TimeSpan.FromMilliseconds(ms),
-            AutoReverse = scale < 1.0 ? true : false,
+            AutoReverse = scale switch { 1.0 => false, > 1.1 => true, > 1.0 => false, _ => false },
             EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
             EnableDependentAnimation = true
         };
 
-        if (tryColorAnimation && prevBackground != null)
-        {
-            ColorAnimation colorAnimation = new ColorAnimation
-            {
-                To = scale switch { 1.0 => ((SolidColorBrush)prevBackground).Color, > 1.0 => Colors.DodgerBlue, < 1.0 => Colors.Orchid, _ => ((SolidColorBrush)prevBackground).Color },
-                Duration = TimeSpan.FromMilliseconds(ms),
-                EnableDependentAnimation = true
-            };
-            Storyboard.SetTarget(colorAnimation, button);
-            Storyboard.SetTargetProperty(colorAnimation, "(Control.Background).(SolidColorBrush.Color)");
-        }
+        //ColorAnimation colorAnimation = new ColorAnimation
+        //{
+        //    To = scale switch { 1.0 => ((SolidColorBrush)button.Background).Color, > 1.1 => ((SolidColorBrush)button.Background).Color.LighterBy(0.25f), > 1.0 => ((SolidColorBrush)button.Background).Color.LighterBy(0.75f), _ => ((SolidColorBrush)button.Background).Color },
+        //    Duration = TimeSpan.FromMilliseconds(ms),
+        //    EnableDependentAnimation = true
+        //};
+        //Storyboard.SetTarget(colorAnimation, button);
+        //Storyboard.SetTargetProperty(colorAnimation, "(Control.Background).(SolidColorBrush.Color)");
+
+        /* Examples of some of commonly-used properties that use a Brush value include:
+         *   (Control.Background).(SolidColorBrush.Color)
+         *   (Control.Foreground).(SolidColorBrush.Color)
+         *   (Shape.Fill).(SolidColorBrush.Color)
+         *   (Control.BorderBrush).(SolidColorBrush.Color)
+         *   (Panel.Background).(SolidColorBrush.Color)
+         *   (TextBlock.Foreground).(SolidColorBrush.Color)
+         */
 
         Storyboard.SetTarget(scaleXAnimation, transform);
         Storyboard.SetTargetProperty(scaleXAnimation, "ScaleX");
@@ -1012,6 +1064,63 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         storyboard.Children.Add(scaleYAnimation);
         storyboard.Children.Add(rotateAnimation);
         storyboard.Begin();
+    }
+
+    /// <summary>
+    /// Only a <see cref="Microsoft.UI.Composition.CompositionColorBrush"/> can be animated.
+    /// https://github.com/MicrosoftDocs/winrt-api/blob/docs/windows.ui.composition/compositionobject_startanimation_709050842.md
+    /// </summary>
+    (CompositionColorBrush?, ColorKeyFrameAnimation?) CreateUIElementColorAnimation(UIElement element, Windows.UI.Color from, Windows.UI.Color to, TimeSpan duration, string ease)
+    {
+        Microsoft.UI.Composition.CompositionEasingFunction easer;
+        var targetVisual = ElementCompositionPreview.GetElementVisual(element);
+        if (targetVisual is null) { return (null, null); }
+        
+        var compositor = targetVisual.Compositor;
+        ColorKeyFrameAnimation? colorAnimation = compositor.CreateColorKeyFrameAnimation();
+        colorAnimation.StopBehavior = Microsoft.UI.Composition.AnimationStopBehavior.SetToInitialValue;
+        colorAnimation.DelayBehavior = Microsoft.UI.Composition.AnimationDelayBehavior.SetInitialValueBeforeDelay;
+        colorAnimation.Duration = duration;
+        colorAnimation.IterationBehavior = AnimationIterationBehavior.Forever;
+        colorAnimation.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
+
+
+        if (string.IsNullOrEmpty(ease) || ease.Contains("linear", StringComparison.CurrentCultureIgnoreCase))
+            easer = compositor.CreateLinearEasingFunction();
+        else
+            easer = Extensions.CreatePennerEquation(compositor, ease);
+
+        colorAnimation.InsertKeyFrame(0, from, easer);
+        colorAnimation.InsertKeyFrame(1, to, easer);
+
+        // Set the interpolation to go through the RGB/HSL space.
+        colorAnimation.InterpolationColorSpace = Microsoft.UI.Composition.CompositionColorSpace.Rgb;
+        //colorAnimation.Target = "Color";
+        var spriteVisual = compositor.CreateSpriteVisual();
+        if (spriteVisual is null) { return (null, null); }
+        /*
+            The ColorKeyFrameAnimation class is one of the supported types of KeyFrameAnimations 
+            that is used to animate the Color property off of the Brush property on a SpriteVisual. 
+            When working with ColorKeyFrameAnimations, utilize Windows.UI.Color objects for the 
+            values of keyframes. Utilize the InterpolationColorSpace property to define which color 
+            space the system will interpolate through for the animation.
+            https://github.com/MicrosoftDocs/winrt-api/blob/docs//windows.ui.composition/colorkeyframeanimation.md
+        */
+        CompositionColorBrush? ccb = compositor.CreateColorBrush();
+        spriteVisual.CompositeMode = Microsoft.UI.Composition.CompositionCompositeMode.MinBlend;
+        // Set the size of the sprite visual to cover the element.
+        spriteVisual.RelativeSizeAdjustment = System.Numerics.Vector2.One;
+        // Or you can be more specific:
+        //spriteVisual.Offset = new System.Numerics.Vector3(1, 1, 0);
+        //spriteVisual.Size = new System.Numerics.Vector2((float)element.ActualSize.X-2, (float)element.ActualSize.Y-2);
+        spriteVisual.Brush = ccb;
+        // When using a sprite, the animation will not work unless the child visual is set.
+        ElementCompositionPreview.SetElementChildVisual(element, spriteVisual);
+        
+        //ccb?.StartAnimation("Color", colorAnimation);
+        //ccb?.StopAnimation("Color");
+        
+        return (ccb, colorAnimation);
     }
     #endregion
 

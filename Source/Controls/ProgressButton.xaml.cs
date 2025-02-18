@@ -660,19 +660,23 @@ public sealed partial class ProgressButton : UserControl
     /// </summary>
     public void InitializeButtonOffsetY(Button button)
     {
-        if (button == null) { return; }
+        if (button is null) { return; }
         Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
         buttonVisual.Offset = new System.Numerics.Vector3(buttonVisual.Offset.X, 0, buttonVisual.Offset.Z);
     }
+
+    /// <summary>
+    /// Applies a <see cref="SpringScalarNaturalMotionAnimation"/> to <paramref name="button"/> based on the <paramref name="offset"/>.
+    /// </summary>
     public void AnimateButtonY(Button button, float offset)
     {
-        if (button == null)
+        if (button is null)
             return;
 
-        if (_compositor == null)
+        if (_compositor is null)
             _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
 
-        // Create a Spring Animation for Y offset
+        // Create spring animation
         SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
         _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
         _springAnimation.Target = "Offset.Y";   // Move vertically
@@ -691,23 +695,27 @@ public sealed partial class ProgressButton : UserControl
     /// </summary>
     public void InitializeButtonOffsetX(Button button)
     {
-        if (button == null) { return; }
+        if (button is null) { return; }
         Visual buttonVisual = ElementCompositionPreview.GetElementVisual(button);
         buttonVisual.Offset = new System.Numerics.Vector3(0, buttonVisual.Offset.Y, buttonVisual.Offset.Z);
     }
+
+    /// <summary>
+    /// Applies a <see cref="SpringScalarNaturalMotionAnimation"/> to <paramref name="button"/> based on the <paramref name="offset"/>.
+    /// </summary>
     public void AnimateButtonX(Button button, float offset)
     {
-        if (button == null)
+        if (button is null)
             return;
 
-        if (_compositor == null)
+        if (_compositor is null)
             _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
 
-        // Create a Spring Animation for X offset
+        // Create spring animation
         SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
         _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
-        _springAnimation.Target = "Offset.X";   // Move vertically
-        _springAnimation.InitialVelocity = 50f; // Adjust movement speed
+        _springAnimation.Target = "Offset.X";   // Move horizontally
+        _springAnimation.InitialVelocity = 50f; // Movement speed
         _springAnimation.FinalValue = offset;   // Set the final target X position
         _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
         _springAnimation.Period = TimeSpan.FromMilliseconds(50);
@@ -722,23 +730,27 @@ public sealed partial class ProgressButton : UserControl
     /// </summary>
     public void InitializeGridOffsetX(Grid grid)
     {
-        if (grid == null) { return; }
+        if (grid is null) { return; }
         Visual gridVisual = ElementCompositionPreview.GetElementVisual(grid);
         gridVisual.Offset = new System.Numerics.Vector3(0, gridVisual.Offset.Y, gridVisual.Offset.Z);
     }
+
+    /// <summary>
+    /// Applies a <see cref="SpringScalarNaturalMotionAnimation"/> to <paramref name="grid"/> based on the <paramref name="offset"/>.
+    /// </summary>
     public void AnimateGridX(Grid grid, float offset)
     {
-        if (grid == null)
+        if (grid is null)
             return;
 
-        if (_compositor == null)
+        if (_compositor is null)
             _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
 
-        // Create a Spring Animation for X offset
+        // Create spring animation
         SpringScalarNaturalMotionAnimation _springAnimation = _compositor.CreateSpringScalarAnimation();
         _springAnimation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
-        _springAnimation.Target = "Offset.X";   // Move vertically
-        _springAnimation.InitialVelocity = 50f; // Adjust movement speed
+        _springAnimation.Target = "Offset.X";   // Move horizontally
+        _springAnimation.InitialVelocity = 50f; // Movement speed
         _springAnimation.FinalValue = offset;   // Set the final target X position
         _springAnimation.DampingRatio = 0.3f;   // Lower values are more "springy"
         _springAnimation.Period = TimeSpan.FromMilliseconds(50);
