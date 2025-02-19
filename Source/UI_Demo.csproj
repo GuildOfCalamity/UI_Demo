@@ -15,8 +15,8 @@
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
-	<TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
-	<!-- 
+    <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
+    <!-- 
         [for SDK v1.5+ specifically]
         https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/stable-channel#other-new-features-from-across-the-winappsdk
         <PublishSingleFile>true</PublishSingleFile>
@@ -24,49 +24,49 @@
         https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/stable-channel#known-issues
         <ShouldComputeInputPris>true</ShouldComputeInputPris>
     -->
-	<LangVersion>latest</LangVersion>
-	<Version>1.0.0.0</Version>
-	<FileVersion>1.0.0.0</FileVersion>
-	<AssemblyVersion>1.0.0.0</AssemblyVersion>
-	<PackageId>UIDemo2025</PackageId>
-	<Title>UI_Demo</Title>
-	<Authors>The Guild</Authors>
-	<!-- 
+    <LangVersion>latest</LangVersion>
+    <Version>1.0.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <PackageId>UIDemo2025</PackageId>
+    <Title>UI_Demo</Title>
+    <Authors>The Guild</Authors>
+    <!-- 
       WindowsPackageType defines whether your app is packaged (MSIX) or unpackaged (None) 
     -->
-	<WindowsPackageType>None</WindowsPackageType>
-	<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-	<!-- 
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- 
       Get rid of all the unnecessary pathing that MS adds and 
       makes the output match the traditional .NET Framework builds.
     -->
-	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-	<!-- 
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <!-- 
          https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#generatedocumentationfile
     -->
-	<!-- <GenerateDocumentationFile>true</GenerateDocumentationFile> -->
-	<!-- 
+    <!-- <GenerateDocumentationFile>true</GenerateDocumentationFile> -->
+    <!-- 
          https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#optimizeimplicitlytriggeredbuild 
     -->
-	<OptimizeImplicitlyTriggeredBuild>true</OptimizeImplicitlyTriggeredBuild>
-	<!-- 
+    <OptimizeImplicitlyTriggeredBuild>true</OptimizeImplicitlyTriggeredBuild>
+    <!-- 
       If true, this will create a subfolder named "refs" which contains all of the possible framework dependencies. The default value is false.
       https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#preservecompilationcontext
     -->
-	<PreserveCompilationContext>false</PreserveCompilationContext>
+    <PreserveCompilationContext>false</PreserveCompilationContext>
     <!-- 
-	    NOTE: When AOT is true, it breaks all RelayCommands! 
+        NOTE: When AOT is true, it breaks all RelayCommands! 
       AOT can strip dynamic bindings for XAML projects.
     -->
-	<PublishAot>false</PublishAot>
+    <PublishAot>false</PublishAot>
  </PropertyGroup>
 
   <!-- 
      Define "IS_UNPACKAGED" constant if the app is an unpackaged app. 
   -->
   <PropertyGroup Condition="'$(WindowsPackageType)' == 'None'">
-	 <DefineConstants>IS_UNPACKAGED</DefineConstants>
+     <DefineConstants>IS_UNPACKAGED</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Assets\AltIcon1.png" />
@@ -82,6 +82,7 @@
     <None Remove="Assets\Exclamation2.png" />
     <None Remove="Assets\Exclamation3.png" />
     <None Remove="Assets\Exclamation4.png" />
+    <None Remove="Assets\Formula.png" />
     <None Remove="Assets\NoticeIcon.png" />
     <None Remove="Assets\Spinner.png" />
     <None Remove="Assets\Spinner5.png" />
@@ -96,8 +97,10 @@
     <None Remove="MainPage.xaml" />
     <None Remove="ProgressButton.xaml" />
     <None Remove="SeparatorLine.xaml" />
+    <None Remove="Widget\Templates\CountingWidgetTemplate.json" />
+    <None Remove="Widget\Templates\WeatherWidgetTemplate.json" />
   </ItemGroup>
-	
+    
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -120,6 +123,8 @@
     <Content Include="Assets\Wide310x150Logo.scale-200.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Widget\Templates\CountingWidgetTemplate.json" />
+    <Content Include="Widget\Templates\WeatherWidgetTemplate.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -191,6 +196,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Exclamation5.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Formula.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Level1.png">
@@ -476,47 +484,47 @@
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
-	  
-	<!-- 
-	    NOTE: For CsWinRT 2.2.0 if this is false then any simple source binding will cause: Unable to cast object of type 'WinRT.IInspectable' to type 'System.String[]'
-		https://github.com/microsoft/CsWinRT/issues/1906#issuecomment-2640570068 
-	-->
+      
+    <!-- 
+        NOTE: For CsWinRT 2.2.0 if this is false then any simple source binding will cause: Unable to cast object of type 'WinRT.IInspectable' to type 'System.String[]'
+        https://github.com/microsoft/CsWinRT/issues/1906#issuecomment-2640570068 
+    -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	  
+      
   </PropertyGroup>
 
   <!-- 
       This target will remove the language folders inside the build output except the specified one. 
   -->
-	<Target Name="RemoveFoldersWithMuiFiles" Condition="'$(WindowsPackageType)' == 'None'" AfterTargets="Build">
-		<ItemGroup>
-			<RemovingFiles Include="$(OutDir)*\*.mui" Exclude="$(OutDir)en-us\*.mui" />
-			<RemovingFolders Include="@(RemovingFiles->'%(RootDir)%(Directory)')" />
-			<RemovingCS Include="$(OutDir)cs" />
-			<RemovingDE Include="$(OutDir)de" />
-			<RemovingES Include="$(OutDir)es" />
-			<RemovingFR Include="$(OutDir)fr" />
-			<RemovingIT Include="$(OutDir)it" />
-			<RemovingJA Include="$(OutDir)ja" />
-			<RemovingKO Include="$(OutDir)ko" />
-			<RemovingPL Include="$(OutDir)pl" />
-			<RemovingRU Include="$(OutDir)ru" />
-			<RemovingTR Include="$(OutDir)tr" />
-			<RemovingZHS Include="$(OutDir)zh-Hans" />
-			<RemovingZHT Include="$(OutDir)zh-Hant" />
-		</ItemGroup>
-		<RemoveDir Directories="@(RemovingFolders)" />
-		<RemoveDir Directories="@(RemovingCS)" />
-		<RemoveDir Directories="@(RemovingDE)" />
-		<RemoveDir Directories="@(RemovingES)" />
-		<RemoveDir Directories="@(RemovingFR)" />
-		<RemoveDir Directories="@(RemovingIT)" />
-		<RemoveDir Directories="@(RemovingJA)" />
-		<RemoveDir Directories="@(RemovingKO)" />
-		<RemoveDir Directories="@(RemovingPL)" />
-		<RemoveDir Directories="@(RemovingRU)" />
-		<RemoveDir Directories="@(RemovingTR)" />
-		<RemoveDir Directories="@(RemovingZHS)" />
-		<RemoveDir Directories="@(RemovingZHT)" />
-	</Target>
+    <Target Name="RemoveFoldersWithMuiFiles" Condition="'$(WindowsPackageType)' == 'None'" AfterTargets="Build">
+        <ItemGroup>
+            <RemovingFiles Include="$(OutDir)*\*.mui" Exclude="$(OutDir)en-us\*.mui" />
+            <RemovingFolders Include="@(RemovingFiles->'%(RootDir)%(Directory)')" />
+            <RemovingCS Include="$(OutDir)cs" />
+            <RemovingDE Include="$(OutDir)de" />
+            <RemovingES Include="$(OutDir)es" />
+            <RemovingFR Include="$(OutDir)fr" />
+            <RemovingIT Include="$(OutDir)it" />
+            <RemovingJA Include="$(OutDir)ja" />
+            <RemovingKO Include="$(OutDir)ko" />
+            <RemovingPL Include="$(OutDir)pl" />
+            <RemovingRU Include="$(OutDir)ru" />
+            <RemovingTR Include="$(OutDir)tr" />
+            <RemovingZHS Include="$(OutDir)zh-Hans" />
+            <RemovingZHT Include="$(OutDir)zh-Hant" />
+        </ItemGroup>
+        <RemoveDir Directories="@(RemovingFolders)" />
+        <RemoveDir Directories="@(RemovingCS)" />
+        <RemoveDir Directories="@(RemovingDE)" />
+        <RemoveDir Directories="@(RemovingES)" />
+        <RemoveDir Directories="@(RemovingFR)" />
+        <RemoveDir Directories="@(RemovingIT)" />
+        <RemoveDir Directories="@(RemovingJA)" />
+        <RemoveDir Directories="@(RemovingKO)" />
+        <RemoveDir Directories="@(RemovingPL)" />
+        <RemoveDir Directories="@(RemovingRU)" />
+        <RemoveDir Directories="@(RemovingTR)" />
+        <RemoveDir Directories="@(RemovingZHS)" />
+        <RemoveDir Directories="@(RemovingZHT)" />
+    </Target>
 </Project>

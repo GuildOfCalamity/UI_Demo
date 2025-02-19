@@ -165,6 +165,9 @@ public partial class App : Application
         
         // PubSubService test
         _ = Task.Run(() => PubSubHeartbeat());
+
+        // Widget test
+        //_ = Task.Run(() => LaunchWidgetServiceProvider());
     }
 
     /// <summary>
@@ -1229,6 +1232,82 @@ public partial class App : Application
             }
         }
         catch (Exception) { }
+    }
+    #endregion
+
+    #region [Widgets]
+    public async Task LaunchWidgetServiceProvider()
+    {
+        try
+        {
+            WinRT.ComWrappersSupport.InitializeComWrappers();
+            using (var manager = RegistrationManager<WidgetProvider>.RegisterProvider())
+            {
+                Debug.WriteLine("[INFO] WidgetProvider registered");
+
+                var wp = new WidgetProvider();
+                // TODO: How to create a WidgetContext?
+                //wp.CreateWidget(Microsoft.Windows.Widgets.Providers.WidgetContext);
+
+                var existingWidgets = Microsoft.Windows.Widgets.Providers.WidgetManager.GetDefault().GetWidgetIds();
+                if (existingWidgets != null)
+                {
+                    Debug.WriteLine($"[INFO] There are {existingWidgets.Length} widgets currently outstanding:");
+                    foreach (var widgetId in existingWidgets)
+                    {
+                        Debug.WriteLine($" - {widgetId}");
+                    }
+                }
+
+                await Task.Delay(10000);
+
+                // Wait until the manager has disposed of the last widget provider.
+                using (var disposedEvent = manager.GetDisposedEvent())
+                {
+                    disposedEvent.WaitOne();
+                }
+            }
+        }
+        catch (COMException ex)
+        {
+            Debug.WriteLine($"[ERROR] HRESULT={ex.HResult}: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] LauchWidgetServiceProvider: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///   New widgets must be registered before use.
+    ///   https://learn.microsoft.com/en-us/windows/apps/develop/widgets/implement-widget-provider-cs
+    ///   https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.windows.widgets.providers.widgetmanager?view=windows-app-sdk-1.6
+    /// </summary>
+    /// <param name="widgetId"></param>
+    /// <remarks>
+    ///   The <see cref="WidgetManager"/> class can only perform operations on existing widgets.
+    /// </remarks>
+    public void UpdateExistingWidgets(string widgetId)
+    {
+        try
+        {
+            Microsoft.Windows.Widgets.Providers.WidgetManager widgetManager = Microsoft.Windows.Widgets.Providers.WidgetManager.GetDefault();
+            var widgetInfos = widgetManager.GetWidgetInfos();
+            foreach (var widgetInfo in widgetInfos)
+            {
+                if (widgetInfo.WidgetContext.IsActive)
+                {
+                    Microsoft.Windows.Widgets.Providers.WidgetUpdateRequestOptions options = new Microsoft.Windows.Widgets.Providers.WidgetUpdateRequestOptions(widgetId);
+                    options.Template = "({ \"type\": \"AdaptiveCard\", \"version\": \"1.5\", \"body\": [{ \"type\": \"TextBlock\", \"text\": \"${greeting}\" }]})";
+                    options.Data = "({ \"greeting\": \"Hello\" })";
+                    widgetManager.UpdateWidget(options);
+                }
+            }
+        }
+        catch (COMException ex)
+        {
+            Debug.WriteLine($"[ERROR] HRESULT={ex.HResult}: {ex.Message}");
+        }
     }
     #endregion
 }

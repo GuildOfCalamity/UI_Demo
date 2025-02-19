@@ -28,6 +28,7 @@ using Microsoft.Windows.Widgets.Providers;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+
 using WinRT.Interop;
 
 namespace UI_Demo;
@@ -257,10 +258,32 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
         });
 
-        SettingsButton.PointerEntered += (s, e) => ColorAnimationHelper.CreateOrStartAnimation(s as Button, Colors.WhiteSmoke, Colors.DodgerBlue, TimeSpan.FromSeconds(0.9));
-        SettingsButton.PointerExited += (s, e) => ColorAnimationHelper.StopAnimation(s as Button);
-        WinUIButton.PointerEntered += (s, e) => ColorAnimationHelper.CreateOrStartAnimation(s as Button, Colors.WhiteSmoke, Colors.DodgerBlue, TimeSpan.FromSeconds(0.9));
-        WinUIButton.PointerExited += (s, e) => ColorAnimationHelper.StopAnimation(s as Button);
+        #region [ColorAnimationHelper test]
+        BasicButton.PointerEntered += (s, e) =>
+        {
+            ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand);
+            (s as Button)!.FontWeight = Microsoft.UI.Text.FontWeights.Bold;
+
+            //var vis = ElementCompositionPreview.GetElementChildVisual(s as Button);
+            //if (vis is not null)
+            //    ElementCompositionPreview.SetElementChildVisual(s as Button, null);
+
+            ColorAnimationHelper.CreateOrStartAnimation(s as Button, Colors.White, Colors.DodgerBlue, TimeSpan.FromSeconds(0.8));
+            //(s as Button)!.Background = ColorAnimationHelper.CreateLinearGradientBrush(Colors.DodgerBlue, Colors.WhiteSmoke);
+        };
+        BasicButton.PointerExited += (s, e) =>
+        {
+            ProtectedCursor = null;
+            (s as Button)!.FontWeight = Microsoft.UI.Text.FontWeights.Normal;
+            ColorAnimationHelper.StopAnimation(s as Button);
+            //(s as Button)!.Background = ColorAnimationHelper.CreateLinearGradientBrush(Colors.WhiteSmoke, Colors.DodgerBlue);
+        };
+        //BasicButton.Tapped += (s, e) =>
+        //{
+        //    ColorAnimationHelper.StopAnimation(s as Button);
+        //    ColorAnimationHelper.CreateAndStartOneTimeAnimation(s as Button, Colors.White, Colors.Orchid, TimeSpan.FromSeconds(0.25));
+        //};
+        #endregion
     }
 
     #region [Events]
@@ -281,7 +304,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 UpdateInfoBar($"App.ArgList.Count ⇒ {App.ArgList.Count}");
 
             // This only worked after adding <AllowUnsafeBlocks> to the csproj.
-            //Flipper.ItemsSource = Pictures;
+            //Flipper.ItemsSource = Assets;
 
             if (Assets.Count > 0)
             {
@@ -290,7 +313,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 BindingOperations.SetBinding(Flipper, FlipView.ItemsSourceProperty, binding);
             }
             else
-                UpdateInfoBar($"No pictures for binding to FlipView", MessageLevel.Warning);
+                UpdateInfoBar($"No assets for binding to FlipView", MessageLevel.Warning);
 
             // Start channel test. (pub sub is the better option now)
             //_ = Task.Run(async () => await StartListeningToGenericMessageServiceAsync(App.CoreChannelToken.Token));
@@ -326,6 +349,16 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 _pointLight?.StartAnimation("Color", _ckfAnimation);
             }
             #endregion
+
+            // WindowsXamlManager is part of the Windows App SDK XAML hosting API. This API enables non-WinAppSDK
+            // desktop applications to host any control that derives from Microsoft.UI.Xaml.UIElement in a UI element
+            // that is associated with a window handle (HWND). This API can be used by desktop applications built
+            // using WPF, Windows Forms, and the Windows API (Win32).
+            WindowsXamlManager? wxm = WindowsXamlManager.GetForCurrentThread();
+            wxm.XamlShutdownCompletedOnThread += (s, e) =>
+            {
+                Debug.WriteLine($"[INFO] XamlShutdownCompleted");
+            };
         }
         _loaded = true;
     }
@@ -955,6 +988,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    transform.Rotation = 90;
         //}
         StartComboAnimation((Button)sender, 1.1, 200);
+        ColorAnimationHelper.CreateOrStartAnimation(sender as Button, Colors.White, Colors.DodgerBlue, TimeSpan.FromSeconds(0.8));
     }
 
     void ButtonCompositePointerExited(object sender, PointerRoutedEventArgs e)
@@ -968,6 +1002,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    transform.Rotation = 0;
         //}
         StartComboAnimation((Button)sender, 1.0, 200);
+        ColorAnimationHelper.StopAnimation(sender as Button);
     }
 
     void ButtonCompositeTapped(object sender, TappedRoutedEventArgs e)
@@ -1241,7 +1276,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         if (surfaceBrush != null)
             _blurVisual.Brush = surfaceBrush;
 
-        // Create drop shadow...
+        // Create drop shadow (this is noticeable on a CompositionSurfaceBrush, but not on a CompositionColorBrush).
         DropShadow shadow = _compositor.CreateDropShadow();
         shadow.Opacity = shadowOpacity;
         shadow.Color = shadowColor;
@@ -1626,35 +1661,4 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         gridVisual.StartAnimation("Offset.X", _springAnimation);
     }
     #endregion
-
-    /// <summary>
-    ///   https://learn.microsoft.com/en-us/windows/apps/develop/widgets/implement-widget-provider-cs
-    ///   https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.windows.widgets.providers.widgetmanager?view=windows-app-sdk-1.6
-    /// </summary>
-    /// <param name="widgetId"></param>
-    /// <remarks>
-    ///   The <see cref="WidgetManager"/> class can only perform operations on existing widgets.
-    /// </remarks>
-    public void UpdateExistingWidgets(string widgetId)
-    {
-        try
-        {
-            WidgetManager widgetManager = WidgetManager.GetDefault();
-            var widgetInfos = widgetManager.GetWidgetInfos();
-            foreach (var widgetInfo in widgetInfos)
-            {
-                if (widgetInfo.WidgetContext.IsActive)
-                {
-                    WidgetUpdateRequestOptions options = new WidgetUpdateRequestOptions(widgetId);
-                    options.Template = "({ \"type\": \"AdaptiveCard\", \"version\": \"1.5\", \"body\": [{ \"type\": \"TextBlock\", \"text\": \"${greeting}\" }]})";
-                    options.Data = "({ \"greeting\": \"Hello\" })";
-                    widgetManager.UpdateWidget(options);
-                }
-            }
-        }
-        catch (COMException ex)
-        {
-            Debug.WriteLine($"[ERROR] HRESULT={ex.HResult}: {ex.Message}");
-        }
-    }
 }

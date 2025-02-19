@@ -663,6 +663,14 @@
                                     <Image Width="30" Source="ms-appx:///Assets/SettingsIcon5.png" />
                                 </Button.Content>
                             </Button>
+                            <Button
+                                x:Name="BasicButton"
+                                Width="70"
+                                Height="32"
+                                Padding="0"
+                                Content="Basic"
+                                Foreground="Black"
+                                Style="{StaticResource BasicButton}" />
                         </StackPanel>
                     </local:GroupBox>
                     <StackPanel Orientation="Horizontal" Spacing="20">
