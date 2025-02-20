@@ -58,11 +58,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     SpringVector3NaturalMotionAnimation? _springVectorAnimation;
     SpringScalarNaturalMotionAnimation? _springScalarAnimation;
     
-    PointLight? _pointLight;
-    ColorKeyFrameAnimation? _ckfAnimation;
-    Visual? _btnLightRoot;
-
-    (CompositionColorBrush?, ColorKeyFrameAnimation?) _clrBtnAnim;
+    PointLight? _pointLightBanner;
+    PointLight? _pointLightButton;
 
     readonly int _maxMessages = 50;
     readonly ObservableCollection<ApplicationMessage>? _coreMessages;
@@ -219,7 +216,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         BindingOperations.SetBinding(lvChannelMessages, ListView.ItemsSourceProperty, binding);
 
         _compositor = ElementCompositionPreview.GetElementVisual(this).Compositor;
-        _pointLight = _compositor?.CreatePointLight();
+        _pointLightButton = _compositor?.CreatePointLight();
+        _pointLightBanner = _compositor?.CreatePointLight();
 
         #region [Button Animation]
         // You could also use Behaviors for this, but I wanted to
@@ -304,8 +302,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             try
             {
-                var token = _ctsTask == null ? new CancellationTokenSource().Token : _ctsTask.Token;
-                IAsyncOperationWithProgress<ulong, ulong>? iaop = PerformDownloadAsync(_delay, token);
+                IAsyncOperationWithProgress<ulong, ulong>? iaop = PerformDownloadAsync(_delay, _ctsTask == null ? new CancellationTokenSource().Token : _ctsTask.Token);
                 iaop.Progress = (result, prog) =>
                 {
                     if (iaop.Status != AsyncStatus.Completed)
@@ -313,13 +310,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     else
                         DispatcherQueue.TryEnqueue(() => { tbVersion.Text = $"AsyncStatus: {iaop.Status}"; });
                 };
-
                 var result = await iaop;
-                DispatcherQueue.TryEnqueue(() => { tbVersion.Text = $"AsyncStatus: {iaop.Status}"; });
+                DispatcherQueue.TryEnqueue(() => { tbVersion.Text = $"AsyncStatus(final): {iaop.Status}"; });
             }
             catch (Exception ex)
             {
-                DispatcherQueue.TryEnqueue(() => tbVersion.Text = $"ERROR: {ex.Message}");
+                DispatcherQueue.TryEnqueue(() => tbVersion.Text = $"AsyncStatus(error): {ex.Message}");
             }
         });
         #endregion
@@ -369,23 +365,36 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             catch (KeyNotFoundException) { }
 
-            #region [PointLight animation for button color]
-            if (_pointLight != null)
+            #region [PointLight animation for control color]
+            if (_pointLightButton != null)
             {
-                _ckfAnimation = _compositor?.CreateColorKeyFrameAnimation();
-                _ckfAnimation.InsertKeyFrame(0f, Colors.LightGray);
-                _ckfAnimation.InsertKeyFrame(.33f, Colors.DodgerBlue);
-                _ckfAnimation.InsertKeyFrame(.66f, Colors.LightBlue);
-                _ckfAnimation.InsertKeyFrame(1f, Colors.White);
-                _ckfAnimation.Duration = TimeSpan.FromSeconds(3);
-                _ckfAnimation.IterationBehavior = AnimationIterationBehavior.Forever;
-                _ckfAnimation.DelayTime = TimeSpan.FromSeconds(0);
-                _ckfAnimation.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
+                var ckfa1 = _compositor?.CreateColorKeyFrameAnimation();
+                ckfa1.InsertKeyFrame(0f, Colors.LightGray);
+                ckfa1.InsertKeyFrame(.33f, Colors.DodgerBlue);
+                ckfa1.InsertKeyFrame(.66f, Colors.LightBlue);
+                ckfa1.InsertKeyFrame(1f, Colors.White);
+                ckfa1.Duration = TimeSpan.FromSeconds(3);
+                ckfa1.IterationBehavior = AnimationIterationBehavior.Forever;
+                ckfa1.DelayTime = TimeSpan.FromSeconds(0);
+                ckfa1.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
+                _pointLightBanner.Offset = new Vector3((float)tbMessagePane.ActualWidth / 2, (float)tbMessagePane.ActualHeight / 2, 100f);
+                _pointLightButton.CoordinateSpace = ElementCompositionPreview.GetElementVisual(tbMessagePane);
+                _pointLightButton.Targets.Add(ElementCompositionPreview.GetElementVisual(tbMessagePane));
+                _pointLightButton?.StartAnimation("Color", ckfa1);
 
-                _btnLightRoot = ElementCompositionPreview.GetElementVisual(tbMessagePane);
-                _pointLight.CoordinateSpace = _btnLightRoot;
-                _pointLight.Targets.Add(_btnLightRoot);
-                _pointLight?.StartAnimation("Color", _ckfAnimation);
+                var ckfa2 = _compositor?.CreateColorKeyFrameAnimation();
+                ckfa2.InsertKeyFrame(0f, Colors.LightGray);
+                ckfa2.InsertKeyFrame(.33f, Colors.DodgerBlue);
+                ckfa2.InsertKeyFrame(.66f, Colors.LightBlue);
+                ckfa2.InsertKeyFrame(1f, Colors.White);
+                ckfa2.Duration = TimeSpan.FromSeconds(2);
+                ckfa2.IterationBehavior = AnimationIterationBehavior.Forever;
+                ckfa2.DelayTime = TimeSpan.FromSeconds(0);
+                ckfa2.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
+                _pointLightBanner.Offset = new Vector3((float)tbMessages.ActualWidth / 2, (float)tbMessages.ActualHeight / 2, 100f);
+                _pointLightBanner.CoordinateSpace = ElementCompositionPreview.GetElementVisual(tbMessages);
+                _pointLightBanner.Targets.Add(ElementCompositionPreview.GetElementVisual(tbMessages));
+                _pointLightBanner?.StartAnimation("Color", ckfa2);
             }
             #endregion
 
@@ -422,11 +431,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     void MainPageOnUnloaded(object sender, RoutedEventArgs e)
     {
-        if (_pointLight != null)
+        if (_pointLightButton != null)
         {
-            _pointLight?.StopAnimation("Color");
-            if (_pointLight.Targets.Count > 0)
-                _pointLight.Targets.RemoveAll();
+            _pointLightButton?.StopAnimation("Color");
+            if (_pointLightButton.Targets.Count > 0)
+                _pointLightButton.Targets.RemoveAll();
+
+            _pointLightBanner?.StopAnimation("Color");
+            if (_pointLightBanner.Targets.Count > 0)
+                _pointLightBanner.Targets.RemoveAll();
         }
 
         PubSubEnhanced<ApplicationMessage>.Instance.Unsubscribe(OnPubSubReceived);
