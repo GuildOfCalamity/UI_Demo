@@ -87,20 +87,6 @@ public static class Extensions
         }
     }
 
-    #region [Keyboard Helpers]
-    public static bool IsShiftKeyDown()
-    {
-        var shiftKey = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift);
-        return shiftKey is Windows.UI.Core.CoreVirtualKeyStates.Down or (Windows.UI.Core.CoreVirtualKeyStates.Down | Windows.UI.Core.CoreVirtualKeyStates.Locked);
-    }
-
-    public static bool IsCtrlKeyDown()
-    {
-        var ctrlKey = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
-        return ctrlKey is Windows.UI.Core.CoreVirtualKeyStates.Down or (Windows.UI.Core.CoreVirtualKeyStates.Down | Windows.UI.Core.CoreVirtualKeyStates.Locked);
-    }
-    #endregion
-
     /// <summary>
     /// Copies one <see cref="List{T}"/> to another <see cref="List{T}"/> by value (deep copy).
     /// </summary>
@@ -657,6 +643,16 @@ public static class Extensions
         }
 
         return age * 12;
+    }
+
+    /// <summary>
+    /// Determines if the given <paramref name="dateTime"/> is older than <paramref name="days"/>.
+    /// </summary>
+    /// <returns><c>true</c> if older, <c>false</c> otherwise</returns>
+    public static bool IsOlderThanDays(this DateTime dateTime, double days = 1.0)
+    {
+        TimeSpan timeDifference = DateTime.Now - dateTime;
+        return timeDifference.TotalDays >= days;
     }
 
     /// <summary>
@@ -1719,12 +1715,12 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Brute force alpha removal of <see cref="Version"/> text
-    /// is not always the best approach, e.g. the following:
-    /// "3.0.0-zmain.2211 (DCPP(199ff10ec000000)(cloudtest).160101.0800)"
-    /// ...converts to: 
-    /// "3.0.0.221119910000000.160101.0800" 
-    /// ...which is not accurate.
+    ///   Brute force alpha removal of <see cref="Version"/> text
+    ///   is not always the best approach, e.g. the following:
+    ///   "3.0.0-zmain.2211 (DCPP(199ff10ec000000)(cloudtest).160101.0800)"
+    ///   ...converts to: 
+    ///   "3.0.0.221119910000000.160101.0800" 
+    ///   ...which is not accurate.
     /// </summary>
     /// <param name="fullPath">the entire path to the file</param>
     /// <returns>sanitized <see cref="Version"/></returns>
@@ -1777,7 +1773,7 @@ public static class Extensions
     }
     public static bool HasSpaceRegex(this string str)
     {
-        return Regex.IsMatch(str ?? "", @"[\s]+"); // [\s]
+        return Regex.IsMatch(str ?? "", @"[\s]+");
     }
 
     public static bool HasPunctuation(this string str)
@@ -1822,9 +1818,9 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Fetch all <see cref="ProcessModule"/>s in the current running process.
+    ///   Fetch all <see cref="ProcessModule"/>s in the current running process.
     /// </summary>
-    /// <param name="excludeWinSys">if true any file path starting with %windir% will be excluded from the results</param>
+    /// <param name="excludeWinSys">if <c>true</c> any file path starting with %windir% will be excluded from the results</param>
     public static List<string> GatherReferenceAssemblies(bool excludeWinSys)
     {
         List<string> modules = new();
@@ -1862,11 +1858,14 @@ public static class Extensions
         }
         catch (Exception ex)
         {
-            App.DebugLog($"Couldn't add a waiter to wait for process to exit (PID {processId}): {ex.Message}");
+            App.DebugLog($"Couldn't add a waiter for process to exit (PID {processId}): {ex.Message}");
             return -1;
         }
     }
 
+    /// <summary>
+    ///   Returns a random enum of type <typeparamref name="T"/>.
+    /// </summary>
     public static T GetRandomEnum<T>() where T : Enum
     {
         var values = Enum.GetValues(typeof(T)).Cast<T>();
@@ -1874,7 +1873,7 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Returns true if within 10 minutes +/- of 2AM, false otherwise.
+    ///   Returns <c>true</c> if within 10 minutes +/- of 2AM, <c>false</c> otherwise.
     /// </summary>
     public static bool IsCloseTo2AM()
     {
@@ -1887,11 +1886,11 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Determines the type of an image file by inspecting its header.
+    ///   Determines the type of an image file by inspecting its header.
     /// </summary>
     /// <param name="filePath">Path to the image file.</param>
     /// <returns>The type of the image (e.g., "jpg", "png", "gif", etc.) or "Unknown" if not recognized.</returns>
-    public static string DetermineType(this string imageFilePath, bool dumpHeader = false)
+    public static string DetermineImageType(this string imageFilePath, bool dumpHeader = false)
     {
         if (!File.Exists(imageFilePath)) { return string.Empty; }
 
@@ -3117,6 +3116,24 @@ public static class Extensions
         return target.TransformToVisual(parent).TransformPoint(default(Windows.Foundation.Point));
     }
 
+
+    public static bool IsCtrlKeyDown()
+    {
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+    }
+
+    public static bool IsAltKeyDown()
+    {
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+    }
+
+    public static bool IsCapsLockOn()
+    {
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.CapitalLock);
+        return ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Locked);
+    }
 
     /// <summary>
     /// I created this to show what controls are members of <see cref="Microsoft.UI.Xaml.FrameworkElement"/>.

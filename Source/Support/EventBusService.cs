@@ -105,20 +105,3 @@ public class EventBus : IDisposable
     ~EventBus() => Dispose();
     #endregion
 }
-
-#region [EventArg Models]
-/// <summary>
-/// Define our event args class.
-/// This example uses an object value that could be switched
-/// upon in the main UI update routine, but more complex object
-/// types could be passed to encapsulate additional information.
-/// </summary>
-public class ObjectEventArgs : EventArgs
-{
-    public object? Payload { get; }
-    public ObjectEventArgs(object? payload)
-    {
-        Payload = payload;
-    }
-}
-#endregion

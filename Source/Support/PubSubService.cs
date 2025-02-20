@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -277,33 +278,3 @@ public class PubSubWithEviction<T> : IDisposable
     ~PubSubWithEviction() => Dispose();
     #endregion
 }
-
-#region [Supporting Cast]
-public class ApplicationMessage
-{
-    public ModuleId Module { get; set; }
-    public string? MessageText { get; set; }
-    public Type? MessageType { get; set; }
-    public object? MessagePayload { get; set; }
-    public DateTime MessageTime { get; set; } = DateTime.Now;
-}
-
-public enum ModuleId
-{
-    None = 0,
-    App = 1,
-    MainWindow = 2,
-    MainPage = 3,
-    ControlsPage = 4,
-    ProfileManager = 21,
-    ToastHelper = 22,
-    DialogHelper = 23,
-    BlurHelper = 24,
-    TaskbarHelper = 25,
-    UIThreadHelper = 26,
-    AppCapture = 27,
-    MessageService = 28,
-    Extensions = 29,
-    Gibberish = 30,
-}
-#endregion

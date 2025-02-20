@@ -6,23 +6,11 @@ namespace UI_Demo
 {
     public class RegistrationManager<TWidgetProvider> : IDisposable where TWidgetProvider : IWidgetProvider, new()
     {
-        private bool disposedValue = false;
-        private ManualResetEvent disposedEvent = new ManualResetEvent(false);
+        IDisposable registeredProvider;
+        bool disposedValue = false;
+        ManualResetEvent disposedEvent = new ManualResetEvent(false);
 
-        private class ClassLifetimeUnregister : IDisposable
-        {
-            public ClassLifetimeUnregister(uint registrationHandle) { COMRegistrationHandle = registrationHandle; }
-            private readonly uint COMRegistrationHandle;
-
-            public void Dispose()
-            {
-                Com.ClassObject.Revoke(COMRegistrationHandle);
-            }
-        }
-
-        private IDisposable registeredProvider;
-
-        private RegistrationManager(IDisposable provider)
+        RegistrationManager(IDisposable provider)
         {
             registeredProvider = provider;
         }
@@ -33,12 +21,21 @@ namespace UI_Demo
             return new RegistrationManager<TWidgetProvider>(registration);
         }
 
-        private static IDisposable RegisterClass(Guid clsid, Com.IClassFactory factory)
+        public ManualResetEvent GetDisposedEvent() => disposedEvent;
+
+        static IDisposable RegisterClass(Guid clsid, Com.IClassFactory factory)
         {
             uint registrationHandle;
             Com.ClassObject.Register(clsid, factory, out registrationHandle);
 
             return new ClassLifetimeUnregister(registrationHandle);
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -51,18 +48,17 @@ namespace UI_Demo
             }
         }
 
-        public ManualResetEvent GetDisposedEvent()
-        {
-            return disposedEvent;
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
         ~RegistrationManager() =>  Dispose(disposing: false);
+
+        class ClassLifetimeUnregister : IDisposable
+        {
+            public ClassLifetimeUnregister(uint registrationHandle) { COMRegistrationHandle = registrationHandle; }
+            private readonly uint COMRegistrationHandle;
+
+            public void Dispose()
+            {
+                Com.ClassObject.Revoke(COMRegistrationHandle);
+            }
+        }
     }
 }

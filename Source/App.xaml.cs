@@ -62,6 +62,10 @@ public partial class App : Application
     public static Channel<ChannelMessageType>? CoreMessageChannel;
     public static CancellationTokenSource? CoreChannelToken;
 
+    /// <summary>
+    /// Testing for JsonDataHelper serialization.
+    /// </summary>
+    public static JsonDataHelper<List<ApplicationMessage>>? MessageLog { get; set; }
 
     #region [User preferences from Windows.UI.ViewManagement]
     // We won't configure backing fields for these as the user could adjust them during app lifetime.
@@ -167,7 +171,13 @@ public partial class App : Application
         _ = Task.Run(() => PubSubHeartbeat());
 
         // Widget test
-        //_ = Task.Run(() => LaunchWidgetServiceProvider());
+        _ = Task.Run(() => LaunchWidgetServiceProvider());
+        //var widgetTask = LaunchWidgetServiceProvider();
+        //widgetTask.ContinueWith(t => { Debug.WriteLine("[INFO] LaunchWidgetServiceProvider ran to completion."); }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.FromCurrentSynchronizationContext());
+        //widgetTask.ContinueWith(t => { Debug.WriteLine("[ERROR] LaunchWidgetServiceProvider has faulted."); }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.FromCurrentSynchronizationContext());
+        //widgetTask.ContinueWith(t => { Debug.WriteLine("[WARNING] LaunchWidgetServiceProvider was canceled."); }, CancellationToken.None, TaskContinuationOptions.OnlyOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
+
+        MessageLog = new JsonDataHelper<List<ApplicationMessage>>(System.IO.Path.Combine(GetCurrentDirectory(), "AppMessages.json"));
     }
 
     /// <summary>
@@ -699,6 +709,11 @@ public partial class App : Application
     /// Returns the AssemblyVersion, not the FileVersion.
     /// </summary>
     public static string? GetCurrentAssemblyVersion() => $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}";
+
+    /// <summary>
+    /// Returns the current assembly's folder location.
+    /// </summary>
+    public static string GetCurrentDirectory() => System.IO.Path.GetDirectoryName(Environment.ProcessPath)!;
     #endregion
 
     #region [Dialog Helper]
@@ -1241,26 +1256,25 @@ public partial class App : Application
         try
         {
             WinRT.ComWrappersSupport.InitializeComWrappers();
+
+            // Register the widget provider when the app starts
             using (var manager = RegistrationManager<WidgetProvider>.RegisterProvider())
             {
                 Debug.WriteLine("[INFO] WidgetProvider registered");
+                await Task.Delay(60000);
 
-                var wp = new WidgetProvider();
-                // TODO: How to create a WidgetContext?
-                //wp.CreateWidget(Microsoft.Windows.Widgets.Providers.WidgetContext);
+                // This line throws an exception:
+                //var existingWidgets = Microsoft.Windows.Widgets.Providers.WidgetManager.GetDefault().GetWidgetIds();
+                //if (existingWidgets != null)
+                //{
+                //    Debug.WriteLine($"[INFO] There are {existingWidgets.Length} widgets currently outstanding:");
+                //    foreach (var widgetId in existingWidgets)
+                //    {
+                //        Debug.WriteLine($" - {widgetId}");
+                //    }
+                //}
 
-                var existingWidgets = Microsoft.Windows.Widgets.Providers.WidgetManager.GetDefault().GetWidgetIds();
-                if (existingWidgets != null)
-                {
-                    Debug.WriteLine($"[INFO] There are {existingWidgets.Length} widgets currently outstanding:");
-                    foreach (var widgetId in existingWidgets)
-                    {
-                        Debug.WriteLine($" - {widgetId}");
-                    }
-                }
-
-                await Task.Delay(10000);
-
+                Debug.WriteLine("[INFO] WidgetProvider disposing");
                 // Wait until the manager has disposed of the last widget provider.
                 using (var disposedEvent = manager.GetDisposedEvent())
                 {
@@ -1291,11 +1305,12 @@ public partial class App : Application
     {
         try
         {
+            //RegistrationManager<WidgetProvider>? manager = RegistrationManager<WidgetProvider>.RegisterProvider();
             Microsoft.Windows.Widgets.Providers.WidgetManager widgetManager = Microsoft.Windows.Widgets.Providers.WidgetManager.GetDefault();
-            var widgetInfos = widgetManager.GetWidgetInfos();
-            foreach (var widgetInfo in widgetInfos)
+            var infos = widgetManager.GetWidgetInfos();
+            foreach (var wi in infos)
             {
-                if (widgetInfo.WidgetContext.IsActive)
+                if (wi.WidgetContext.IsActive)
                 {
                     Microsoft.Windows.Widgets.Providers.WidgetUpdateRequestOptions options = new Microsoft.Windows.Widgets.Providers.WidgetUpdateRequestOptions(widgetId);
                     options.Template = "({ \"type\": \"AdaptiveCard\", \"version\": \"1.5\", \"body\": [{ \"type\": \"TextBlock\", \"text\": \"${greeting}\" }]})";

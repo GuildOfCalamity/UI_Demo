@@ -15,7 +15,7 @@ using Con = System.Diagnostics.Debug;
 
 namespace UI_Demo;
 
-// Custom attribute to mark sensitive properties
+// Custom attribute to mark sensitive properties.
 [AttributeUsage(AttributeTargets.Property)]
 public class EncryptedAttribute : Attribute { }
 

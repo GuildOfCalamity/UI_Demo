@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -24,9 +25,11 @@ using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.Windows.Management.Deployment;
 using Microsoft.Windows.Widgets.Providers;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
+using Windows.Media.Ocr;
 using Windows.Storage;
 
 using WinRT.Interop;
@@ -87,6 +90,16 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             NotifyPropertyChanged(nameof(Amount));
         }
     }
+    string _status = string.Empty;
+    public string Status
+    {
+        get => _status;
+        set
+        {
+            _status = value;
+            NotifyPropertyChanged(nameof(Status));
+        }
+    }
     DelayTime _delay = DelayTime.Medium;
     public DelayTime Delay
     {
@@ -138,6 +151,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     #endregion
 
     public ICommand SwitchDelayCommand { get; private set; }
+    public ICommand ProgressCommand { get; private set; }
 
     public MainPage()
     {
@@ -284,6 +298,31 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    ColorAnimationHelper.CreateAndStartOneTimeAnimation(s as Button, Colors.White, Colors.Orchid, TimeSpan.FromSeconds(0.25));
         //};
         #endregion
+
+        #region [Testing IAsyncOperations]
+        ProgressCommand = new AsyncRelayCommand(async (obj) =>
+        {
+            try
+            {
+                var token = _ctsTask == null ? new CancellationTokenSource().Token : _ctsTask.Token;
+                IAsyncOperationWithProgress<ulong, ulong>? iaop = PerformDownloadAsync(_delay, token);
+                iaop.Progress = (result, prog) =>
+                {
+                    if (iaop.Status != AsyncStatus.Completed)
+                        DispatcherQueue.TryEnqueue(() => { tbVersion.Text = $"Progress: {prog}%"; });
+                    else
+                        DispatcherQueue.TryEnqueue(() => { tbVersion.Text = $"AsyncStatus: {iaop.Status}"; });
+                };
+
+                var result = await iaop;
+                DispatcherQueue.TryEnqueue(() => { tbVersion.Text = $"AsyncStatus: {iaop.Status}"; });
+            }
+            catch (Exception ex)
+            {
+                DispatcherQueue.TryEnqueue(() => tbVersion.Text = $"ERROR: {ex.Message}");
+            }
+        });
+        #endregion
     }
 
     #region [Events]
@@ -359,6 +398,24 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 Debug.WriteLine($"[INFO] XamlShutdownCompleted");
             };
+
+            try
+            {
+                int count = 0;
+                var prevMsgs = App.MessageLog?.GetData();
+                if (prevMsgs is not null)
+                {
+                    foreach (var msg in prevMsgs)
+                    {
+                        // Load messages as long as we aren't exceeding the limit and they're fresh.
+                        if (++count < _maxMessages && !msg.MessageTime.IsOlderThanDays(4d))
+                            _coreMessages.Add(msg);
+                    }
+                    Debug.WriteLine($"[INFO] {count} previous messages loaded");
+                }
+            }
+            catch (Exception) { Debug.WriteLine($"[WARNING] Failed to load previous message list."); }
+
         }
         _loaded = true;
     }
@@ -373,6 +430,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
 
         PubSubEnhanced<ApplicationMessage>.Instance.Unsubscribe(OnPubSubReceived);
+
+        if (_coreMessages.Count > 1)
+            App.MessageLog?.SaveData(_coreMessages?.ToList());
     }
 
     /// <summary>
@@ -1661,4 +1721,41 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         gridVisual.StartAnimation("Offset.X", _springAnimation);
     }
     #endregion
+
+
+    public IAsyncOperationWithProgress<ulong, ulong> PerformDownloadAsync(DelayTime delay, CancellationToken token = default)
+    {
+        return AsyncInfo.Run<ulong, ulong>((token, progress) =>
+        {
+            return Task<ulong>.Run(async () =>
+            {
+                ulong length = 0;
+                for (int i = 0; i < 100; i++)
+                {
+                    if (!token.IsCancellationRequested)
+                    {
+                        if (length < 100)
+                            length += 1;
+                        else
+                            length = 100;
+
+                        progress.Report(length);
+
+                        // fake delay to simulate download process
+                        switch (delay)
+                        {
+                            case DelayTime.Short: await Task.Delay(10); break;
+                            case DelayTime.Medium: await Task.Delay(30); break;
+                            case DelayTime.Long: await Task.Delay(80); break;
+                            default: await Task.Delay(10); break;
+                        }
+                    }
+                    else
+                        break;
+                }
+                return length;
+            });
+        });
+    }
+
 }

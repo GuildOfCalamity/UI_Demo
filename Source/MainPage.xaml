@@ -512,10 +512,12 @@
                             Spacing="20">
                             <Button
                                 x:Name="SettingsButton"
+                                Command="{x:Bind ProgressCommand}"
                                 Content="{StaticResource Settings}"
                                 Flyout="{StaticResource SettingsFlyout}"
                                 FontFamily="Segoe MDL2 Assets"
-                                FontSize="{StaticResource FontSizeLarge}" />
+                                FontSize="{StaticResource FontSizeLarge}"
+                                IsEnabled="{Binding ProgressCommand.CanExecute, Mode=OneWay}" />
                             <ToggleButton
                                 x:Name="tbMessagePane"
                                 Checked="ToggleOnChanged"

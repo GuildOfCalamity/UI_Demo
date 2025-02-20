@@ -46,18 +46,18 @@ public static class Gibberish
     #endregion
 
     /// <summary>
-    /// Generates technical gibberish.
+    ///   Generates technical gibberish.
     /// </summary>
     static string GenerateTechnicalSentence(int wordCount)
     {
         string[] table = { "a", "server", "or", "workstation", "PC", "is", "technological", "technology", "power",
-        "system", "used", "for", "diagnosing", "and", "analyzing", "data", "for", "reporting", "to", "on",
-        "user", "monitor", "display", "interaction", "electric", "batteries", "along", "with", "some", "over",
-        "under", "memory", "once", "in", "while", "special", "object", "can be", "found", "inside", "the",
-        "HD", "SSD", "USB", "CDROM", "NVMe", "GPU", "RAM", "NIC", "RAID", "SQL", "API", "XML", "JSON", "website",
-        "at", "cluster", "fiber-optic", "floppy-disk", "media", "storage", "Windows", "operating", "root",
-        "database", "access", "denied", "granted", "file", "files", "folder", "folders", "directory", "path",
-        "registry", "policy", "wire", "wires", "serial", "parallel", "bus", "fast", "slow", "speed", "bits",
+        "system", "used", "for", "diagnosing", "and", "analyzing", "data", "for", "reporting", "to", "on", "ethernet",
+        "user", "monitor", "display", "interaction", "electric", "batteries", "along", "with", "some", "over", "heatsink",
+        "under", "memory", "once", "in", "while", "special", "object", "can be", "found", "inside", "the", "blueprint",
+        "CAT5", "CAT6", "TTL", "HD", "SSD", "USB", "CDROM", "NVMe", "GPU", "RAM", "NIC", "RAID", "SQL", "API", "XML", "JSON", 
+        "website", "at", "cluster", "fiber-optic", "floppy-disk", "media", "storage", "Windows", "operating", "root",
+        "database", "access", "denied", "granted", "file", "files", "folder", "folders", "directory", "path", "surface-mount",
+        "registry", "policy", "wire", "wires", "serial", "parallel", "bus", "fast", "slow", "speed", "bits", "DSL",
         "bytes", "voltage", "current", "resistance", "wattage", "circuit", "inspection", "measurement", "continuity",
         "diagram", "specifications", "robotics", "telecommunication", "applied", "internet", "science", "code",
         "password", "username", "wireless", "digital", "headset", "programming", "framework", "enabled", "disabled",
@@ -92,9 +92,9 @@ public static class Gibberish
     static string GeneratePickupSentence(bool prefab = true)
     {
         /*
-        o----------------------------------------------------o
-        |              BASIC SENTENCE ANATOMY                |
-        o----------------------------------------------------o
+          o--------------------------------------------------o
+          |             BASIC SENTENCE ANATOMY               |
+          o--------------------------------------------------o
                                Sentence
                                   /\
                                  /  \
@@ -118,13 +118,13 @@ public static class Gibberish
 
         string[] article = { "the", "one", "my", "this", "some", "a", /* "an" */ };
         string[] conjunction = { "and", "for", /* "so", "but", "or", "yet" */ };
-        string[] superlative = { "biggest", "blackest", "boldest", "bravest", "brightest", "cheapest", "cleanest", "cleverest", "coldest", "dullest", "drunkest", "faintest", "fewest", "gentlest", "grandest", "gravest", "greatest", "highest", "kindest", "loudest", "moistest", "narrowest", "nicest", "oddest", "proudest", "purest", "quietest", "rarest", "richest", "ripest", "roughest", "rudest", "safest", "shallowest", "simplest", "smoothest", "strangest", "strictest", "truest", "weirdest", "youngest", };
-        string[] adjective = { "steamy", "gentle", "grand", "cheap", "young", "old", "bright", "bold", "loud", "ripe", "powerful", "sticky", "spicy", "strange", "illegal", "crazy", "smelly", "wet", "bad", "hairy", "radiant", "meaningless", "nicer", "adorable", "part-time", "open-minded", "well-behaved", "cold-blooded", "beautiful", "breakable", "mathematical", "homeless", "wooden", "biological", "inedible", "incomprehensible", "inquisitive", "weird", };
-        string[] noun = { "person", "cheese", "ham-bone", "garden", "dog", "town", "car", "container", "house", "bird", "hose", "horse", "statue", "game", "community", "team", "teacher", "room", "book", "job", "building", "spouse", "company", "student", "state", "world", "planet", "system", "service", "thing", "problem", "toothache", "hand", "part", "place", "alligator", "weasel", "animal", "moose", "ostrich", "cheetah", "monkey", "snake", "platypus", };
+        string[] superlative = { "biggest", "blackest", "boldest", "bravest", "brightest", "cheapest", "cleanest", "cleverest", "coldest", "dullest", "drunkest", "faintest", "fewest", "gentlest", "grandest", "gravest", "greatest", "highest", "kindest", "loudest", "moistest", "narrowest", "nicest", "oddest", "proudest", "purest", "quietest", "rarest", "richest", "ripest", "roughest", "rudest", "safest", "shallowest", "simplest", "smoothest", "strangest", "strictest", "truest", "weirdest", "whitest", "youngest", };
+        string[] adjective = { "steamy", "gentle", "extracurricular", "extramarital", "grand", "cheap", "young", "old", "bright", "bold", "loud", "ripe", "powerful", "sticky", "spicy", "strange", "illegal", "crazy", "smelly", "wet", "bad", "hairy", "radiant", "meaningless", "nicer", "adorable", "part-time", "open-minded", "well-behaved", "cold-blooded", "beautiful", "breakable", "mathematical", "homeless", "wooden", "biological", "inedible", "incomprehensible", "inquisitive", "weird", };
+        string[] noun = { "person", "situation", "cheese", "ham-bone", "garden", "dog", "town", "car", "container", "neckerchief", "house", "bird", "mildew", "ceramic tile", "digit", "horse", "statue", "game", "community", "team", "professor", "room", "book", "job", "building", "spouse", "mistress", "company", "student", "state", "world", "planet", "system", "service", "thing", "problem", "toothache", "hand", "appendage", "place", "alligator", "weasel", "animal", "moose", "ostrich", "cheetah", "monkey", "snake", "platypus", "bow tie" };
         string[] pastverb = { "toasted", "watched", "scuttled", "drove", "jumped", "ran", "walked", "skipped", "flew", "cranked", "barked", "sprayed", "owned", "dreamed", "asked", "accelerated", "soaked", "broke", "burned", "grew", "remained", "asked", "growled", "helped", "opened", "started", "buzzed", "kicked", "licked", "rolled", "laughed", "lived", "enjoyed", "needed", "fixed", "spilled", "yelled", "failed", "finished", "cooked", "talked", "stayed", "worked", "scratched", "showed", "barfed", "destroyed", "missed", "offered", "spied", "erupted", "sizzled", };
         string[] presentverb = { "toast", "watch", "boast", "scuttle", "drive", "jump", "run", "walk", "skip", "fly", "crank", "bark", "spray", "own", "dream", "ask", "accelerate", "soak", "brake", "burn", "grow", "remain", "ask", "growl", "help", "open", "start", "buzz", "punch", "kick", "lick", "roll", "laugh", "live", "enjoy", "need", "fix", "spill", "yell", "fail", "finish", "cook", "talk", "stay", "work", "scratch", "show", "destroy", "miss", "offer", "spy", "erupt", "sizzle", "swim", "barf", "thump" };
         string[] preposition = { "above", "across", "after", "at", "around", "by", "before", "behind", "below", "beside", "between", "during", "off of", "out of", "to", "from", "for", "over", "under", "on", "onto", "with", "inside", "through", "in", "up", "down" };
-        string[] gerund = { "driving", "jumping", "running", "skipping", "flying", "cranking", "barking", "spraying", "dreaming", "asking", "breaking", "soaking", "burning", "growing", "asking", "growling", "helping", "opening", "starting", "buzzing", "punching", "kicking", "licking", "rolling", "laughing", "living", "enjoying", "needing", "fixing", "spilling", "yelling", "failing", "finishing", "cooking", "talking", "working", "scratching", "showing", "destroying", "missing", "spying", "erupting", "sizzling", "swimming", "barfing", "thumping", "falling" };
+        string[] gerund = { "driving", "jumping", "running", "skipping", "flying", "cranking", "barking", "farting", "spraying", "dreaming", "breaking", "soaking", "burning", "growing", "growling", "asking", "helping", "opening", "starting", "buzzing", "punching", "kicking", "slamming", "dehydrating", "licking", "rolling", "laughing", "living", "enjoying", "needing", "fixing", "spilling", "yelling", "failing", "finishing", "cooking", "talking", "working", "scratching", "showing", "destroying", "missing", "spying", "erupting", "sizzling", "swimming", "barfing", "vomiting", "thumping", "falling" };
 
         #region [Random Statements]
 
@@ -182,6 +182,7 @@ public static class Gibberish
         "I just made a huge investment in [ADJ1] [NOUN1]s, let's hope it pays off.",
         "I have some questions regarding the article you wrote about [ADJ1] [NOUN1]s that practice [GER1].",
         "I'm trading in my old car for some [ADJ1] [NOUN1]s.",
+        "Stand back, cuz I'm gonna [PRESVERB1] this [ADJ1] [NOUN1]!",
     };
 
         // Pick a sentence to use 
@@ -255,9 +256,10 @@ public static class Gibberish
         return similarity >= similarityThreshold;
     }
 
- 
+
     #endregion
 
+    #region [Name Table]
     static List<string> NameList = new() {
           "Olivia   ","Liam       ","Emma     ","Noah       ",
           "Amelia   ","Oliver     ","Ava      ","Elijah     ",
@@ -319,4 +321,5 @@ public static class Gibberish
           "Frank    ","Jade       ","Alex     ","Bart       ",
           "Carol    ","Sarah      ","Joan     ","Jose       "
     };
+    #endregion
 }

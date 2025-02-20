@@ -15,6 +15,25 @@ public enum MessageLevel
     Error = 4
 }
 
+public enum ModuleId
+{
+    None = 0,
+    App = 1,
+    MainWindow = 2,
+    MainPage = 3,
+    ControlsPage = 4,
+    ProfileManager = 21,
+    ToastHelper = 22,
+    DialogHelper = 23,
+    BlurHelper = 24,
+    TaskbarHelper = 25,
+    UIThreadHelper = 26,
+    AppCapture = 27,
+    MessageService = 28,
+    Extensions = 29,
+    Gibberish = 30,
+}
+
 public enum ChannelMessageType
 {
     AppHeartbeat = 0,

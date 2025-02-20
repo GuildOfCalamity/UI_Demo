@@ -211,6 +211,7 @@ public static class ColorAnimationHelper
         }
     }
 
+    #region [Helpers]
     /// <summary>
     /// Helper method for creating <see cref="LinearGradientBrush"/>s.
     /// </summary>
@@ -299,4 +300,5 @@ public static class ColorAnimationHelper
         byte blendedA = (byte)((color1.A * (1 - ratio)) + (color2.A * ratio));
         return Windows.UI.Color.FromArgb(blendedA, blendedR, blendedG, blendedB);
     }
+    #endregion
 }

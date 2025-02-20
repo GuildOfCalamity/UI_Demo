@@ -11,55 +11,18 @@ namespace UI_Demo;
 [Guid("80DAE84C-DE3C-4F02-8ECD-DCDD1CDECC15")]
 public sealed class WidgetProvider : IWidgetProvider
 {
-    public WidgetProvider()
-    {
-        RecoverRunningWidgets();
-    }
-
-    private static bool HaveRecoveredWidgets { get; set; } = false;
-    private static void RecoverRunningWidgets()
-    {
-        if (!HaveRecoveredWidgets)
-        {
-            try
-            {
-                var widgetManager = WidgetManager.GetDefault();
-                foreach (var widgetInfo in widgetManager.GetWidgetInfos())
-                {
-                    var context = widgetInfo.WidgetContext;
-                    if (!WidgetInstances.ContainsKey(context.Id))
-                    {
-                        if (WidgetImpls.ContainsKey(context.DefinitionId))
-                        {
-                            // Need to recover this instance
-                            WidgetInstances[context.Id] = WidgetImpls[context.DefinitionId](context.Id, widgetInfo.CustomState);
-                        }
-                        else
-                        {
-                            // this provider doesn't know about this type of Widget (any more?) delete it
-                            widgetManager.DeleteWidget(context.Id);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[ERROR] RecoverRunningWidgets: {ex.Message}");
-            }
-            finally
-            {
-                HaveRecoveredWidgets = true;
-            }
-        }
-    }
-
+    static bool HaveRecoveredWidgets { get; set; } = false;
     static readonly Dictionary<string, WidgetCreateDelegate> WidgetImpls = new() 
     {
         [CountingWidget.DefinitionId] = (widgetId, initialState) => new CountingWidget(widgetId, initialState),
         [WeatherWidget.DefinitionId] = (widgetId, initialState) => new WeatherWidget(widgetId, initialState),
     };
+    static Dictionary<string, WidgetImplBase> WidgetInstances = new();
 
-    private static Dictionary<string, WidgetImplBase> WidgetInstances = new();
+    public WidgetProvider()
+    {
+        RecoverRunningWidgets();
+    }
 
     // Handle the CreateWidget call. During this function call you should store
     // the WidgetId value so you can use it to update corresponding widget.
@@ -166,5 +129,41 @@ public sealed class WidgetProvider : IWidgetProvider
     {
         Debug.WriteLine($"Deactivate id: {widgetId}");
         WidgetInstances[widgetId].Deactivate();
+    }
+
+    static void RecoverRunningWidgets()
+    {
+        if (!HaveRecoveredWidgets)
+        {
+            try
+            {
+                var widgetManager = WidgetManager.GetDefault();
+                foreach (var widgetInfo in widgetManager.GetWidgetInfos())
+                {
+                    var context = widgetInfo.WidgetContext;
+                    if (!WidgetInstances.ContainsKey(context.Id))
+                    {
+                        if (WidgetImpls.ContainsKey(context.DefinitionId))
+                        {
+                            // Need to recover this instance
+                            WidgetInstances[context.Id] = WidgetImpls[context.DefinitionId](context.Id, widgetInfo.CustomState);
+                        }
+                        else
+                        {
+                            // this provider doesn't know about this type of Widget (any more?) delete it
+                            widgetManager.DeleteWidget(context.Id);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ERROR] RecoverRunningWidgets: {ex.Message}");
+            }
+            finally
+            {
+                HaveRecoveredWidgets = true;
+            }
+        }
     }
 }
