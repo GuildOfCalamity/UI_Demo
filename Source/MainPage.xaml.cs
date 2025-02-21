@@ -8,6 +8,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -25,11 +26,9 @@ using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.Windows.Management.Deployment;
-using Microsoft.Windows.Widgets.Providers;
+
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
-using Windows.Media.Ocr;
 using Windows.Storage;
 
 using WinRT.Interop;
@@ -45,11 +44,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     bool _loaded = false;
     bool _useSpinner = true;
     bool _useSurfaceBrush = true;
-    static Brush? _lvl1;
-    static Brush? _lvl2;
-    static Brush? _lvl3;
-    static Brush? _lvl4;
-    static Brush? _lvl5;
+    static Brush? _lvl1, _lvl2, _lvl3, _lvl4, _lvl5;
     DispatcherTimer? _flyoutTimer;
     CancellationTokenSource? _ctsTask;
 
@@ -58,8 +53,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     SpringVector3NaturalMotionAnimation? _springVectorAnimation;
     SpringScalarNaturalMotionAnimation? _springScalarAnimation;
     
-    PointLight? _pointLightBanner;
-    PointLight? _pointLightButton;
+    PointLight? _pointLightBanner, _pointLightButton;
 
     readonly int _maxMessages = 50;
     readonly ObservableCollection<ApplicationMessage>? _coreMessages;
@@ -71,41 +65,25 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     public bool IsBusy
     {
         get => _isBusy;
-        set
-        {
-            _isBusy = value;
-            NotifyPropertyChanged(nameof(IsBusy));
-        }
+        set { _isBusy = value; NotifyPropertyChanged(nameof(IsBusy)); }
     }
     double _amount = 0;
     public double Amount
     {
         get => _amount;
-        set
-        {
-            _amount = value;
-            NotifyPropertyChanged(nameof(Amount));
-        }
+        set { _amount = value; NotifyPropertyChanged(nameof(Amount)); }
     }
     string _status = string.Empty;
     public string Status
     {
         get => _status;
-        set
-        {
-            _status = value;
-            NotifyPropertyChanged(nameof(Status));
-        }
+        set { _status = value; NotifyPropertyChanged(nameof(Status)); }
     }
     DelayTime _delay = DelayTime.Medium;
     public DelayTime Delay
     {
         get => _delay;
-        set
-        {
-            _delay = value;
-            NotifyPropertyChanged(nameof(Delay));
-        }
+        set { _delay = value; NotifyPropertyChanged(nameof(Delay)); }
     }
     public ObservableCollection<string> LogMessages { get; private set; } = new();
     public ObservableCollection<string> Assets = new();
@@ -319,6 +297,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
         });
         #endregion
+
+        // WindowsXamlManager is part of the Windows App SDK XAML hosting API. This API enables non-WinAppSDK
+        // desktop applications to host any control that derives from Microsoft.UI.Xaml.UIElement in a UI element
+        // that is associated with a window handle (HWND). This API can be used by desktop applications built
+        // using WPF, Windows Forms, and the Windows API (Win32). We're not using it in this application since
+        // it is already a WinUI3 app, but as an example I am hooking the only event the manager exposes.
+        // This event succeeds the AppWindow.Destroying() event.
+        Microsoft.UI.Xaml.Hosting.WindowsXamlManager? wxm = Microsoft.UI.Xaml.Hosting.WindowsXamlManager.GetForCurrentThread();
+        wxm.XamlShutdownCompletedOnThread += (s, e) => { Debug.WriteLine($"[INFO] XamlShutdownCompleted"); };
     }
 
     #region [Events]
@@ -365,29 +352,29 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             catch (KeyNotFoundException) { }
 
-            #region [PointLight animation for control color]
+            #region [PointLight animations]
             if (_pointLightButton != null)
             {
-                var ckfa1 = _compositor?.CreateColorKeyFrameAnimation();
-                ckfa1.InsertKeyFrame(0f, Colors.LightGray);
-                ckfa1.InsertKeyFrame(.33f, Colors.DodgerBlue);
-                ckfa1.InsertKeyFrame(.66f, Colors.LightBlue);
-                ckfa1.InsertKeyFrame(1f, Colors.White);
+                ColorKeyFrameAnimation? ckfa1 = _compositor?.CreateColorKeyFrameAnimation();
+                ckfa1.InsertKeyFrame(0.0f, Colors.LightGray);
+                ckfa1.InsertKeyFrame(0.33f, Colors.DodgerBlue);
+                ckfa1.InsertKeyFrame(0.66f, Colors.LightBlue);
+                ckfa1.InsertKeyFrame(1.0f, Colors.White);
                 ckfa1.Duration = TimeSpan.FromSeconds(3);
                 ckfa1.IterationBehavior = AnimationIterationBehavior.Forever;
                 ckfa1.DelayTime = TimeSpan.FromSeconds(0);
                 ckfa1.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
-                _pointLightBanner.Offset = new Vector3((float)tbMessagePane.ActualWidth / 2, (float)tbMessagePane.ActualHeight / 2, 100f);
+                _pointLightButton.Offset = new Vector3((float)tbMessagePane.ActualWidth / 2, (float)tbMessagePane.ActualHeight / 2, 100f);
                 _pointLightButton.CoordinateSpace = ElementCompositionPreview.GetElementVisual(tbMessagePane);
                 _pointLightButton.Targets.Add(ElementCompositionPreview.GetElementVisual(tbMessagePane));
                 _pointLightButton?.StartAnimation("Color", ckfa1);
 
-                var ckfa2 = _compositor?.CreateColorKeyFrameAnimation();
-                ckfa2.InsertKeyFrame(0f, Colors.LightGray);
-                ckfa2.InsertKeyFrame(.33f, Colors.DodgerBlue);
-                ckfa2.InsertKeyFrame(.66f, Colors.LightBlue);
-                ckfa2.InsertKeyFrame(1f, Colors.White);
-                ckfa2.Duration = TimeSpan.FromSeconds(2);
+                ColorKeyFrameAnimation? ckfa2 = _compositor?.CreateColorKeyFrameAnimation();
+                ckfa2.InsertKeyFrame(0.0f, Colors.White);
+                ckfa2.InsertKeyFrame(0.3f, Colors.SkyBlue);
+                ckfa2.InsertKeyFrame(0.6f, Colors.DodgerBlue);
+                ckfa2.InsertKeyFrame(1.0f, Colors.White);
+                ckfa2.Duration = TimeSpan.FromSeconds(1.9);
                 ckfa2.IterationBehavior = AnimationIterationBehavior.Forever;
                 ckfa2.DelayTime = TimeSpan.FromSeconds(0);
                 ckfa2.Direction = Microsoft.UI.Composition.AnimationDirection.Alternate;
@@ -398,16 +385,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             #endregion
 
-            // WindowsXamlManager is part of the Windows App SDK XAML hosting API. This API enables non-WinAppSDK
-            // desktop applications to host any control that derives from Microsoft.UI.Xaml.UIElement in a UI element
-            // that is associated with a window handle (HWND). This API can be used by desktop applications built
-            // using WPF, Windows Forms, and the Windows API (Win32).
-            WindowsXamlManager? wxm = WindowsXamlManager.GetForCurrentThread();
-            wxm.XamlShutdownCompletedOnThread += (s, e) =>
-            {
-                Debug.WriteLine($"[INFO] XamlShutdownCompleted");
-            };
-
+            #region [Fetch previous messages]
             try
             {
                 int count = 0;
@@ -424,7 +402,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 }
             }
             catch (Exception) { Debug.WriteLine($"[WARNING] Failed to load previous message list."); }
-
+            #endregion
         }
         _loaded = true;
     }
@@ -1735,7 +1713,45 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
     #endregion
 
+    #region [IAsyncOperation]
+    static Windows.Storage.FileProperties.BasicProperties lastProps;
+    public IAsyncOperation<Windows.Storage.FileProperties.BasicProperties> GetBasicFilePropertiesAsync(string name, StreamedFileDataRequestedHandler handler)
+    {
+        return AsyncInfo.Run(async (token) =>
+        {
+            async Task<Windows.Storage.FileProperties.BasicProperties> GetFakeBasicProperties()
+            {
+                var streamedFile = await StorageFile.GetFileFromPathAsync(name);
+                return await streamedFile.GetBasicPropertiesAsync();
+            }
+            return lastProps ?? (lastProps = await GetFakeBasicProperties());
+        });
+    }
 
+    public async Task<FileSystemItemType> GetTypeFromPath(string path)
+    {
+        IStorageItem item = await StorageFile.GetFileFromPathAsync(path);
+        return item is null ? FileSystemItemType.File : (item.IsOfType(StorageItemTypes.Folder) ? FileSystemItemType.Directory : FileSystemItemType.File);
+    }
+
+    public async Task<long> GetFileSize(IStorageFile file)
+    {
+        Windows.Storage.FileProperties.BasicProperties properties = await file.GetBasicPropertiesAsync();
+        return (long)properties.Size;
+    }
+
+    public async Task TestAndThenCopy(string origFilePath, string copyFileName)
+    {
+        await StorageFile.GetFileFromPathAsync(origFilePath)
+            .AsTask()
+            .AndThen(c => 
+            c.CopyAsync(ApplicationData.Current.TemporaryFolder, copyFileName, NameCollisionOption.ReplaceExisting)
+            .AsTask());
+    }
+
+    /// <summary>
+    /// Download simulation using <see cref="IAsyncOperationWithProgress{TResult, TProgress}"/>.
+    /// </summary>
     public IAsyncOperationWithProgress<ulong, ulong> PerformDownloadAsync(DelayTime delay, CancellationToken token = default)
     {
         return AsyncInfo.Run<ulong, ulong>((token, progress) =>
@@ -1748,7 +1764,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     if (!token.IsCancellationRequested)
                     {
                         if (length < 100)
-                            length += 1;
+                            length++;
                         else
                             length = 100;
 
@@ -1770,5 +1786,41 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             });
         });
     }
+    #endregion
+}
 
+// Wrapper class to implement IAsyncAction
+public class AsyncActionWrapper : IAsyncAction
+{
+    readonly Task _task;
+    AsyncActionCompletedHandler IAsyncAction.Completed { get; set; }
+    public Exception ErrorCode { get; }
+    public uint Id { get; }
+    public AsyncStatus Status { get; }
+
+    public AsyncActionWrapper(Task task)
+    {
+        _task = task;
+    }
+
+    public void Cancel()
+    {
+        // You can add cancellation logic here if needed
+        // For example, you could call _task.Cancel() if applicable
+    }
+
+    public void GetResults()
+    {
+        // This method is not used for IAsyncAction
+    }
+
+    public void Close()
+    {
+        // This method is not used for IAsyncAction
+    }
+
+    public void Dispose()
+    {
+        // Dispose of resources if necessary
+    }
 }

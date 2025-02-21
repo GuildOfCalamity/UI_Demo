@@ -6,6 +6,7 @@ using Windows.Foundation;
 
 namespace UI_Demo;
 
+
 #region [Basic]
 public class RelayCommand : ICommand
 {
@@ -18,8 +19,18 @@ public class RelayCommand : ICommand
         _execute = execute ?? throw new ArgumentNullException(nameof(execute));
         _canExecute = canExecute;
     }
-    public bool CanExecute(object parameter) => _canExecute == null || _canExecute(parameter);
-    public void Execute(object parameter) => _execute(parameter);
+    public bool CanExecute(object parameter)
+    {
+        // If no parameter, don't disable the control.
+        if (parameter is null)
+            return true;
+
+        return _canExecute == null || _canExecute(parameter);
+    }
+    public void Execute(object parameter)
+    {
+        _execute(parameter);
+    }
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }
 
@@ -35,10 +46,18 @@ public class AsyncRelayCommand : ICommand
         _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
         _canExecute = canExecute;
     }
-    public bool CanExecute(object parameter) => !_isExecuting && (_canExecute == null || _canExecute(parameter));
+    public bool CanExecute(object parameter)
+    {
+        // If no parameter, don't disable the control.
+        if (parameter is null)
+            return true;
+
+        return !_isExecuting && (_canExecute == null || _canExecute(parameter));
+    }
     public async void Execute(object parameter)
     {
-        if (!CanExecute(parameter)) return;
+        if (!CanExecute(parameter)) 
+            return;
 
         _isExecuting = true;
         RaiseCanExecuteChanged();

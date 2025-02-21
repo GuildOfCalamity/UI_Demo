@@ -3943,6 +3943,250 @@
             </Style>
             <!--#endregion-->
 
+            <!--#region [StorageRing Styler]-->
+            <x:Double x:Key="StorageRingValueRingThickness">3</x:Double>
+            <x:Double x:Key="StorageRingTrackRingThickness">1</x:Double>
+            <Thickness x:Key="StorageRingPadding">0</Thickness>
+            <Thickness x:Key="StorageRingMargin">0</Thickness>
+            <PenLineCap x:Key="StorageRingValueStartCap">Round</PenLineCap>
+            <PenLineCap x:Key="StorageRingValueEndCap">Round</PenLineCap>
+            <PenLineCap x:Key="StorageRingTrackStartCap">Round</PenLineCap>
+            <PenLineCap x:Key="StorageRingTrackEndCap">Round</PenLineCap>
+            <StaticResource x:Key="StorageRingBackgroundBrush" ResourceKey="ControlFillColorTransparentBrush" />
+            <StaticResource x:Key="StorageRingValueBrush" ResourceKey="AccentFillColorDefaultBrush" />
+            <StaticResource x:Key="StorageRingValueCautionBrush" ResourceKey="SystemFillColorCautionBrush" />
+            <StaticResource x:Key="StorageRingValueCriticalBrush" ResourceKey="SystemFillColorCriticalBrush" />
+            <StaticResource x:Key="StorageRingValueDisabledBrush" ResourceKey="AccentFillColorDisabledBrush" />
+            <StaticResource x:Key="StorageRingTrackBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="StorageRingTrackCautionBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="StorageRingTrackCriticalBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="StorageRingTrackDisabledBrush" ResourceKey="ControlStrongStrokeColorDisabledBrush" />
+            <Style BasedOn="{StaticResource DefaultStorageRingStyle}" TargetType="local:StorageRing" />
+            <Style x:Key="DefaultStorageRingStyle" TargetType="local:StorageRing">
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="{ThemeResource StorageRingTrackBrush}" />
+                <Setter Property="Foreground" Value="{ThemeResource StorageRingValueBrush}" />
+                <Setter Property="ValueRingThickness" Value="{ThemeResource StorageRingValueRingThickness}" />
+                <Setter Property="TrackRingThickness" Value="{ThemeResource StorageRingTrackRingThickness}" />
+                <Setter Property="Width" Value="16" />
+                <Setter Property="Height" Value="16" />
+                <Setter Property="MinAngle" Value="0" />
+                <Setter Property="MaxAngle" Value="360" />
+                <Setter Property="StartAngle" Value="0" />
+                <Setter Property="Minimum" Value="0" />
+                <Setter Property="Maximum" Value="100" />
+                <Setter Property="Value" Value="25" />
+                <Setter Property="Padding" Value="{ThemeResource StorageRingPadding}" />
+                <Setter Property="Margin" Value="{ThemeResource StorageRingMargin}" />
+                <Setter Property="LargeChange" Value="10" />
+                <Setter Property="SmallChange" Value="0.1" />
+                <Setter Property="UseLayoutRounding" Value="True" />
+                <Setter Property="MinWidth" Value="12" />
+                <Setter Property="MinHeight" Value="12" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="local:StorageRing">
+                            <Grid
+                                x:Name="GridRoot"
+                                Width="{TemplateBinding Width}"
+                                Height="{TemplateBinding Height}"
+                                MinWidth="{TemplateBinding MinWidth}"
+                                MinHeight="{TemplateBinding MinHeight}"
+                                Padding="{TemplateBinding Padding}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}">
+                                <Grid
+                                    x:Name="PART_Container"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource StorageRingBackgroundBrush}"
+                                    BackgroundSizing="OuterBorderEdge">
+                                    <local:RingShape
+                                        x:Name="PART_TrackRingShape"
+                                        IsCircle="True"
+                                        MaxAngle="{TemplateBinding MaxAngle}"
+                                        MinAngle="{TemplateBinding MinAngle}"
+                                        Stroke="{TemplateBinding Background}"
+                                        StrokeEndLineCap="{ThemeResource StorageRingTrackEndCap}"
+                                        StrokeStartLineCap="{ThemeResource StorageRingTrackStartCap}"
+                                        StrokeThickness="{TemplateBinding TrackRingThickness}"
+                                        SweepDirection="Clockwise"
+                                        UseLayoutRounding="True" />
+                                    <local:RingShape
+                                        x:Name="PART_ValueRingShape"
+                                        IsCircle="True"
+                                        MaxAngle="{TemplateBinding MaxAngle}"
+                                        MinAngle="{TemplateBinding MinAngle}"
+                                        Stroke="{TemplateBinding Foreground}"
+                                        StrokeEndLineCap="{ThemeResource StorageRingValueEndCap}"
+                                        StrokeStartLineCap="{ThemeResource StorageRingValueStartCap}"
+                                        StrokeThickness="{TemplateBinding ValueRingThickness}"
+                                        SweepDirection="Clockwise"
+                                        UseLayoutRounding="True" />
+                                </Grid>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="ControlStates">
+                                        <VisualState x:Name="Safe" />
+                                        <VisualState x:Name="Caution">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_ValueRingShape" Storyboard.TargetProperty="Stroke">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageRingValueCautionBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_TrackRingShape" Storyboard.TargetProperty="Stroke">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageRingTrackCautionBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Critical">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_ValueRingShape" Storyboard.TargetProperty="Stroke">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageRingValueCriticalBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_TrackRingShape" Storyboard.TargetProperty="Stroke">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageRingTrackCriticalBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_ValueRingShape" Storyboard.TargetProperty="Stroke">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ControlStrongStrokeColorDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_TrackRingShape" Storyboard.TargetProperty="Stroke">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ControlStrongStrokeColorDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!--#endregion-->
+
+            <!--#region [StorageBar Styler]-->
+            <StaticResource x:Key="StorageBarCornerRadius" ResourceKey="OverlayCornerRadius" />
+            <x:Double x:Key="StorageBarValueHeight">6</x:Double>
+            <x:Double x:Key="StorageBarTrackHeight">2</x:Double>
+            <Thickness x:Key="StorageBarPadding">4,4,4,4</Thickness>
+            <StaticResource x:Key="StorageBarBackgroundBrush" ResourceKey="ControlFillColorTransparentBrush" />
+            <StaticResource x:Key="StorageBarValueBrush" ResourceKey="AccentFillColorDefaultBrush" />
+            <StaticResource x:Key="StorageBarValueCautionBrush" ResourceKey="SystemFillColorCautionBrush" />
+            <StaticResource x:Key="StorageBarValueCriticalBrush" ResourceKey="SystemFillColorCriticalBrush" />
+            <StaticResource x:Key="StorageBarValueDisabledBrush" ResourceKey="AccentFillColorDisabledBrush" />
+            <StaticResource x:Key="StorageBarTrackBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="StorageBarTrackCautionBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="StorageBarTrackCriticalBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="StorageBarTrackDisabledBrush" ResourceKey="ControlStrongStrokeColorDisabledBrush" />
+            <Style BasedOn="{StaticResource DefaultStorageBarStyle}" TargetType="local:StorageBar" />
+            <Style x:Key="DefaultStorageBarStyle" TargetType="local:StorageBar">
+                <Setter Property="Padding" Value="{ThemeResource StorageBarPadding}" />
+                <Setter Property="Foreground" Value="{ThemeResource StorageBarValueBrush}" />
+                <Setter Property="Background" Value="{ThemeResource StorageBarTrackBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="ValueBarHeight" Value="{ThemeResource StorageBarValueHeight}" />
+                <Setter Property="TrackBarHeight" Value="{ThemeResource StorageBarTrackHeight}" />
+                <Setter Property="CornerRadius" Value="{ThemeResource StorageBarCornerRadius}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Minimum" Value="0" />
+                <Setter Property="Maximum" Value="100" />
+                <Setter Property="MinWidth" Value="32" />
+                <Setter Property="MinHeight" Value="8" />
+                <Setter Property="Value" Value="25" />
+                <Setter Property="SmallChange" Value="0.1" />
+                <Setter Property="LargeChange" Value="10" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="local:StorageBar">
+                            <Grid
+                                x:Name="GridRoot"
+                                Width="{TemplateBinding Width}"
+                                Height="{TemplateBinding Height}"
+                                MinWidth="{TemplateBinding MinWidth}"
+                                MinHeight="{TemplateBinding MinHeight}"
+                                MaxWidth="{TemplateBinding MaxWidth}"
+                                MaxHeight="{TemplateBinding MaxHeight}"
+                                Padding="{TemplateBinding Padding}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}">
+                                <Grid
+                                    x:Name="PART_Container"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    FlowDirection="{TemplateBinding FlowDirection}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="PART_ValueColumn" />
+                                        <ColumnDefinition x:Name="PART_GapColumn" />
+                                        <ColumnDefinition x:Name="PART_TrackColumn" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border
+                                        x:Name="PART_ValueBar"
+                                        Grid.Column="0"
+                                        Height="{TemplateBinding ValueBarHeight}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Center"
+                                        Background="{TemplateBinding Foreground}"
+                                        CornerRadius="{TemplateBinding CornerRadius}" />
+                                    <Border
+                                        x:Name="PART_TrackBar"
+                                        Grid.Column="2"
+                                        Height="{TemplateBinding TrackBarHeight}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Center"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="{TemplateBinding CornerRadius}" />
+                                </Grid>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="ControlStates">
+                                        <VisualState x:Name="Safe" />
+                                        <VisualState x:Name="Caution">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_ValueBar" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageBarValueCautionBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_TrackBar" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageBarTrackCautionBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Critical">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_ValueBar" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageBarValueCriticalBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_TrackBar" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageBarTrackCriticalBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_ValueBar" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageBarValueDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_TrackBar" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource StorageBarTrackDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Grid>
+
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!--#endregion-->
+
             <!--#region [Map For Segoe Fluent Icons]-->
             <!--  https://learn.microsoft.com/en-us/windows/apps/design/style/segoe-fluent-icons-font#pua-e700-e900  -->
             <x:String x:Key="GlobalNavButton">&#xe700;</x:String>

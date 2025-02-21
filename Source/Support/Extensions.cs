@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
@@ -32,6 +33,11 @@ namespace UI_Demo;
 
 public static class Extensions
 {
+    public static bool IsStrongPasswordRegex(string pswd)
+    {
+        return Regex.IsMatch(pswd ?? "", "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[\\-`\\]~\\[!@#$%^\\&*()\\\\_+={}:;<,>.?/|'\\\"])(?=.{8,})");
+    }
+
     /// <summary>
     /// Determine if the application has been launched as an administrator.
     /// </summary>
@@ -1873,6 +1879,50 @@ public static class Extensions
     }
 
     /// <summary>
+    ///   Removes all elements from the specified index to the end of the list.
+    /// </summary>
+    public static List<T> RemoveFrom<T>(this List<T> list, int index)
+    {
+        if (!list.Any())
+            return list;
+
+        return index <= 0 ? [] : list.Take(index - 1).ToList();
+    }
+
+    public static T[] CloneArray<T>(this T[] array)
+    {
+        var clonedArray = new T[array.Length];
+        Array.Copy(array, 0, clonedArray, 0, array.Length);
+
+        return clonedArray;
+    }
+
+    public static Task<IList<T>> ToListAsync<T>(this IEnumerable<T> source)
+    {
+        return Task.Run(() => (IList<T>)source.ToList());
+    }
+
+    /// <summary>
+    ///   Determines whether <paramref name="enumerable"/> is empty or not (this function is null-safe).
+    /// </summary>
+    /// <remarks>
+    ///   This function is faster than enumerable.Count == 0 since it will only iterate one element instead of all elements.
+    /// </remarks>
+    public static bool IsEmpty<T>(this IEnumerable<T> enumerable)
+    {
+        return enumerable is null || !enumerable.Any();
+    }
+
+    [return: NotNullIfNotNull(nameof(defaultValue))]
+    public static TOut? TryCast<TOut>(this object? value, Func<TOut>? defaultValue = null)
+    {
+        if (value is TOut outValue)
+            return outValue;
+
+        return defaultValue is not null ? defaultValue() : default;
+    }
+
+    /// <summary>
     ///   Returns <c>true</c> if within 10 minutes +/- of 2AM, <c>false</c> otherwise.
     /// </summary>
     public static bool IsCloseTo2AM()
@@ -2081,6 +2131,27 @@ public static class Extensions
         Debug.WriteLine($"[INFO] Damerau-Levenshtein score: {dp[len1, len2]}");
         return dp[len1, len2];
     }
+
+    #region [Task Helpers]
+    public static async Task WithTimeoutAsync(this Task task, TimeSpan timeout)
+    {
+        if (task == await Task.WhenAny(task, Task.Delay(timeout))) { await task; }
+    }
+
+    public static async Task<T?> WithTimeoutAsync<T>(this Task<T> task, TimeSpan timeout, T? defaultValue = default)
+    {
+        if (task == await Task.WhenAny(task, Task.Delay(timeout)))
+            return await task;
+
+        return defaultValue;
+    }
+
+    public static async Task<TOut> AndThen<TIn, TOut>(this Task<TIn> inputTask, Func<TIn, Task<TOut>> mapping)
+    {
+        var input = await inputTask;
+        return (await mapping(input));
+    }
+    #endregion
 
     #region [WinUI Specific]
     /// <summary>
@@ -3016,6 +3087,45 @@ public static class Extensions
                 return await reader.ReadToEndAsync(); // uses UTF8 by default
             }
         }
+    }
+
+    public static async Task PackagedWriteToFileAsync(string fileName, string content)
+    {
+        if (App.IsPackaged)
+        {
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            StorageFile file = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+            byte[] data = Encoding.UTF8.GetBytes(content);
+            IBuffer buffer = data.AsBuffer();
+            using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+            {
+                using (DataWriter writer = new DataWriter(stream))
+                {
+                    writer.WriteBuffer(buffer);
+                    await writer.StoreAsync();
+                    writer.DetachStream();
+                }
+            }
+        }
+    }
+
+    public static async Task<string> PackagedReadFromFileAsync(string fileName)
+    {
+        if (App.IsPackaged)
+        {
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            StorageFile file = await localFolder.GetFileAsync(fileName);
+            using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read))
+            {
+                IBuffer buffer = new Windows.Storage.Streams.Buffer((uint)stream.Size);
+                await stream.ReadAsync(buffer, buffer.Capacity, InputStreamOptions.None);
+                DataReader reader = DataReader.FromBuffer(buffer);
+                string content = reader.ReadString(buffer.Length);
+                return content;
+            }
+        }
+        else
+            throw new Exception("Method is only viable with a packaged application.");
     }
 
     /// <summary>
