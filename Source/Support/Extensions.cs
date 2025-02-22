@@ -14,6 +14,7 @@ using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -33,6 +34,64 @@ namespace UI_Demo;
 
 public static class Extensions
 {
+    #region [Easing Functions]
+    // Quadratic Easing (t²): EaseInQuadratic → Starts slow, speeds up.  EaseOutQuadratic → Starts fast, slows down.  EaseInOutQuadratic → Symmetric acceleration-deceleration.
+    public static double EaseInQuadratic(double t) => t * t;
+    public static double EaseOutQuadratic(double t) => 1.0 - (1.0 - t) * (1.0 - t);
+    public static double EaseInOutQuadratic(double t) => t < 0.5 ? 2.0 * t * t : 1.0 - Math.Pow(-2.0 * t + 2.0, 2.0) / 2.0;
+    
+    // Cubic Easing (t³): EaseInCubic → Stronger acceleration.  EaseOutCubic → Slower deceleration.  EaseInOutCubic → Balanced smooth curve.
+    public static double EaseInCubic(double t) => Math.Pow(t, 3.0);
+    public static double EaseOutCubic(double t) => 1.0 - Math.Pow(1.0 - t, 3.0);
+    public static double EaseInOutCubic(double t) => t < 0.5 ? 4.0 * Math.Pow(t, 3.0) : 1.0 - Math.Pow(-2.0 * t + 2.0, 3.0) / 2.0;
+    
+    // Quartic Easing (t⁴): Sharper transition than cubic easing.
+    public static double EaseInQuartic(double t) => Math.Pow(t, 4.0);
+    public static double EaseOutQuartic(double t) => 1.0 - Math.Pow(1.0 - t, 4.0);
+    public static double EaseInOutQuartic(double t) => t < 0.5 ? 8.0 * Math.Pow(t, 4.0) : 1.0 - Math.Pow(-2.0 * t + 2.0, 4.0) / 2.0;
+    
+    // Quintic Easing (t⁵): Even steeper curve for dramatic transitions.
+    public static double EaseInQuintic(double t) => Math.Pow(t, 5.0);
+    public static double EaseOutQuintic(double t) => 1.0 - Math.Pow(1.0 - t, 5.0);
+    public static double EaseInOutQuintic(double t) => t < 0.5 ? 16.0 * Math.Pow(t, 5.0) : 1.0 - Math.Pow(-2.0 * t + 2.0, 5.0) / 2.0;
+    
+    // Elastic Easing (Bouncing Effect)
+    public static double EaseInElastic(double t) => t == 0 ? 0 : t == 1 ? 1 : -Math.Pow(2.0, 10.0 * t - 10.0) * Math.Sin((t * 10.0 - 10.75) * (2.0 * Math.PI) / 3.0);
+    public static double EaseOutElastic(double t) => t == 0 ? 0 : t == 1 ? 1 : Math.Pow(2.0, -10.0 * t) * Math.Sin((t * 10.0 - 0.75) * (2.0 * Math.PI) / 3.0) + 1.0;
+    public static double EaseInOutElastic(double t) => t == 0 ? 0 : t == 1 ? 1 : t < 0.5 ? -(Math.Pow(2.0, 20.0 * t - 10.0) * Math.Sin((20.0 * t - 11.125) * (2.0 * Math.PI) / 4.5)) / 2.0 : (Math.Pow(2.0, -20.0 * t + 10.0) * Math.Sin((20.0 * t - 11.125) * (2.0 * Math.PI) / 4.5)) / 2.0 + 1.0;
+    
+    //Bounce Easing(Ball Bouncing Effect)
+    public static double EaseInBounce(double t) => 1.0 - EaseOutBounce(1.0 - t);
+    public static double EaseOutBounce(double t)
+    {
+        double n1 = 7.5625, d1 = 2.75;
+        if (t < 1.0 / d1)
+            return n1 * t * t;
+        else if (t < 2.0 / d1)
+            return n1 * (t -= 1.5 / d1) * t + 0.75;
+        else if (t < 2.5 / d1)
+            return n1 * (t -= 2.25 / d1) * t + 0.9375;
+        else
+            return n1 * (t -= 2.625 / d1) * t + 0.984375;
+    }
+    public static double EaseInOutBounce(double t) => t < 0.5 ? (1.0 - EaseOutBounce(1.0 - 2.0 * t)) / 2.0 : (1.0 + EaseOutBounce(2.0 * t - 1.0)) / 2.0;
+    
+    // Exponential Easing(Fast Growth/Decay)
+    public static double EaseInExpo(double t) => t == 0 ? 0 : Math.Pow(2.0, 10.0 * t - 10.0);
+    public static double EaseOutExpo(double t) => t == 1 ? 1 : 1.0 - Math.Pow(2.0, -10.0 * t);
+    public static double EaseInOutExpo(double t) => t == 0 ? 0 : t == 1 ? 1 : t < 0.5 ? Math.Pow(2.0, 20.0 * t - 10.0) / 2.0 : (2.0 - Math.Pow(2.0, -20.0 * t + 10.0)) / 2.0;
+    
+    // Circular Easing(Smooth Circular Motion)
+    public static double EaseInCircular(double t) => 1.0 - Math.Sqrt(1.0 - Math.Pow(t, 2.0));
+    public static double EaseOutCircular(double t) => Math.Sqrt(1.0 - Math.Pow(t - 1.0, 2.0));
+    public static double EaseInOutCircular(double t) => t < 0.5 ? (1.0 - Math.Sqrt(1.0 - Math.Pow(2.0 * t, 2.0))) / 2.0 : (Math.Sqrt(1.0 - Math.Pow(-2.0 * t + 2.0, 2.0)) + 1.0) / 2.0;
+    
+    // Back Easing(Overshoots Before Settling)
+    public static double EaseInBack(double t) => 2.70158 * t * t * t - 1.70158 * t * t;
+    public static double EaseOutBack(double t) => 1.0 + 2.70158 * Math.Pow(t - 1.0, 3.0) + 1.70158 * Math.Pow(t - 1.0, 2.0);
+    public static double EaseInOutBack(double t) => t < 0.5 ? (Math.Pow(2.0 * t, 2.0) * ((2.59491 + 1.0) * 2.0 * t - 2.59491)) / 2.0 : (Math.Pow(2.0 * t - 2.0, 2.0) * ((2.59491 + 1.0) * (t * 2.0 - 2.0) + 2.59491) + 2.0) / 2.0;
+    #endregion
+
     public static bool IsStrongPasswordRegex(string pswd)
     {
         return Regex.IsMatch(pswd ?? "", "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[\\-`\\]~\\[!@#$%^\\&*()\\\\_+={}:;<,>.?/|'\\\"])(?=.{8,})");
@@ -2148,8 +2207,267 @@ public static class Extensions
 
     public static async Task<TOut> AndThen<TIn, TOut>(this Task<TIn> inputTask, Func<TIn, Task<TOut>> mapping)
     {
-        var input = await inputTask;
-        return (await mapping(input));
+         var input = await inputTask;
+         return (await mapping(input));
+    }
+
+    public static async Task<TOut?> AndThen<TIn, TOut>(this Task<TIn> inputTask, Func<TIn, Task<TOut>> mapping, Func<Exception, TOut>? errorHandler = null)
+    {
+        try
+        {
+            var input = await inputTask;
+            return await mapping(input);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] AndThen: {ex.Message}");
+            if (errorHandler != null)
+                return errorHandler(ex);
+            
+            throw; // Rethrow if no handler is provided
+        }
+    }
+
+    /// <summary>
+    /// Runs the specified asynchronous method with return type.
+    /// NOTE: Will not catch exceptions generated by the task.
+    /// </summary>
+    /// <param name="asyncMethod">The asynchronous method to execute.</param>
+    public static T RunSynchronously<T>(Func<Task<T>> asyncMethod)
+    {
+        if (asyncMethod == null)
+            throw new ArgumentNullException($"{nameof(asyncMethod)} cannot be null");
+
+        var prevCtx = SynchronizationContext.Current;
+        try
+        {   // Invoke the function and alert the context when it completes.
+            var t = asyncMethod();
+            if (t == null)
+                throw new InvalidOperationException("No task provided.");
+
+            return t.GetAwaiter().GetResult();
+        }
+        finally { SynchronizationContext.SetSynchronizationContext(prevCtx); }
+    }
+
+    /// <summary>
+    /// Runs the specified asynchronous method without return type.
+    /// NOTE: Will not catch exceptions generated by the task.
+    /// </summary>
+    /// <param name="asyncMethod">The asynchronous method to execute.</param>
+    public static void RunSynchronously(Func<Task> asyncMethod)
+    {
+        if (asyncMethod == null)
+            throw new ArgumentNullException($"{nameof(asyncMethod)}");
+
+        var prevCtx = SynchronizationContext.Current;
+        try
+        {   // Invoke the function and alert the context when it completes
+            var t = asyncMethod();
+            if (t == null)
+                throw new InvalidOperationException("No task provided.");
+
+            t.GetAwaiter().GetResult();
+        }
+        finally { SynchronizationContext.SetSynchronizationContext(prevCtx); }
+    }
+
+    /// <summary>
+    /// Chainable task helper.
+    /// var result = await SomeLongAsyncFunction().WithTimeout(TimeSpan.FromSeconds(2));
+    /// </summary>
+    /// <typeparam name="TResult">the type of task result</typeparam>
+    /// <returns><see cref="Task"/>TResult</returns>
+    public async static Task<TResult> WithTimeout<TResult>(this Task<TResult> task, TimeSpan timeout)
+    {
+        Task winner = await (Task.WhenAny(task, Task.Delay(timeout)));
+
+        if (winner != task)
+            throw new TimeoutException();
+
+        return await task;   // Unwrap result/re-throw
+    }
+
+    /// <summary>
+    /// Task extension to add a timeout.
+    /// </summary>
+    /// <returns>The task with timeout.</returns>
+    /// <param name="task">Task.</param>
+    /// <param name="timeoutInMilliseconds">Timeout duration in Milliseconds.</param>
+    /// <typeparam name="T">The 1st type parameter.</typeparam>
+    public async static Task<T> WithTimeout<T>(this Task<T> task, int timeoutInMilliseconds)
+    {
+        var retTask = await Task.WhenAny(task, Task.Delay(timeoutInMilliseconds))
+            .ConfigureAwait(false);
+
+#pragma warning disable CS8603 // Possible null reference return.
+        return retTask is Task<T> ? task.Result : default;
+#pragma warning restore CS8603 // Possible null reference return.
+    }
+
+    /// <summary>
+    /// Chainable task helper.
+    /// var result = await SomeLongAsyncFunction().WithCancellation(cts.Token);
+    /// </summary>
+    /// <typeparam name="TResult">the type of task result</typeparam>
+    /// <returns><see cref="Task"/>TResult</returns>
+    public static Task<TResult> WithCancellation<TResult>(this Task<TResult> task, CancellationToken cancelToken)
+    {
+        var tcs = new TaskCompletionSource<TResult>();
+        var reg = cancelToken.Register(() => tcs.TrySetCanceled());
+        task.ContinueWith(ant =>
+        {
+            reg.Dispose();
+            if (ant.IsCanceled)
+                tcs.TrySetCanceled();
+            else if (ant.IsFaulted)
+                tcs.TrySetException(ant.Exception?.InnerException ?? new Exception("Antecedent faulted."));
+            else
+                tcs.TrySetResult(ant.Result);
+        });
+        return tcs.Task;  // Return the TaskCompletionSource result
+    }
+
+    public static Task<T> WithAllExceptions<T>(this Task<T> task)
+    {
+        TaskCompletionSource<T> tcs = new TaskCompletionSource<T>();
+
+        task.ContinueWith(ignored =>
+        {
+            switch (task.Status)
+            {
+                case TaskStatus.Canceled:
+                    Debug.WriteLine($"[TaskStatus.Canceled]");
+                    tcs.SetCanceled();
+                    break;
+                case TaskStatus.RanToCompletion:
+                    tcs.SetResult(task.Result);
+                    //Debug.WriteLine($"[TaskStatus.RanToCompletion({task.Result})]");
+                    break;
+                case TaskStatus.Faulted:
+                    // SetException will automatically wrap the original AggregateException
+                    // in another one. The new wrapper will be removed in TaskAwaiter, leaving
+                    // the original intact.
+                    Debug.WriteLine($"[TaskStatus.Faulted: {task.Exception?.Message}]");
+                    tcs.SetException(task.Exception ?? new Exception("Task faulted."));
+                    break;
+                default:
+                    Debug.WriteLine($"[TaskStatus: Continuation called illegally.]");
+                    tcs.SetException(new InvalidOperationException("Continuation called illegally."));
+                    break;
+            }
+        });
+
+        return tcs.Task;
+    }
+
+#pragma warning disable RECS0165 // Asynchronous methods should return a Task instead of void
+    /// <summary>
+    /// Attempts to await on the task and catches exception
+    /// </summary>
+    /// <param name="task">Task to execute</param>
+    /// <param name="onException">What to do when method has an exception</param>
+    /// <param name="continueOnCapturedContext">If the context should be captured.</param>
+    public static async void SafeFireAndForget(this Task task, Action<Exception>? onException = null, bool continueOnCapturedContext = false)
+#pragma warning restore RECS0165 // Asynchronous methods should return a Task instead of void
+    {
+        try
+        {
+            await task.ConfigureAwait(continueOnCapturedContext);
+        }
+        catch (Exception ex) when (onException != null)
+        {
+            onException.Invoke(ex);
+        }
+        catch (Exception ex) when (onException == null)
+        {
+            Debug.WriteLine($"SafeFireAndForget: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Task.Factory.StartNew (() => { throw null; }).IgnoreExceptions();
+    /// </summary>
+    public static void IgnoreExceptions(this Task task)
+    {
+        task.ContinueWith(t =>
+        {
+            var ignore = t.Exception;
+            var inners = ignore?.Flatten()?.InnerExceptions;
+            if (inners != null)
+            {
+                foreach (Exception ex in inners)
+                    Debug.WriteLine($"[{ex.GetType()}]: {ex.Message}");
+            }
+        }, TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    /// <summary>
+    /// Gets the result of a <see cref="Task"/> if available, or <see langword="null"/> otherwise.
+    /// </summary>
+    /// <param name="task">The input <see cref="Task"/> instance to get the result for.</param>
+    /// <returns>The result of <paramref name="task"/> if completed successfully, or <see langword="default"/> otherwise.</returns>
+    /// <remarks>
+    /// This method does not block if <paramref name="task"/> has not completed yet. Furthermore, it is not generic
+    /// and uses reflection to access the <see cref="Task{TResult}.Result"/> property and boxes the result if it's
+    /// a value type, which adds overhead. It should only be used when using generics is not possible.
+    /// </remarks>
+    [Pure]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static object? GetResultOrDefault(this Task task)
+    {
+        // Check if the instance is a completed Task
+        if (
+#if NETSTANDARD2_1
+            task.IsCompletedSuccessfully
+#else
+            task.Status == TaskStatus.RanToCompletion
+#endif
+        )
+        {
+            // We need an explicit check to ensure the input task is not the cached
+            // Task.CompletedTask instance, because that can internally be stored as
+            // a Task<T> for some given T (e.g. on dotNET 5 it's VoidTaskResult), which
+            // would cause the following code to return that result instead of null.
+            if (task != Task.CompletedTask)
+            {
+                // Try to get the Task<T>.Result property. This method would've
+                // been called anyway after the type checks, but using that to
+                // validate the input type saves some additional reflection calls.
+                // Furthermore, doing this also makes the method flexible enough to
+                // cases whether the input Task<T> is actually an instance of some
+                // runtime-specific type that inherits from Task<T>.
+                PropertyInfo? propertyInfo =
+#if NETSTANDARD1_4
+                    task.GetType().GetRuntimeProperty(nameof(Task<object>.Result));
+#else
+                    task.GetType().GetProperty(nameof(Task<object>.Result));
+#endif
+
+                // Return the result, if possible
+                return propertyInfo?.GetValue(task);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the result of a <see cref="Task{TResult}"/> if available, or <see langword="default"/> otherwise.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="Task{TResult}"/> to get the result for.</typeparam>
+    /// <param name="task">The input <see cref="Task{TResult}"/> instance to get the result for.</param>
+    /// <returns>The result of <paramref name="task"/> if completed successfully, or <see langword="default"/> otherwise.</returns>
+    /// <remarks>This method does not block if <paramref name="task"/> has not completed yet.</remarks>
+    [Pure]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T? GetResultOrDefault<T>(this Task<T?> task)
+    {
+#if NETSTANDARD2_1
+        return task.IsCompletedSuccessfully ? task.Result : default;
+#else
+        return task.Status == TaskStatus.RanToCompletion ? task.Result : default;
+#endif
     }
     #endregion
 

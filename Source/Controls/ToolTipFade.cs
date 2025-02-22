@@ -44,13 +44,9 @@ public sealed partial class ToolTipFade : ToolTip
     {
         this.DefaultStyleKey = typeof(ToolTip);
 
-        // Set default properties
-        this.Opacity = 0;
-        this.Placement = Microsoft.UI.Xaml.Controls.Primitives.PlacementMode.Mouse;
-
         // Initialize animations
         InitializeAnimations();
-
+        
         // Hook into the IsOpenChanged event
         this.Opened += OnOpened;
         this.Closed += OnClosed;
@@ -64,6 +60,8 @@ public sealed partial class ToolTipFade : ToolTip
         base.OnApplyTemplate();
         
         // Alter some of the base style properties.
+        Opacity = 0.0;
+        Placement = Microsoft.UI.Xaml.Controls.Primitives.PlacementMode.Mouse;
         Padding = new Thickness(0);
         BorderThickness = new Thickness(0);
         Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
@@ -94,6 +92,7 @@ public sealed partial class ToolTipFade : ToolTip
         var fadeOutAnimation = new DoubleAnimation
         {
             From = 1, To = 0,
+            // Cut hide time in half, since control's default behavior is close quickly.
             Duration = TimeSpan.FromMilliseconds(FadeTime / 2),
             EnableDependentAnimation = true
         };
@@ -121,7 +120,7 @@ public sealed partial class ToolTipFade : ToolTip
     }
     /// <summary>
     ///   We don't have complete control over this since we are inheriting from the <see cref="ToolTip"/> base.
-    ///   Long fade times will not be respected since the control's nature is to close quickly.
+    ///   Long fade times will not be respected since the control's default nature is to close and fade quickly.
     /// </summary>
     void OnClosed(object sender, object e)
     {

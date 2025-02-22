@@ -415,7 +415,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             #endregion
 
             _ = Task.Run(async () => 
-            { 
+            {
+                //await AndThenExample();
+
                 while (!App.IsClosing)
                 {
                     await Task.Delay(500);
@@ -1804,6 +1806,26 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 return length;
             });
         });
+    }
+    #endregion
+
+    #region [AndThen Extension]
+    async Task AndThenExample()
+    {
+        var result = await ReadSomethingAsync("data").AndThen(ConvertToUpperAsync, ex => "Error occurred during AndThen");
+        Debug.WriteLine($"[DEBUG] {result}");
+    }
+
+    async Task<string> ReadSomethingAsync(string path)
+    {
+        await Task.Delay(1500);
+        return "Some example data to be used for uppercase.";
+    }
+
+    async Task<string> ConvertToUpperAsync(string text)
+    {
+        await Task.Delay(500);
+        return text.ToUpper();
     }
     #endregion
 }

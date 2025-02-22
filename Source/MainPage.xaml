@@ -439,19 +439,26 @@
                                 TrackRingThickness="4.0"
                                 ValueRingThickness="8.0"
                                 Value="{x:Bind Size, Mode=OneWay}" />
-                            <TextBlock
+                            <local:CompositionShadow
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                Text="{x:Bind Size, Mode=OneWay}" />
+                                BlurRadius="2"
+                                OffsetX="1.5"
+                                OffsetY="1.5"
+                                ShadowOpacity="1"
+                                Color="#559AD0">
+                                <TextBlock FontSize="{StaticResource FontSizeLarge}" Text="{x:Bind Size, Mode=OneWay}" />
+                            </local:CompositionShadow>
                         </Grid>
+
                         <local:StorageBar
                             Width="200"
                             HorizontalAlignment="Stretch"
                             Background="#A0808080"
-                            BarShape="Soft"
+                            BarShape="Round"
                             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                             BorderThickness="2"
-                            CornerRadius="4"
+                            CornerRadius="3"
                             FlowDirection="LeftToRight"
                             IsEnabled="True"
                             PercentCaution="60"
@@ -459,6 +466,7 @@
                             TrackBarHeight="4.0"
                             ValueBarHeight="8.0"
                             Value="{x:Bind Size, Mode=OneWay}" />
+
                     </StackPanel>
 
                     <!--

@@ -15,81 +15,31 @@ namespace UI_Demo;
 /// </remarks>
 public partial class StorageRing : RangeBase
 {
-	double _containerSize;          // Size of the inner container after padding
+    #region [Backing Members]
+    double _containerSize;          // Size of the inner container after padding
 	double _containerCenter;        // Center X and Y value of the inner container
 	double _sharedRadius;           // Radius to be shared by both rings (smaller of the two)
-
 	double _oldValue;               // Stores the previous Value
 	double _oldValueAngle;          // Stored the old ValueAngle
-
 	double _valueRingThickness;     // The stored value ring thickness
 	double _trackRingThickness;     // The stored track ring thickness
 	ThicknessCheck _thicknessCheck; // Determines how the two ring thicknesses compare
 	double _largerThickness;        // The larger of the two ring thicknesses
 	double _smallerThickness;       // The smaller of the two ring thicknesses
-
 	Grid? _containerGrid;           // Reference to the container Grid
 	RingShape? _valueRingShape;     // Reference to the Value RingShape
 	RingShape? _trackRingShape;     // Reference to the Track RingShape
-
 	RectangleGeometry? _clipRect;   // Clipping RectangleGeometry for the canvas
-
 	double _normalizedMinAngle;     // Stores the normalized Minimum Angle
 	double _normalizedMaxAngle;     // Stores the normalized Maximum Angle
 	double _gapAngle;               // Stores the angle to be used to separate Value and Track rings
 	double _validStartAngle;        // The validated StartAngle
+    #endregion
 
-	#region  Private Setters
-
-	/// <summary>
-	/// Sets the Container size to the smaller of control's Height and Width.
-	/// </summary>
-	void SetContainerSize(double controlWidth, double controlHeight, Thickness padding)
-	{
-		double correctedWidth = controlWidth - (padding.Left + padding.Right);
-		double correctedHeight = controlHeight - (padding.Top + padding.Bottom);
-		double check = Math.Min(correctedWidth, correctedHeight);
-		_containerSize = check < minSize ? minSize : check;
-	}
-
-	/// <summary>
-	/// Sets the private Container center X and Y value
-	/// </summary>
-	void SetContainerCenter(double containerSize)
-	{
-		_containerCenter = (containerSize / 2);
-	}
-
-	/// <summary>
-	/// Sets the shared Radius by passing in containerSize and thickness.
-	/// </summary>
-	void SetSharedRadius(double containerSize, double thickness)
-	{
-		double check = (containerSize / 2) - (thickness / 2);
-		double minSize = 4;
-
-		_sharedRadius = check <= minSize ? minSize : check;
-	}
-
-	/// <summary>
-	/// Sets the private ThicknessCheck enum value
-	/// </summary>
-	void SetThicknessCheck(double valueThickness, double trackThickness)
-	{
-		if (valueThickness > trackThickness)
-			_thicknessCheck = ThicknessCheck.Value;
-		else if (valueThickness < trackThickness)
-			_thicknessCheck = ThicknessCheck.Track;
-		else
-			_thicknessCheck = ThicknessCheck.Equal;
-	}
-
-	#endregion
-
-	/// <summary>
-	/// Initializes an instance of <see cref="StorageRing"/> class.
-	/// </summary>
-	public StorageRing()
+    /// <summary>
+    /// Initializes an instance of <see cref="StorageRing"/> class.
+    /// </summary>
+    public StorageRing()
 	{
 		DefaultStyleKey = typeof(StorageRing);
 
@@ -108,7 +58,7 @@ public partial class StorageRing : RangeBase
 	/// <summary>
 	/// Initializes the Parts and properties of a PercentageRing control.
 	/// </summary>
-	private void InitializeParts()
+	void InitializeParts()
 	{
 		// Retrieve references to visual elements
 		_containerGrid = GetTemplateChild(ContainerPartName) as Grid;
@@ -118,14 +68,61 @@ public partial class StorageRing : RangeBase
 		UpdateValues(this, Value, 0.0, false, -1.0);
 	}
 
-	#region Property Change Events
+    #region [Private Setters]
 
-	/// <summary>
-	/// Occurs when either the ActualHeight or the ActualWidth property changes value,
-	/// </summary>
-	/// <param name="sender">The object that triggered the event.</param>
-	/// <param name="e">Provides data related to the SizeChanged event.</param>
-	void StorageRing_SizeChanged(object sender, SizeChangedEventArgs e)
+    /// <summary>
+    /// Sets the Container size to the smaller of control's Height and Width.
+    /// </summary>
+    void SetContainerSize(double controlWidth, double controlHeight, Thickness padding)
+    {
+        double correctedWidth = controlWidth - (padding.Left + padding.Right);
+        double correctedHeight = controlHeight - (padding.Top + padding.Bottom);
+        double check = Math.Min(correctedWidth, correctedHeight);
+        _containerSize = check < minSize ? minSize : check;
+    }
+
+    /// <summary>
+    /// Sets the private Container center X and Y value
+    /// </summary>
+    void SetContainerCenter(double containerSize)
+    {
+        _containerCenter = (containerSize / 2);
+    }
+
+    /// <summary>
+    /// Sets the shared Radius by passing in containerSize and thickness.
+    /// </summary>
+    void SetSharedRadius(double containerSize, double thickness)
+    {
+        double check = (containerSize / 2) - (thickness / 2);
+        double minSize = 4;
+
+        _sharedRadius = check <= minSize ? minSize : check;
+    }
+
+    /// <summary>
+    /// Sets the private ThicknessCheck enum value
+    /// </summary>
+    void SetThicknessCheck(double valueThickness, double trackThickness)
+    {
+        if (valueThickness > trackThickness)
+            _thicknessCheck = ThicknessCheck.Value;
+        else if (valueThickness < trackThickness)
+            _thicknessCheck = ThicknessCheck.Track;
+        else
+            _thicknessCheck = ThicknessCheck.Equal;
+    }
+
+    #endregion
+
+    #region [Property Change Events]
+
+    /// <summary>
+    /// Occurs when either the ActualHeight or the ActualWidth property changes value,
+    /// </summary>
+    /// <param name="sender">The object that triggered the event.</param>
+    /// <param name="e">Provides data related to the SizeChanged event.</param>
+    void StorageRing_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
 		Size minSize;
 
@@ -179,7 +176,7 @@ public partial class StorageRing : RangeBase
 
 	#endregion
 
-	#region Update functions
+	#region [Update functions]
 
 	/// <summary>
 	/// Updates Values used by the control
@@ -327,7 +324,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="isTrack">Checks if the TrackRing is being updated</param>
 	void UpdateGapAngle(DependencyObject d, double newRadius, bool isTrack)
 	{
-		double angle = GapThicknessToAngle(_sharedRadius, (_largerThickness * 0.75));
+		double angle = GapThicknessToAngle(_sharedRadius, (_largerThickness * 0.55));
 		_gapAngle = angle;
 	}
 
@@ -359,7 +356,7 @@ public partial class StorageRing : RangeBase
 
 	#endregion
 
-	#region Update Rings
+	#region [Update Rings]
 
 	/// <summary>
 	/// Updates both Rings
@@ -674,7 +671,7 @@ public partial class StorageRing : RangeBase
 
 	#endregion
 
-	#region RangeBase Events
+	#region [RangeBase Events]
 
 	/// <summary>
 	/// Occurs when the range value changes.
@@ -710,7 +707,7 @@ public partial class StorageRing : RangeBase
 
 	#endregion
 
-	#region Conversion methods
+	#region [Conversion Methods]
 
 	/// <summary>
 	/// Calculates and Sets the normalized Min and Max Angles
@@ -968,10 +965,34 @@ public partial class StorageRing : RangeBase
 		return (startAngle + valueAngle) * (endAngle - startAngle);
 	}
 
-	/// <summary>
-	/// Example quadratic ease-in-out function
-	/// </summary>
-	double EaseInOutFunction(double t)
+    /// <summary>
+    /// Checks True if the Angle range is a Full Circle
+    /// </summary>
+    /// <param name="MinAngle"></param>
+    /// <param name="MaxAngle"></param>
+    /// <returns></returns>
+    public static bool IsFullCircle(double MinAngle, double MaxAngle)
+    {
+        // Calculate the absolute difference between angles
+        double angleDifference = Math.Abs(MaxAngle - MinAngle);
+
+        // Check if the angle difference is equal to 360 degrees
+        return Math.Abs(angleDifference - 360) < Double.Epsilon;
+    }
+
+    /*
+	 *	EaseInQuadratic → Starts slow, speeds up.
+	 *	EaseOutQuadratic → Starts fast, slows down.
+	 *	EaseInOutQuadratic → Symmetric acceleration-deceleration.
+	 *	EaseInCubic → Stronger acceleration.
+	 *	EaseOutCubic → Slower deceleration.
+	 *	EaseInOutCubic → Balanced smooth curve.
+	 */
+
+    /// <summary>
+    /// Example quadratic ease-in-out function
+    /// </summary>
+    double EaseInOutFunction(double t)
 	{
 		return t < 0.5 ? 2 * t * t : 1 - Math.Pow(-2 * t + 2, 2) / 2;
 	}
@@ -984,23 +1005,13 @@ public partial class StorageRing : RangeBase
 		return 1.0 - Math.Pow(1.0 - t, 3.0);
 	}
 
-	/// <summary>
-	/// Checks True if the Angle range is a Full Circle
-	/// </summary>
-	/// <param name="MinAngle"></param>
-	/// <param name="MaxAngle"></param>
-	/// <returns></returns>
-	public static bool IsFullCircle(double MinAngle, double MaxAngle)
-	{
-		// Calculate the absolute difference between angles
-		double angleDifference = Math.Abs(MaxAngle - MinAngle);
-
-		// Check if the angle difference is equal to 360 degrees
-		//return angleDifference == 360;
-
-		// Changed to this as suggested by Marcel
-		return Math.Abs( angleDifference - 360 ) < Double.Epsilon;
-	}
+    /// <summary>
+    /// Example ease-in cubic function
+    /// </summary>
+    double EaseInCubic(double t)
+    {
+        return Math.Pow(t, 3.0);
+    }
 
 	#endregion
 }

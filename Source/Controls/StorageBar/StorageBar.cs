@@ -14,34 +14,27 @@ namespace UI_Demo;
 /// </remarks>
 public partial class StorageBar : RangeBase
 {
-	// Fields
-
-	double _oldValue;                // Stores the previous value
-
+    #region [Backing Members]
+    double _oldValue;                // Stores the previous value
 	double _valueBarMaxWidth;        // The maximum width for the Value Bar
 	double _trackBarMaxWidth;        // The maximum width for the Track Bar
-
 	Grid? _containerGrid;            // Reference to the container Grid
 	Size? _containerSize;            // Reference to the container Size
-
 	ColumnDefinition? _valueColumn;  // Reference to the ValueBar Column
 	ColumnDefinition? _trackColumn;  // Reference to the TrackBar Column
 	ColumnDefinition? _gapColumn;    // Reference to the Gap Column
-
 	Border? _valueBarBorder;         // Reference to the Value Bar Border
 	Border? _trackBarBorder;         // Reference to the Track Bar Border
-
 	BarShapes _barShape;             // Reference to the BarShape
-
 	double _gapWidth;                // Stores the Gap between Value and Track Bars
 	double _smallerHeight;           // Stores the smaller between Value and Track Bars
+	double _gapModifier = 0.25;      // Adjustment for distance between Value and Track Bars
+    #endregion
 
-	// Constructor
-
-	/// <summary>
-	/// Initializes an instance of <see cref="StorageBar"/> class.
-	/// </summary>
-	public StorageBar()
+    /// <summary>
+    /// Initializes an instance of <see cref="StorageBar"/> class.
+    /// </summary>
+    public StorageBar()
 	{
 		DefaultStyleKey = typeof(StorageBar);
 
@@ -52,7 +45,7 @@ public partial class StorageBar : RangeBase
 		SizeChanged += StorageBar_SizeChanged;
 		Unloaded += StorageBar_Unloaded;
 		IsEnabledChanged += StorageBar_IsEnabledChanged;
-	}
+    }
 
 	/// <inheritdoc/>
 	protected override void OnApplyTemplate()
@@ -61,7 +54,7 @@ public partial class StorageBar : RangeBase
 		UpdateInitialLayout(this);
 	}
 
-	#region Handle Property Changes
+	#region [Property Change Events]
 
 	/// <summary>
 	/// Handles the IsEnabledChanged event
@@ -113,13 +106,13 @@ public partial class StorageBar : RangeBase
 
 	#endregion
 
-	#region Update functions
+	#region [Update Methods]
 
 	/// <summary>
 	/// Updates the initial layout of the StorageBar control
 	/// </summary>
 	/// <param name="d">The DependencyObject representing the control.</param>
-	private void UpdateInitialLayout(DependencyObject d)
+	void UpdateInitialLayout(DependencyObject d)
 	{
 		// Retrieve references to visual elements
 		_containerGrid = GetTemplateChild(ContainerPartName) as Grid;
@@ -141,14 +134,12 @@ public partial class StorageBar : RangeBase
 	/// Updates the StorageBar control.
 	/// </summary>
 	/// <param name="d">The DependencyObject representing the control.</param>
-	private void UpdateControl(DependencyObject d)
+	void UpdateControl(DependencyObject d)
 	{
 		// 1. Update the Bar Heights
 		UpdateContainerHeightsAndCorners(this, ValueBarHeight, TrackBarHeight);
-
 		// 2. Set the 3 Column Widths
 		UpdateColumnWidths(this, Value, Minimum, Maximum);
-
 		// 3. Update the control's VisualState
 		UpdateVisualState(this);
 	}
@@ -161,13 +152,11 @@ public partial class StorageBar : RangeBase
 	/// <param name="oldValue">The old Value</param>
 	/// <param name="isPercent">Checks if the Percent value is being changed</param>
 	/// <param name="newPercent">The new Percent value</param>
-	private void UpdateValue(DependencyObject d, double newValue, double oldValue, bool isPercent, double newPercent)
+	void UpdateValue(DependencyObject d, double newValue, double oldValue, bool isPercent, double newPercent)
 	{
 		_oldValue = oldValue;
-
 		var adjustedValue = isPercent ? PercentageToValue(newPercent, Minimum, Maximum) : newValue;
 		Percent = DoubleToPercentage(adjustedValue, Minimum, Maximum);
-
 		UpdateControl(this);
 	}
 
@@ -177,7 +166,7 @@ public partial class StorageBar : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="valueBarHeight">The ValueBar Height</param>
 	/// <param name="trackBarHeight">The TrackBar Height</param>
-	private void UpdateContainerHeightsAndCorners(DependencyObject d, double valueBarHeight, double trackBarHeight)
+	void UpdateContainerHeightsAndCorners(DependencyObject d, double valueBarHeight, double trackBarHeight)
 	{
 		// Finds the larger of the two height values
 		double calculatedLargerHeight = Math.Max(valueBarHeight, trackBarHeight);
@@ -188,18 +177,21 @@ public partial class StorageBar : RangeBase
 			_valueBarBorder.Height = valueBarHeight;
 			_trackBarBorder.Height = trackBarHeight;
 
-			if (_barShape == BarShapes.Round)
+            // Extra corner radius for the ValueBar and TrackBar.
+            if (_barShape == BarShapes.Round)
 			{
 				_valueBarBorder.CornerRadius = new(valueBarHeight / 2);
 				_trackBarBorder.CornerRadius = new(trackBarHeight / 2);
 			}
-			else if (_barShape == BarShapes.Soft)
+            // Minimal corner radius for the ValueBar and TrackBar.
+            else if (_barShape == BarShapes.Soft)
 			{
 				_valueBarBorder.CornerRadius = new(valueBarHeight / 4);
 				_trackBarBorder.CornerRadius = new(trackBarHeight / 4);
 			}
-			else
-			{
+            // No corner radius for the ValueBar and TrackBar.
+            else // => Flat
+            {
 				_valueBarBorder.CornerRadius = new(0);
 				_trackBarBorder.CornerRadius = new(0);
 			}
@@ -207,9 +199,8 @@ public partial class StorageBar : RangeBase
 			_containerGrid.Height = calculatedLargerHeight;
 		}
 
-		_gapWidth = calculatedLargerHeight;
-		_smallerHeight = calculatedSmallerHeight;
-
+		_gapWidth = calculatedLargerHeight * _gapModifier;
+        _smallerHeight = calculatedSmallerHeight;
 	}
 
 	/// <summary>
@@ -219,7 +210,7 @@ public partial class StorageBar : RangeBase
 	/// <param name="value">The Value</param>
 	/// <param name="minValue">The Minimum value</param>
 	/// <param name="maxValue">The Maximum value</param>
-	private void UpdateColumnWidths(DependencyObject d, double value, double minValue, double maxValue)
+	void UpdateColumnWidths(DependencyObject d, double value, double minValue, double maxValue)
 	{
 		if (_gapColumn != null || _valueColumn != null || _trackColumn != null || _valueBarBorder != null || _trackBarBorder != null)
 		{
@@ -428,7 +419,7 @@ public partial class StorageBar : RangeBase
 						}
 
 						_gapColumn.Width = new(interpolatedGapWidth);
-
+						
 						_valueBarBorder.Height = valueBarHeight;
 						_trackBarBorder.Height = trackBarHeight;
 					}
@@ -442,7 +433,7 @@ public partial class StorageBar : RangeBase
 	/// </summary>
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="newSize">The new Size</param>
-	private void UpdateContainer(DependencyObject d, Size newSize)
+	void UpdateContainer(DependencyObject d, Size newSize)
 	{
 		double containerWidth = newSize.Width - (Padding.Left + Padding.Right);
 		double containerHeight = newSize.Height - (Padding.Top + Padding.Bottom);
@@ -454,7 +445,7 @@ public partial class StorageBar : RangeBase
 	/// Update the control's VisualState
 	/// </summary>
 	/// <param name="d">The DependencyObject representing the control.</param>
-	private void UpdateVisualState(DependencyObject d)
+	void UpdateVisualState(DependencyObject d)
 	{
 		// First is the control is Disabled
 		if (IsEnabled == false)
@@ -484,7 +475,7 @@ public partial class StorageBar : RangeBase
 
 	#endregion
 
-	#region Conversion return functions
+	#region [Conversion Methods]
 
 	/// <summary>
 	/// Converts a value within a specified range to a percentage.
@@ -493,7 +484,7 @@ public partial class StorageBar : RangeBase
 	/// <param name="minValue">The minimum value of the input range.</param>
 	/// <param name="maxValue">The maximum value of the input range.</param>
 	/// <returns>The percentage value (between 0 and 100).</returns>
-	private double DoubleToPercentage(double value, double minValue, double maxValue)
+	double DoubleToPercentage(double value, double minValue, double maxValue)
 	{
 		// Ensure value is within the specified range
 		if (value < minValue)
@@ -512,9 +503,8 @@ public partial class StorageBar : RangeBase
 			// Convert to percentage
 			var percentage = normalizedValue * 100.0;
 
-			double roundedPercentage = Math.Round(percentage, 2, MidpointRounding.ToEven);
-
-			return roundedPercentage;
+			// Return rounded percentage
+            return Math.Round(percentage, 2, MidpointRounding.ToEven);
 		}
 	}
 
@@ -525,7 +515,7 @@ public partial class StorageBar : RangeBase
 	/// <param name="minValue">The minimum value of the input range.</param>
 	/// <param name="maxValue">The maximum value of the input range.</param>
 	/// <returns>The percentage value (between 0 and 100).</returns>
-	private double PercentageToValue(double percentage, double minValue, double maxValue)
+	double PercentageToValue(double percentage, double minValue, double maxValue)
 	{
 		double convertedValue = percentage * (maxValue - minValue) / 100.0;
 
@@ -549,7 +539,7 @@ public partial class StorageBar : RangeBase
 	/// <param name="endOutput">The ending Output value.</param>
 	/// <param name="useEasing">Indicates whether to apply an easing function.</param>
 	/// <returns>The interpolated thickness value.</returns>
-	private double CalculateInterpolatedValue(DependencyObject d, double startValue, double value, double endValue, double startOutput, double endOutput, bool useEasing)
+	double CalculateInterpolatedValue(DependencyObject d, double startValue, double value, double endValue, double startOutput, double endOutput, bool useEasing)
 	{
 		// Ensure that value is within the range [startValue, endValue]
 		value = Math.Max(startValue, Math.Min(endValue, value));
@@ -577,21 +567,45 @@ public partial class StorageBar : RangeBase
 		return interpolatedOutput;
 	}
 
-	/// <summary>
-	/// Example quadratic ease-in-out function
-	/// </summary>
-	private double EasingInOutFunction(double t)
+    /*
+	 *	EaseInQuadratic → Starts slow, speeds up.
+	 *	EaseOutQuadratic → Starts fast, slows down.
+	 *	EaseInOutQuadratic → Symmetric acceleration-deceleration.
+	 *	EaseInCubic → Stronger acceleration.
+	 *	EaseOutCubic → Slower deceleration.
+	 *	EaseInOutCubic → Balanced smooth curve.
+	 */
+
+    /// <summary>
+    /// Example quadratic ease-in-out function
+    /// </summary>
+    double EasingInOutFunction(double t)
 	{
 		return t < 0.5 ? 2 * t * t : 1 - Math.Pow(-2 * t + 2, 2) / 2;
 	}
 
-	/// <summary>
-	/// Example ease-out cubic function
-	/// </summary>
-	static double EaseOutCubic(double t)
+    /// <summary>
+    /// Alternative quadratic ease-in-out function
+    /// </summary>
+    double EaseInOutCubic(double t)
+    {
+        return t < 0.5 ? 4.0 * Math.Pow(t, 3.0) : 1.0 - Math.Pow(-2.0 * t + 2.0, 3.0) / 2.0;
+    }
+
+    /// <summary>
+    /// Example ease-out cubic function
+    /// </summary>
+    double EaseOutCubic(double t)
 	{
 		return 1.0 - Math.Pow(1.0 - t, 3.0);
 	}
 
-	#endregion
+    /// <summary>
+    /// Example ease-in cubic function
+    /// </summary>
+    double EaseInCubic(double t)
+    {
+        return Math.Pow(t, 3.0);
+    }
+    #endregion
 }

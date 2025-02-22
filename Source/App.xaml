@@ -4160,6 +4160,11 @@
                                         <ColumnDefinition x:Name="PART_GapColumn" />
                                         <ColumnDefinition x:Name="PART_TrackColumn" />
                                     </Grid.ColumnDefinitions>
+                                    <!--
+                                        Don't set the corner radius here, it will be set via the
+                                        ValueBar's BarShapes.Round, BarShapes.Soft or BarShapes.Flat
+                                        inside the StorageBar.cs RangeBase class.
+                                    -->
                                     <Border
                                         x:Name="PART_ValueBar"
                                         Grid.Column="0"
@@ -4167,7 +4172,12 @@
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Center"
                                         Background="{TemplateBinding Foreground}"
-                                        CornerRadius="{TemplateBinding CornerRadius}" />
+                                        CornerRadius="0" />
+                                    <!--
+                                        Don't set the corner radius here, it will be set via the
+                                        TrackBar's BarShapes.Round, BarShapes.Soft or BarShapes.Flat
+                                        inside the StorageBar.cs RangeBase class.
+                                    -->
                                     <Border
                                         x:Name="PART_TrackBar"
                                         Grid.Column="2"
@@ -4175,7 +4185,7 @@
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Center"
                                         Background="{TemplateBinding Background}"
-                                        CornerRadius="{TemplateBinding CornerRadius}" />
+                                        CornerRadius="0" />
                                 </Grid>
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="ControlStates">
