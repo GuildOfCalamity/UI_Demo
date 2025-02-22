@@ -15,51 +15,47 @@ namespace UI_Demo;
 /// </remarks>
 public partial class StorageRing : RangeBase
 {
-	// Fields
+	double _containerSize;          // Size of the inner container after padding
+	double _containerCenter;        // Center X and Y value of the inner container
+	double _sharedRadius;           // Radius to be shared by both rings (smaller of the two)
 
-	private double _containerSize;          // Size of the inner container after padding
-	private double _containerCenter;        // Center X and Y value of the inner container
-	private double _sharedRadius;           // Radius to be shared by both rings (smaller of the two)
+	double _oldValue;               // Stores the previous Value
+	double _oldValueAngle;          // Stored the old ValueAngle
 
-	private double _oldValue;               // Stores the previous Value
-	private double _oldValueAngle;          // Stored the old ValueAngle
+	double _valueRingThickness;     // The stored value ring thickness
+	double _trackRingThickness;     // The stored track ring thickness
+	ThicknessCheck _thicknessCheck; // Determines how the two ring thicknesses compare
+	double _largerThickness;        // The larger of the two ring thicknesses
+	double _smallerThickness;       // The smaller of the two ring thicknesses
 
-	private double _valueRingThickness;     // The stored value ring thickness
-	private double _trackRingThickness;     // The stored track ring thickness
-	private ThicknessCheck _thicknessCheck; // Determines how the two ring thicknesses compare
-	private double _largerThickness;        // The larger of the two ring thicknesses
-	private double _smallerThickness;       // The smaller of the two ring thicknesses
+	Grid? _containerGrid;           // Reference to the container Grid
+	RingShape? _valueRingShape;     // Reference to the Value RingShape
+	RingShape? _trackRingShape;     // Reference to the Track RingShape
 
-	private Grid? _containerGrid;           // Reference to the container Grid
-	private RingShape? _valueRingShape;     // Reference to the Value RingShape
-	private RingShape? _trackRingShape;     // Reference to the Track RingShape
+	RectangleGeometry? _clipRect;   // Clipping RectangleGeometry for the canvas
 
-	private RectangleGeometry? _clipRect;   // Clipping RectangleGeometry for the canvas
-
-	private double _normalizedMinAngle;     // Stores the normalized Minimum Angle
-	private double _normalizedMaxAngle;     // Stores the normalized Maximum Angle
-	private double _gapAngle;               // Stores the angle to be used to separate Value and Track rings
-	private double _validStartAngle;        // The validated StartAngle
+	double _normalizedMinAngle;     // Stores the normalized Minimum Angle
+	double _normalizedMaxAngle;     // Stores the normalized Maximum Angle
+	double _gapAngle;               // Stores the angle to be used to separate Value and Track rings
+	double _validStartAngle;        // The validated StartAngle
 
 	#region  Private Setters
 
 	/// <summary>
 	/// Sets the Container size to the smaller of control's Height and Width.
 	/// </summary>
-	private void SetContainerSize(double controlWidth, double controlHeight, Thickness padding)
+	void SetContainerSize(double controlWidth, double controlHeight, Thickness padding)
 	{
 		double correctedWidth = controlWidth - (padding.Left + padding.Right);
 		double correctedHeight = controlHeight - (padding.Top + padding.Bottom);
-
 		double check = Math.Min(correctedWidth, correctedHeight);
-
 		_containerSize = check < minSize ? minSize : check;
 	}
 
 	/// <summary>
 	/// Sets the private Container center X and Y value
 	/// </summary>
-	private void SetContainerCenter(double containerSize)
+	void SetContainerCenter(double containerSize)
 	{
 		_containerCenter = (containerSize / 2);
 	}
@@ -67,7 +63,7 @@ public partial class StorageRing : RangeBase
 	/// <summary>
 	/// Sets the shared Radius by passing in containerSize and thickness.
 	/// </summary>
-	private void SetSharedRadius(double containerSize, double thickness)
+	void SetSharedRadius(double containerSize, double thickness)
 	{
 		double check = (containerSize / 2) - (thickness / 2);
 		double minSize = 4;
@@ -78,7 +74,7 @@ public partial class StorageRing : RangeBase
 	/// <summary>
 	/// Sets the private ThicknessCheck enum value
 	/// </summary>
-	private void SetThicknessCheck(double valueThickness, double trackThickness)
+	void SetThicknessCheck(double valueThickness, double trackThickness)
 	{
 		if (valueThickness > trackThickness)
 			_thicknessCheck = ThicknessCheck.Value;
@@ -89,8 +85,6 @@ public partial class StorageRing : RangeBase
 	}
 
 	#endregion
-
-	// Constructor
 
 	/// <summary>
 	/// Initializes an instance of <see cref="StorageRing"/> class.
@@ -108,7 +102,6 @@ public partial class StorageRing : RangeBase
 	protected override void OnApplyTemplate()
 	{
 		InitializeParts();
-
 		base.OnApplyTemplate();
 	}
 
@@ -121,9 +114,7 @@ public partial class StorageRing : RangeBase
 		_containerGrid = GetTemplateChild(ContainerPartName) as Grid;
 		_valueRingShape = GetTemplateChild(ValueRingShapePartName) as RingShape;
 		_trackRingShape = GetTemplateChild(TrackRingShapePartName) as RingShape;
-
 		CalculateAndSetNormalizedAngles(this, MinAngle, MaxAngle);
-
 		UpdateValues(this, Value, 0.0, false, -1.0);
 	}
 
@@ -134,16 +125,15 @@ public partial class StorageRing : RangeBase
 	/// </summary>
 	/// <param name="sender">The object that triggered the event.</param>
 	/// <param name="e">Provides data related to the SizeChanged event.</param>
-	private void StorageRing_SizeChanged(object sender, SizeChangedEventArgs e)
+	void StorageRing_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
 		Size minSize;
 
-		if ( DesiredSize.Width < MinWidth || DesiredSize.Height < MinHeight ||
+		if (DesiredSize.Width < MinWidth || DesiredSize.Height < MinHeight ||
 			e.NewSize.Width < MinWidth || e.NewSize.Height < MinHeight)
 		{
 			Width = MinWidth;
 			Height = MinHeight;
-
 			minSize = new Size( MinWidth , MinHeight );
 		}
 		else
@@ -152,7 +142,6 @@ public partial class StorageRing : RangeBase
 		}
 
 		UpdateContainerCenterAndSizes( this , minSize );
-		
 		UpdateRings(this);
 	}
 
@@ -161,7 +150,7 @@ public partial class StorageRing : RangeBase
 	/// </summary>
 	/// <param name="sender">The object that triggered the event.</param>
 	/// <param name="e">Provides data related to the Unloaded event.</param>
-	private void StorageRing_Unloaded(object sender, RoutedEventArgs e)
+	void StorageRing_Unloaded(object sender, RoutedEventArgs e)
 	{
 		SizeChanged -= StorageRing_SizeChanged;
 		Unloaded -= StorageRing_Unloaded;
@@ -173,7 +162,7 @@ public partial class StorageRing : RangeBase
 	/// </summary>
 	/// <param name="sender">The object that triggered the event.</param>
 	/// <param name="e">Provides data related to the Unloaded event.</param>
-	private void StorageRing_Loaded(object sender, RoutedEventArgs e)
+	void StorageRing_Loaded(object sender, RoutedEventArgs e)
 	{
 	}
 
@@ -183,7 +172,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="sender">The object that triggered the event.</param>
 	/// <param name="e">Provides data for a PropertyChangedCallback implementation that is invoked 
 	/// when a dependency property changes its value. </param>
-	private void StorageRing_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
+	void StorageRing_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
 	{
 		UpdateVisualState(this);
 	}
@@ -200,7 +189,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="oldValue">The old Value</param>
 	/// <param name="percentChanged">Checks if Percent value is being changed</param>
 	/// <param name="newPercent">The new Percent value</param>
-	private void UpdateValues(DependencyObject d, double newValue, double oldValue, bool percentChanged, double newPercent)
+	void UpdateValues(DependencyObject d, double newValue, double oldValue, bool percentChanged, double newPercent)
 	{
 		CalculateAndSetNormalizedAngles(this, MinAngle, MaxAngle);
 
@@ -228,7 +217,7 @@ public partial class StorageRing : RangeBase
 	/// </summary>
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="newSize">The new Size</param>
-	private void UpdateContainerCenterAndSizes(DependencyObject d, Size newSize)
+	void UpdateContainerCenterAndSizes(DependencyObject d, Size newSize)
 	{
 		var borderThickness = BorderThickness;
 
@@ -265,7 +254,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="newRadius">The new Radius</param>
 	/// <param name="isTrack">Checks if the Track is currently being updated</param>
-	private void UpdateRadii(DependencyObject d, double newRadius, bool isTrack)
+	void UpdateRadii(DependencyObject d, double newRadius, bool isTrack)
 	{
 		double valueRingThickness = _valueRingThickness;
 		double trackRingThickness = _trackRingThickness;
@@ -304,7 +293,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="newThickness">The new Thickness</param>
 	/// <param name="isTrack">Checks if the TrackRing Thickness is being updated</param>
-	private void UpdateRingThickness(DependencyObject d, double newThickness, bool isTrack)
+	void UpdateRingThickness(DependencyObject d, double newThickness, bool isTrack)
 	{
 		if (isTrack)
 			_trackRingThickness = newThickness;
@@ -336,7 +325,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="newRadius">The new Radius</param>
 	/// <param name="isTrack">Checks if the TrackRing is being updated</param>
-	private void UpdateGapAngle(DependencyObject d, double newRadius, bool isTrack)
+	void UpdateGapAngle(DependencyObject d, double newRadius, bool isTrack)
 	{
 		double angle = GapThicknessToAngle(_sharedRadius, (_largerThickness * 0.75));
 		_gapAngle = angle;
@@ -346,7 +335,7 @@ public partial class StorageRing : RangeBase
 	/// Updates the control's VisualState
 	/// </summary>
 	/// <param name="d">The DependencyObject representing the control.</param>
-	private void UpdateVisualState(DependencyObject d)
+	void UpdateVisualState(DependencyObject d)
 	{
 		// First is the control is Disabled
 		if (!IsEnabled)
@@ -362,7 +351,7 @@ public partial class StorageRing : RangeBase
 			// Is the Percent value equal to or above the PercentCaution value
 			else if (Percent >= PercentCaution)
 				VisualStateManager.GoToState(this, CautionStateName, true);
-			// Else we use the Safe State
+			// Else we use the Safe State (normal)
 			else
 				VisualStateManager.GoToState(this, SafeStateName, true);
 		}
@@ -376,7 +365,7 @@ public partial class StorageRing : RangeBase
 	/// Updates both Rings
 	/// </summary>
 	/// <param name="d">The DependencyObject representing the control.</param>
-	private void UpdateRings(DependencyObject d)
+	void UpdateRings(DependencyObject d)
 	{
 		if (_valueRingShape == null || _trackRingShape == null)
 			return;
@@ -399,7 +388,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="valueRingShape">The reference to the ValueRing RingShape TemplatePart</param>
 	/// <param name="trackRingShape">The reference to the TrackRing RingShape TemplatePart</param>
-	private void UpdateRingSizes(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
+	void UpdateRingSizes(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
 	{
 		if (valueRingShape is null || trackRingShape is null)
 			return;
@@ -440,7 +429,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="valueRingShape">The reference to the ValueRing RingShape TemplatePart</param>
 	/// <param name="trackRingShape">The reference to the TrackRing RingShape TemplatePart</param>
-	private void UpdateRingAngles(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
+	void UpdateRingAngles(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
 	{
 		if (valueRingShape == null || trackRingShape == null)
 			return;
@@ -568,7 +557,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="valueRingShape">The reference to the ValueRing RingShape TemplatePart</param>
 	/// <param name="trackRingShape">The reference to the TrackRing RingShape TemplatePart</param>
-	private void UpdateRingLayouts(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
+	void UpdateRingLayouts(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
 	{
 		StorageRing storageRing = (StorageRing)d;
 
@@ -595,7 +584,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject representing the control.</param>
 	/// <param name="valueRingShape">The reference to the ValueRing RingShape TemplatePart</param>
 	/// <param name="trackRingShape">The reference to the TrackRing RingShape TemplatePart</param>
-	private void UpdateRingStrokes(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
+	void UpdateRingStrokes(DependencyObject d, RingShape valueRingShape, RingShape trackRingShape)
 	{
 		if (valueRingShape == null || trackRingShape == null)
 			return;
@@ -693,7 +682,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject which holds the DependencyProperty</param>
 	/// <param name="newValue">The new Value</param>
 	/// <param name="oldValue">The previous Value</param>
-	private void StorageRing_ValueChanged(DependencyObject d, double newValue, double oldValue)
+	void StorageRing_ValueChanged(DependencyObject d, double newValue, double oldValue)
 	{
 		UpdateValues(d, newValue, oldValue, false, -1.0);
 		UpdateRings(d);
@@ -704,7 +693,7 @@ public partial class StorageRing : RangeBase
 	/// </summary>
 	/// <param name="d">The DependencyObject which holds the DependencyProperty</param>
 	/// <param name="newValue">The new Minimum value</param>
-	private void StorageRing_MinimumChanged(DependencyObject d, double newMinimum)
+	void StorageRing_MinimumChanged(DependencyObject d, double newMinimum)
 	{
 		UpdateRings(d);
 	}
@@ -714,7 +703,7 @@ public partial class StorageRing : RangeBase
 	/// </summary>
 	/// <param name="d">The DependencyObject which holds the DependencyProperty</param>
 	/// <param name="newValue">The new Maximum value</param>
-	private void StorageRing_MaximumChanged(DependencyObject d, double newMaximum)
+	void StorageRing_MaximumChanged(DependencyObject d, double newMaximum)
 	{
 		UpdateRings(d);
 	}
@@ -729,7 +718,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="d">The DependencyObject calling the function</param>
 	/// <param name="minAngle">MinAngle in the range from -180 to 180.</param>
 	/// <param name="maxAngle">MaxAngle, in the range from -180 to 540.</param>
-	private void CalculateAndSetNormalizedAngles(DependencyObject d, double minAngle, double maxAngle)
+	void CalculateAndSetNormalizedAngles(DependencyObject d, double minAngle, double maxAngle)
 	{
 		StorageRing storageRing = (StorageRing)d;
 
@@ -775,7 +764,7 @@ public partial class StorageRing : RangeBase
 	/// </summary>
 	/// <param name="d">The DependencyObject calling the function</param>
 	/// <param name="startAngle">The StartAngle to validate</param>
-	private void ValidateStartAngle(DependencyObject d, double startAngle)
+	void ValidateStartAngle(DependencyObject d, double startAngle)
 	{
 		if (startAngle >= _normalizedMaxAngle)
 			_validStartAngle = _normalizedMaxAngle;
@@ -796,7 +785,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="endThickness">The ending thickness value.</param>
 	/// <param name="useEasing">Indicates whether to apply an easing function.</param>
 	/// <returns>The interpolated thickness value.</returns>
-	private double GetThicknessTransition(DependencyObject d, double startValue, double value, double endValue, double startThickness, double endThickness, bool useEasing)
+	double GetThicknessTransition(DependencyObject d, double startValue, double value, double endValue, double startThickness, double endThickness, bool useEasing)
 	{
 		// Ensure that value is within the range [startValue, endValue]
 		value = Math.Max(startValue, Math.Min(endValue, value));
@@ -835,7 +824,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="valueAngle">The angle corresponding to the current value.</param>
 	/// <param name="useEasing">Indicates whether to apply an easing function.</param>
 	/// <returns>The interpolated angle value.</returns>
-	private double GetAdjustedAngle(DependencyObject d, double startValue, double value, double endValue, double startAngle, double endAngle, double valueAngle, bool useEasing)
+	double GetAdjustedAngle(DependencyObject d, double startValue, double value, double endValue, double startAngle, double endAngle, double valueAngle, bool useEasing)
 	{
 		// Ensure that value is within the range [startValue, endValue]
 		value = Math.Max(startValue, Math.Min(endValue, value));
@@ -871,7 +860,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="minAngle">The minimum angle of the output range (in degrees).</param>
 	/// <param name="maxAngle">The maximum angle of the output range (in degrees).</param>
 	/// <returns>The converted angle.</returns>
-	private double DoubleToAngle(double value, double minValue, double maxValue, double minAngle, double maxAngle)
+	double DoubleToAngle(double value, double minValue, double maxValue, double minAngle, double maxAngle)
 	{
 		// If value is below the Minimum set
 		if (value < minValue)
@@ -900,7 +889,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="minValue">The minimum value of the input range.</param>
 	/// <param name="maxValue">The maximum value of the input range.</param>
 	/// <returns>The percentage value (between 0 and 100).</returns>
-	private double DoubleToPercentage(double value, double minValue, double maxValue)
+	double DoubleToPercentage(double value, double minValue, double maxValue)
 	{
 		// Ensure value is within the specified range
 		if (value < minValue)
@@ -931,7 +920,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="minValue">The minimum value of the input range.</param>
 	/// <param name="maxValue">The maximum value of the input range.</param>
 	/// <returns>The percentage value (between 0 and 100).</returns>
-	private double PercentageToValue(double percentage, double minValue, double maxValue)
+	double PercentageToValue(double percentage, double minValue, double maxValue)
 	{
 		double convertedValue = percentage * (maxValue - minValue) / 100.0;
 
@@ -950,7 +939,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="thickness">The Thickness radius to measure.</param>
 	/// <param name="radius">The radius of the rings.</param>
 	/// <returns>The gap angle (sum of angles for the larger and smaller strokes).</returns>
-	private double GapThicknessToAngle(double radius, double thickness)
+	double GapThicknessToAngle(double radius, double thickness)
 	{
 		if (radius > 0 && thickness > 0)
 		{
@@ -973,7 +962,7 @@ public partial class StorageRing : RangeBase
 	/// <param name="endAngle">The final angle.</param>
 	/// <param name="valueAngle">A value between 0 and 1 representing the interpolation factor.</param>
 	/// <returns>The adjusted angle based on linear interpolation.</returns>
-	private static double GetInterpolatedAngle(double startAngle, double endAngle, double valueAngle)
+	static double GetInterpolatedAngle(double startAngle, double endAngle, double valueAngle)
 	{
 		// Linear interpolation formula (lerp): GetInterpolatedAngle = (startAngle + valueAngle) * (endAngle - startAngle)
 		return (startAngle + valueAngle) * (endAngle - startAngle);
@@ -982,7 +971,7 @@ public partial class StorageRing : RangeBase
 	/// <summary>
 	/// Example quadratic ease-in-out function
 	/// </summary>
-	private double EaseInOutFunction(double t)
+	double EaseInOutFunction(double t)
 	{
 		return t < 0.5 ? 2 * t * t : 1 - Math.Pow(-2 * t + 2, 2) / 2;
 	}
@@ -990,7 +979,7 @@ public partial class StorageRing : RangeBase
 	/// <summary>
 	/// Example ease-out cubic function
 	/// </summary>
-	static double EaseOutCubic(double t)
+	double EaseOutCubic(double t)
 	{
 		return 1.0 - Math.Pow(1.0 - t, 3.0);
 	}

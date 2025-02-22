@@ -73,6 +73,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         get => _amount;
         set { _amount = value; NotifyPropertyChanged(nameof(Amount)); }
     }
+    double _size = 0;
+    public double Size
+    {
+        get => _size;
+        set { _size = value; NotifyPropertyChanged(nameof(Size)); }
+    }
     string _status = string.Empty;
     public string Status
     {
@@ -403,6 +409,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             catch (Exception) { Debug.WriteLine($"[WARNING] Failed to load previous message list."); }
             #endregion
+
+            _ = Task.Run(async () => 
+            { 
+                while (!App.IsClosing)
+                {
+                    await Task.Delay(500);
+                    Size = Math.Round((DateTime.Now.Second / 60.0) * 100, 0, MidpointRounding.ToEven);
+                }
+            });
         }
         _loaded = true;
     }
@@ -1787,40 +1802,4 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         });
     }
     #endregion
-}
-
-// Wrapper class to implement IAsyncAction
-public class AsyncActionWrapper : IAsyncAction
-{
-    readonly Task _task;
-    AsyncActionCompletedHandler IAsyncAction.Completed { get; set; }
-    public Exception ErrorCode { get; }
-    public uint Id { get; }
-    public AsyncStatus Status { get; }
-
-    public AsyncActionWrapper(Task task)
-    {
-        _task = task;
-    }
-
-    public void Cancel()
-    {
-        // You can add cancellation logic here if needed
-        // For example, you could call _task.Cancel() if applicable
-    }
-
-    public void GetResults()
-    {
-        // This method is not used for IAsyncAction
-    }
-
-    public void Close()
-    {
-        // This method is not used for IAsyncAction
-    }
-
-    public void Dispose()
-    {
-        // Dispose of resources if necessary
-    }
 }

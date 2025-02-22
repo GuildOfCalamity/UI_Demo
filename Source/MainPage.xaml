@@ -433,17 +433,16 @@
                                 Width="64"
                                 Height="64"
                                 FlowDirection="LeftToRight"
-                                Foreground="{StaticResource SecondaryBrush}"
                                 IsEnabled="True"
-                                PercentCaution="75"
-                                PercentCritical="95"
+                                PercentCaution="60"
+                                PercentCritical="85"
                                 TrackRingThickness="4.0"
                                 ValueRingThickness="8.0"
-                                Value="{x:Bind Amount, Mode=OneWay}" />
+                                Value="{x:Bind Size, Mode=OneWay}" />
                             <TextBlock
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                Text="{x:Bind Amount, Mode=OneWay}" />
+                                Text="{x:Bind Size, Mode=OneWay}" />
                         </Grid>
                         <local:StorageBar
                             Width="200"
@@ -454,13 +453,12 @@
                             BorderThickness="2"
                             CornerRadius="4"
                             FlowDirection="LeftToRight"
-                            Foreground="{StaticResource SecondaryBrush}"
                             IsEnabled="True"
-                            PercentCaution="75"
-                            PercentCritical="95"
+                            PercentCaution="60"
+                            PercentCritical="85"
                             TrackBarHeight="4.0"
                             ValueBarHeight="8.0"
-                            Value="{x:Bind Amount, Mode=OneWay}" />
+                            Value="{x:Bind Size, Mode=OneWay}" />
                     </StackPanel>
 
                     <!--

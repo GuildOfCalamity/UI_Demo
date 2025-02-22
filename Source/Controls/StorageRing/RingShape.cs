@@ -13,26 +13,20 @@ public partial class RingShape : Path
 {
 	#region Fields and Constructors
 
-	// Fields
+	bool			_isUpdating;             // Is True when path is updating
+	bool			_isCircle;               // When True, Width and Height are equalized
+	Size			_equalSize;              // Calculated where Width and Height are equal
+	double			_equalRadius;            // Calculated where RadiusWidth and RadiusHeight are equal
+	Point			_centerPoint;            // Center Point within Width and Height bounds
+	double			_normalizedMinAngle;     // Normalized MinAngle between -180 and 540
+	double			_normalizedMaxAngle;     // Normalized MaxAngle between 0 and 360
+	double			_validStartAngle;        // The validated StartAngle
+	double			_validEndAngle;          // The validated EndAngle
+	double			_radiusWidth;            // The radius Width
+	double			_radiusHeight;           // The radius Height
+	SweepDirection	_sweepDirection;         // The SweepDirection
 
-	private bool			_isUpdating;             // Is True when path is updating
-	private bool			_isCircle;               // When True, Width and Height are equalized
-	private Size			_equalSize;              // Calculated where Width and Height are equal
-	private double			_equalRadius;            // Calculated where RadiusWidth and RadiusHeight are equal
-	private Point			_centerPoint;            // Center Point within Width and Height bounds
-	private double			_normalizedMinAngle;     // Normalized MinAngle between -180 and 540
-	private double			_normalizedMaxAngle;     // Normalized MaxAngle between 0 and 360
-	private double			_validStartAngle;        // The validated StartAngle
-	private double			_validEndAngle;          // The validated EndAngle
-	private double			_radiusWidth;            // The radius Width
-	private double			_radiusHeight;           // The radius Height
-	private SweepDirection	_sweepDirection;         // The SweepDirection
-
-	// Constants
-
-	private const double DegreesToRadians = Math.PI / 180;
-
-	// Constructor
+	const double DegreesToRadians = Math.PI / 180;
 
 	/// <summary>
 	/// Initializes an instance of the <see cref="RingShape" /> class.
@@ -180,7 +174,7 @@ public partial class RingShape : Path
 		ValidateAngle( ringShape , ringShape.EndAngle , false );
 	}
 
-	private static EllipseGeometry DrawEllipse(bool IsCircle, Point Center, double EqualRadius, double RadiusWidth, double RadiusHeight)
+	static EllipseGeometry DrawEllipse(bool IsCircle, Point Center, double EqualRadius, double RadiusWidth, double RadiusHeight)
 	{
 		EllipseGeometry eg;
 
@@ -227,7 +221,6 @@ public partial class RingShape : Path
 			// Start Point
 			pathFigure.StartPoint = ArcStartPoint( SweepDirection , newCenter, StartAngle, radius, radius);
 
-
 			// Arc Segment and End Point
 			arcSegment = CreateArcSegment( SweepDirection , newCenter , StartAngle , EndAngle , radius , radius );
 		}
@@ -242,7 +235,6 @@ public partial class RingShape : Path
 			// Start Point
 			pathFigure.StartPoint = ArcStartPoint( SweepDirection , newCenter , StartAngle , radiusWidth , radiusHeight );
 
-
 			// Arc Segment and End Point
 			arcSegment = CreateArcSegment( SweepDirection , newCenter , StartAngle , EndAngle , radiusWidth , radiusHeight );
 		}
@@ -253,23 +245,21 @@ public partial class RingShape : Path
 		return pathGeometry;
 	}
 
-	private static Point ArcStartPoint(SweepDirection SweepDirection , Point Center, double StartAngle , double RadiusWidth, double RadiusHeight)
+	static Point ArcStartPoint(SweepDirection SweepDirection , Point Center, double StartAngle , double RadiusWidth, double RadiusHeight)
 	{
 		var finalPoint = new Point();
 
 		// Counterclockwise
 		if ( SweepDirection == SweepDirection.Counterclockwise )
 		{
-			finalPoint =
-			new Point(
+			finalPoint = new Point(
 				Center.X - Math.Sin( StartAngle * DegreesToRadians ) * RadiusWidth ,
 				Center.Y - Math.Cos( StartAngle * DegreesToRadians ) * RadiusHeight );
 		}
 		// Clockwise
 		else
 		{
-			finalPoint =
-			new Point(
+			finalPoint = new Point(
 				Center.X + Math.Sin( StartAngle * DegreesToRadians ) * RadiusWidth ,
 				Center.Y - Math.Cos( StartAngle * DegreesToRadians ) * RadiusHeight );
 		}
@@ -282,44 +272,42 @@ public partial class RingShape : Path
 		var finalArcSegment = new ArcSegment();
 
 		// Counterclockwise
-		if ( SweepDirection == SweepDirection.Counterclockwise )
+		if (SweepDirection == SweepDirection.Counterclockwise)
 		{
-			finalArcSegment.Point =
-				new Point(
-					Center.X - Math.Sin( EndAngle * DegreesToRadians ) * RadiusWidth ,
-					Center.Y - Math.Cos( EndAngle * DegreesToRadians ) * RadiusHeight );
+			finalArcSegment.Point = new Point(
+					Center.X - Math.Sin(EndAngle * DegreesToRadians) * RadiusWidth ,
+					Center.Y - Math.Cos(EndAngle * DegreesToRadians) * RadiusHeight);
 
-			if ( EndAngle < StartAngle )
+			if (EndAngle < StartAngle)
 			{
-				finalArcSegment.IsLargeArc = ( EndAngle - StartAngle ) <= -180.0;
+				finalArcSegment.IsLargeArc = (EndAngle - StartAngle) <= -180.0;
 				finalArcSegment.SweepDirection = SweepDirection.Clockwise;
 			}
 			else
 			{
-				finalArcSegment.IsLargeArc = ( EndAngle - StartAngle ) >= 180.0;
+				finalArcSegment.IsLargeArc = (EndAngle - StartAngle) >= 180.0;
 				finalArcSegment.SweepDirection = SweepDirection.Counterclockwise;
 			}
 		}
 		// Clockwise
 		else
 		{
-			finalArcSegment.Point =
-				new Point(
-					Center.X + Math.Sin( EndAngle * DegreesToRadians ) * RadiusWidth ,
-					Center.Y - Math.Cos( EndAngle * DegreesToRadians ) * RadiusHeight );
-			//ArcSegment.IsLargeArc = ( EndAngle - StartAngle ) >= 180.0;
-			if ( EndAngle < StartAngle )
+			finalArcSegment.Point =	new Point(
+					Center.X + Math.Sin(EndAngle * DegreesToRadians) * RadiusWidth ,
+					Center.Y - Math.Cos(EndAngle * DegreesToRadians) * RadiusHeight);
+			//ArcSegment.IsLargeArc = (EndAngle - StartAngle) >= 180.0;
+			if (EndAngle < StartAngle)
 			{
-				finalArcSegment.IsLargeArc = ( EndAngle - StartAngle ) <= -180.0;
+				finalArcSegment.IsLargeArc = (EndAngle - StartAngle) <= -180.0;
 				finalArcSegment.SweepDirection = SweepDirection.Counterclockwise;
 			}
 			else
 			{
-				finalArcSegment.IsLargeArc = ( EndAngle - StartAngle ) >= 180.0;
+				finalArcSegment.IsLargeArc = (EndAngle - StartAngle) >= 180.0;
 				finalArcSegment.SweepDirection = SweepDirection.Clockwise;
 			}
 		}
-		finalArcSegment.Size = new Size( RadiusWidth , RadiusHeight );
+		finalArcSegment.Size = new Size(RadiusWidth, RadiusHeight);
 
 		return finalArcSegment;
 	}
@@ -328,7 +316,7 @@ public partial class RingShape : Path
 
 	#region Value Calculations
 
-	private static Size CalculateEqualSize(Size size, double strokeThickness)
+	static Size CalculateEqualSize(Size size, double strokeThickness)
 	{
 		double adjWidth = size.Width;
 		double adjHeight = size.Height;
@@ -336,16 +324,12 @@ public partial class RingShape : Path
 		var smaller = Math.Min(adjWidth, adjHeight);
 
 		if (smaller > strokeThickness * 2)
-		{
 			return new Size(smaller, smaller);
-		}
 		else
-		{
 			return new Size(strokeThickness * 2, strokeThickness * 2);
-		}
 	}
 
-	private static double CalculateEqualRadius(DependencyObject d, double radiusWidth, double radiusHeight, double strokeThickness)
+	static double CalculateEqualRadius(DependencyObject d, double radiusWidth, double radiusHeight, double strokeThickness)
 	{
 		RingShape ringShape = (RingShape)d;
 
@@ -355,27 +339,20 @@ public partial class RingShape : Path
 		var smaller = Math.Min(adjWidth, adjHeight);
 
 		if (smaller <= strokeThickness)
-		{
 			return strokeThickness;
-		}
 		else if (smaller >= ((ringShape._equalSize.Width / 2) - (strokeThickness / 2)))
-		{
 			return (ringShape._equalSize.Width / 2) - (strokeThickness / 2);
-		}
 		else
-		{
 			return smaller;
-		}
 	}
 
-	private static Point CalculateCenter(double Width, double Height)
+	static Point CalculateCenter(double Width, double Height)
 	{
 		Point calculatedCenter = new Point((Width / 2.0), (Height / 2.0));
-
 		return calculatedCenter;
 	}
 
-	private static void CalculateAndSetNormalizedAngles(DependencyObject d, double minAngle, double maxAngle)
+	static void CalculateAndSetNormalizedAngles(DependencyObject d, double minAngle, double maxAngle)
 	{
 		RingShape ringShape = (RingShape)d;
 
@@ -394,11 +371,10 @@ public partial class RingShape : Path
 		if (result > ringShape._normalizedMinAngle + 360)
 			result = result - 360;
 
-
 		ringShape._normalizedMaxAngle = result;
 	}
 
-	private static double CalculateModulus(double number, double divider)
+	static double CalculateModulus(double number, double divider)
 	{
 		// Calculate the modulus
 		var result = number % divider;
@@ -409,46 +385,34 @@ public partial class RingShape : Path
 		return result;
 	}
 
-	private void ValidateAngle(DependencyObject d, double angle, bool isStart)
+	void ValidateAngle(DependencyObject d, double angle, bool isStart)
 	{
 		RingShape ringShape = (RingShape)d;
 
 		if (angle >= _normalizedMaxAngle)
 		{
 			if (isStart == true)
-			{
 				_validStartAngle = _normalizedMaxAngle;
-			}
 			else
-			{
 				_validEndAngle = _normalizedMaxAngle;
-			}
 		}
 		else if (angle <= _normalizedMinAngle)
 		{
 			if (isStart == true)
-			{
 				_validStartAngle = _normalizedMinAngle;
-			}
 			else
-			{
 				_validEndAngle = _normalizedMinAngle;
-			}
 		}
 		else
 		{
 			if (isStart == true)
-			{
 				_validStartAngle = angle;
-			}
 			else
-			{
 				_validEndAngle = angle;
-			}
 		}
 	}
 
-	private void AdjustRadiusWidth(DependencyObject d, double radiusWidth, double strokeThickness)
+	void AdjustRadiusWidth(DependencyObject d, double radiusWidth, double strokeThickness)
 	{
 		RingShape ringShape = (RingShape)d;
 
@@ -456,20 +420,14 @@ public partial class RingShape : Path
 		var threshold = strokeThickness;
 
 		if (radiusWidth >= maxValue)
-		{
 			ringShape._radiusWidth = maxValue;
-		}
 		else if (radiusWidth <= maxValue && radiusWidth >= threshold)
-		{
 			ringShape._radiusWidth = radiusWidth;
-		}
 		else
-		{
 			ringShape._radiusWidth = threshold;
-		}
 	}
 
-	private void AdjustRadiusHeight(DependencyObject d, double radiusHeight, double strokeThickness)
+	void AdjustRadiusHeight(DependencyObject d, double radiusHeight, double strokeThickness)
 	{
 		RingShape ringShape = (RingShape)d;
 
@@ -477,17 +435,11 @@ public partial class RingShape : Path
 		var threshold = strokeThickness;
 
 		if (radiusHeight >= maxValue)
-		{
 			ringShape._radiusHeight = maxValue;
-		}
 		else if (radiusHeight <= maxValue && radiusHeight >= threshold)
-		{
 			ringShape._radiusHeight = radiusHeight;
-		}
 		else
-		{
 			ringShape._radiusHeight = threshold;
-		}
 	}
 
 	#endregion

@@ -180,17 +180,30 @@
                 <GradientStop Offset="0.3" Color="#F0FF0000" />
                 <GradientStop Offset="1.0" Color="#F0FF3200" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientButtonNormalBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#F0ADDBFF" />
                 <GradientStop Offset="0.3" Color="#F066BCFF" />
                 <GradientStop Offset="1.0" Color="#F0305D7A" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientButtonPressedBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#F066BCFF" />
                 <GradientStop Offset="0.3" Color="#F0305D7A" />
                 <GradientStop Offset="1.0" Color="#F0ADDBFF" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="GradientStorageNormalBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Offset="0.0" Color="#F0F0F0F0" />
+                <GradientStop Offset="0.5" Color="#F066a9dd" />
+                <GradientStop Offset="1.0" Color="#F0305D7A" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="GradientStorageCautionBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Offset="0.0" Color="#F0F0F0F0" />
+                <GradientStop Offset="0.5" Color="#F0FFD800" />
+                <GradientStop Offset="1.0" Color="#F0897200" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="GradientStorageCriticalBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Offset="0.0" Color="#F0F0F0F0" />
+                <GradientStop Offset="0.5" Color="#F0FF0000" />
+                <GradientStop Offset="1.0" Color="#F07A0000" />
             </LinearGradientBrush>
 
             <media:AcrylicBrush
@@ -3952,10 +3965,15 @@
             <PenLineCap x:Key="StorageRingValueEndCap">Round</PenLineCap>
             <PenLineCap x:Key="StorageRingTrackStartCap">Round</PenLineCap>
             <PenLineCap x:Key="StorageRingTrackEndCap">Round</PenLineCap>
+
+            <!--<StaticResource x:Key="StorageRingValueBrush" ResourceKey="AccentFillColorDefaultBrush" />-->
+            <StaticResource x:Key="StorageRingValueBrush" ResourceKey="GradientStorageNormalBrush" />
+            <!--<StaticResource x:Key="StorageRingValueCautionBrush" ResourceKey="SystemFillColorCautionBrush" />-->
+            <StaticResource x:Key="StorageRingValueCautionBrush" ResourceKey="GradientStorageCautionBrush" />
+            <!--<StaticResource x:Key="StorageRingValueCriticalBrush" ResourceKey="SystemFillColorCriticalBrush" />-->
+            <StaticResource x:Key="StorageRingValueCriticalBrush" ResourceKey="GradientStorageCriticalBrush" />
+
             <StaticResource x:Key="StorageRingBackgroundBrush" ResourceKey="ControlFillColorTransparentBrush" />
-            <StaticResource x:Key="StorageRingValueBrush" ResourceKey="AccentFillColorDefaultBrush" />
-            <StaticResource x:Key="StorageRingValueCautionBrush" ResourceKey="SystemFillColorCautionBrush" />
-            <StaticResource x:Key="StorageRingValueCriticalBrush" ResourceKey="SystemFillColorCriticalBrush" />
             <StaticResource x:Key="StorageRingValueDisabledBrush" ResourceKey="AccentFillColorDisabledBrush" />
             <StaticResource x:Key="StorageRingTrackBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
             <StaticResource x:Key="StorageRingTrackCautionBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
@@ -4073,10 +4091,15 @@
             <x:Double x:Key="StorageBarValueHeight">6</x:Double>
             <x:Double x:Key="StorageBarTrackHeight">2</x:Double>
             <Thickness x:Key="StorageBarPadding">4,4,4,4</Thickness>
+
+            <!--<StaticResource x:Key="StorageBarValueBrush" ResourceKey="AccentFillColorDefaultBrush" />-->
+            <StaticResource x:Key="StorageBarValueBrush" ResourceKey="GradientStorageNormalBrush" />
+            <!--<StaticResource x:Key="StorageBarValueCautionBrush" ResourceKey="SystemFillColorCautionBrush" />-->
+            <StaticResource x:Key="StorageBarValueCautionBrush" ResourceKey="GradientStorageCautionBrush" />
+            <!--<StaticResource x:Key="StorageBarValueCriticalBrush" ResourceKey="SystemFillColorCriticalBrush" />-->
+            <StaticResource x:Key="StorageBarValueCriticalBrush" ResourceKey="GradientStorageCriticalBrush" />
+
             <StaticResource x:Key="StorageBarBackgroundBrush" ResourceKey="ControlFillColorTransparentBrush" />
-            <StaticResource x:Key="StorageBarValueBrush" ResourceKey="AccentFillColorDefaultBrush" />
-            <StaticResource x:Key="StorageBarValueCautionBrush" ResourceKey="SystemFillColorCautionBrush" />
-            <StaticResource x:Key="StorageBarValueCriticalBrush" ResourceKey="SystemFillColorCriticalBrush" />
             <StaticResource x:Key="StorageBarValueDisabledBrush" ResourceKey="AccentFillColorDisabledBrush" />
             <StaticResource x:Key="StorageBarTrackBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
             <StaticResource x:Key="StorageBarTrackCautionBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
