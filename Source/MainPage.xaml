@@ -554,18 +554,82 @@
                                 Flyout="{StaticResource SettingsFlyout}"
                                 FontFamily="Segoe MDL2 Assets"
                                 FontSize="{StaticResource FontSizeLarge}"
-                                IsEnabled="{Binding ProgressCommand.CanExecute, Mode=OneWay}" />
+                                IsEnabled="{Binding ProgressCommand.CanExecute, Mode=OneWay}">
+                                <ToolTipService.ToolTip>
+                                    <ToolTip Background="{StaticResource GradientToolTipBrush}" BackgroundSizing="OuterBorderEdge">
+                                        <StackPanel
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            CornerRadius="5"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <Image
+                                                Width="32"
+                                                Height="32"
+                                                Source="ms-appx:///Assets/Formula.png" />
+                                            <TextBlock
+                                                Margin="1"
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeMedium}"
+                                                Text="Adjusts the task delay time" />
+                                        </StackPanel>
+                                    </ToolTip>
+                                </ToolTipService.ToolTip>
+                            </Button>
                             <ToggleButton
                                 x:Name="tbMessagePane"
                                 Checked="ToggleOnChanged"
                                 Style="{StaticResource ToolbarToggleButton}"
                                 Unchecked="ToggleOnChanged">
                                 <FontIcon FontSize="24" Glyph="{StaticResource Message}" />
+                                <ToolTipService.ToolTip>
+                                    <ToolTip Background="{StaticResource GradientToolTipBrush}" BackgroundSizing="OuterBorderEdge">
+                                        <StackPanel
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            CornerRadius="5"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <Image
+                                                Width="32"
+                                                Height="32"
+                                                Source="ms-appx:///Assets/Formula.png" />
+                                            <TextBlock
+                                                Margin="1"
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeMedium}"
+                                                Text="Opens the PubSub SplitView.Pane" />
+                                        </StackPanel>
+                                    </ToolTip>
+                                </ToolTipService.ToolTip>
+
                             </ToggleButton>
                             <Button
                                 x:Name="tbButton"
                                 Click="ToolbarButtonOnClick"
                                 Style="{StaticResource ToolbarButton}">
+                                <ToolTipService.ToolTip>
+                                    <local:ToolTipFade x:Name="CustomTooltip" FadeTime="500">
+                                        <Border
+                                            MinWidth="300"
+                                            Padding="10"
+                                            Background="{StaticResource GradientToolTipBrush}"
+                                            BorderBrush="{StaticResource GradientDebugBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6">
+                                            <StackPanel
+                                                CornerRadius="6"
+                                                Orientation="Vertical"
+                                                Spacing="8">
+                                                <TextBlock
+                                                    FontWeight="Bold"
+                                                    Foreground="White"
+                                                    Text="ToolTipFade" />
+                                                <TextBlock Foreground="White" Text="This is a custom fading tool tip." />
+                                            </StackPanel>
+                                        </Border>
+                                    </local:ToolTipFade>
+                                </ToolTipService.ToolTip>
                                 <Button.Flyout>
                                     <!--
                                         If LightDismissOverlayMode is "On", the Page background will be darkened when it's opened.

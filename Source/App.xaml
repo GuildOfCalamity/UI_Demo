@@ -57,6 +57,10 @@
             <Color x:Key="LinearBorder4">#F0101E28</Color>
             <Color x:Key="PrimaryFill">#F0F0F0</Color>
             <Color x:Key="SecondaryFill">#76b9ed</Color>
+            <Color x:Key="tt1">#DF66BCFF</Color>
+            <Color x:Key="tt2">#DF4E91C4</Color>
+            <Color x:Key="tt3">#DF3F769E</Color>
+            <Color x:Key="tt4">#DF1E384C</Color>
             <!--#endregion-->
 
             <!--#region [Brushes]-->
@@ -204,6 +208,13 @@
                 <GradientStop Offset="0.0" Color="#F0F0F0F0" />
                 <GradientStop Offset="0.5" Color="#F0FF0000" />
                 <GradientStop Offset="1.0" Color="#F07A0000" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GradientToolTipBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="{StaticResource tt1}" />
+                <GradientStop Offset="0.1" Color="{StaticResource tt2}" />
+                <GradientStop Offset="0.2" Color="{StaticResource tt3}" />
+                <GradientStop Offset="1.0" Color="{StaticResource tt4}" />
             </LinearGradientBrush>
 
             <media:AcrylicBrush

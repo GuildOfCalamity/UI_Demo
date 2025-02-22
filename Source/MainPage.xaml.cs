@@ -149,6 +149,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Running…");
             IsBusy = true;
+            DispatcherQueue.TryEnqueue(() => { CustomTooltip.IsOpen = IsBusy; });
             Amount = 0;
             for (int i = 0; i < 100; i++)
             {
@@ -163,7 +164,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Finished");
             IsBusy = false;
-            var dr = await DialogHelper.ShowAsync(new Dialogs.ResultsDialog("Action Result", "Progress button's action event was completed.", MessageLevel.Information), Content as FrameworkElement);
+            DispatcherQueue.TryEnqueue(() => { CustomTooltip.IsOpen = IsBusy; });
+            //var dr = await DialogHelper.ShowAsync(new Dialogs.ResultsDialog("Action Result", "Progress button's action event was completed.", MessageLevel.Information), Content as FrameworkElement);
         };
         #endregion
 
@@ -313,6 +315,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         Microsoft.UI.Xaml.Hosting.WindowsXamlManager? wxm = Microsoft.UI.Xaml.Hosting.WindowsXamlManager.GetForCurrentThread();
         wxm.XamlShutdownCompletedOnThread += (s, e) => { Debug.WriteLine($"[INFO] XamlShutdownCompleted"); };
     }
+
+    void ToggleFadeTooltip() => CustomTooltip.IsOpen = !CustomTooltip.IsOpen;
 
     #region [Events]
     void MainPageOnLoaded(object sender, RoutedEventArgs e)
