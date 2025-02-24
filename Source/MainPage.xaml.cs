@@ -60,6 +60,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     readonly DispatcherQueue _localDispatcher;
 
     public Action? ProgressButtonClickEvent { get; set; }
+    public Action? FadeImageTapEvent { get; set; }
     public event PropertyChangedEventHandler? PropertyChanged;
     bool _isBusy = false;
     public bool IsBusy
@@ -166,6 +167,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             IsBusy = false;
             DispatcherQueue.TryEnqueue(() => { CustomTooltip.IsOpen = IsBusy; });
             //var dr = await DialogHelper.ShowAsync(new Dialogs.ResultsDialog("Action Result", "Progress button's action event was completed.", MessageLevel.Information), Content as FrameworkElement);
+        };
+        #endregion
+
+        #region [Action example for our FadeImage control]
+        FadeImageTapEvent += () => 
+        { 
+            tbMessages.DispatcherQueue.TryEnqueue(() => Debug.WriteLine($"[INFO] FadeImage was tapped at {DateTime.Now.ToLongTimeString()}")); 
         };
         #endregion
 
@@ -416,12 +424,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
             _ = Task.Run(async () => 
             {
-                //await AndThenExample();
-
+                int size = 0;
                 while (!App.IsClosing)
                 {
-                    await Task.Delay(500);
-                    Size = Math.Round((DateTime.Now.Second / 60.0) * 100, 0, MidpointRounding.ToEven);
+                    //Size = Math.Round((DateTime.Now.Second / 60.0) * 100, 0, MidpointRounding.ToEven);
+                    int slope = (int)Extensions.EaseInQuadratic(size/10);
+                    await Task.Delay(95 - Math.Min(94, slope));
+                    if (size > 100) { size = 0; }
+                    Size = size++;
                 }
             });
         }
@@ -872,6 +882,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     else
                     {
                         Debug.WriteLine($"[INFO] Ignoring non right-click event at {position}");
+                        
+                        // Testing custom FadeImage control.
+                        if (FadeImage.IsVisible)
+                            FadeImage.IsVisible = false;
+                        else
+                            FadeImage.IsVisible = true;
                     }
                 }
             }
@@ -1812,19 +1828,21 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     #region [AndThen Extension]
     async Task AndThenExample()
     {
-        var result = await ReadSomethingAsync("data").AndThen(ConvertToUpperAsync, ex => "Error occurred during AndThen");
+        var result = await ReadSomethingAsync().AndThen(ConvertToUpperAsync, ex => "Error occurred during AndThen");
         Debug.WriteLine($"[DEBUG] {result}");
     }
 
-    async Task<string> ReadSomethingAsync(string path)
+    async Task<string> ReadSomethingAsync()
     {
-        await Task.Delay(1500);
+        await Task.Delay(1000);
         return "Some example data to be used for uppercase.";
     }
 
     async Task<string> ConvertToUpperAsync(string text)
     {
         await Task.Delay(500);
+        if (Random.Shared.Next(8) == 7)
+            throw new Exception("Fake exception during ConvertToUpperAsync");
         return text.ToUpper();
     }
     #endregion

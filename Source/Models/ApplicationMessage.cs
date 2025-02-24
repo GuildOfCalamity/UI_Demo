@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace UI_Demo;
 
-public class ApplicationMessage
+public class ApplicationMessage : ICloneable
 {
     public ModuleId Module { get; set; }
     public string? MessageText { get; set; }
@@ -11,6 +11,7 @@ public class ApplicationMessage
     public Type? MessageType { get; set; }
     public object? MessagePayload { get; set; }
     public DateTime MessageTime { get; set; } = DateTime.Now;
+    public object Clone() => this.MemberwiseClone();
     public override string ToString() => $"{Module} => {MessageText} => {MessageTime}";
 }
 

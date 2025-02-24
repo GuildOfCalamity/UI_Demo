@@ -650,7 +650,7 @@ public sealed partial class ProgressButton : UserControl
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[CLICK_ERROR] => {ex.Message}");
+            Debug.WriteLine($"[ERROR] ThisButton_Click: {ex.Message}");
             //Debugger.Break();
         }
     }

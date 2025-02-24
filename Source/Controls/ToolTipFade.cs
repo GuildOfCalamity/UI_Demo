@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
@@ -69,6 +70,11 @@ public sealed partial class ToolTipFade : ToolTip
         _initialized = true;
     }
 
+    /// <summary>
+    /// Support for UI automation.
+    /// </summary>
+    protected override AutomationPeer OnCreateAutomationPeer() => new ToolTipFadeAutomationPeer(this);
+
     void InitializeAnimations()
     {
         #region [Fade In]
@@ -126,5 +132,22 @@ public sealed partial class ToolTipFade : ToolTip
     {
         Debug.WriteLine($"[INFO] FadeOutStoryboard was started.");
         _fadeOutStoryboard?.Begin();
+    }
+}
+
+/// <summary>
+/// Support for UI automation.
+/// </summary>
+public class ToolTipFadeAutomationPeer : FrameworkElementAutomationPeer
+{
+    public ToolTipFadeAutomationPeer(ToolTipFade control) : base(control) { }
+    protected override string GetClassNameCore() => "ToolTipFade";
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Group;
+    protected override string GetNameCore()
+    {
+        if (((ToolTipFade)Owner).Name is string str)
+            return str;
+
+        return base.GetNameCore();
     }
 }
