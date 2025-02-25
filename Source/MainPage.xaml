@@ -276,7 +276,7 @@
                     <!--#endregion-->
                 </Grid.Resources>
 
-
+                <!--#region [FadeImage Control]-->
                 <local:FadeImage
                     x:Name="FadeImage"
                     Grid.RowSpan="2"
@@ -285,12 +285,12 @@
                     Height="300"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    FadeDuration="0:0:1.1"
+                    FadeDuration="0:0:1.25"
                     FadeStyle="ZoomAndRotate"
                     IsVisible="True"
                     Source="ms-appx:///Assets/FadeImage.png"
                     TapEvent="{x:Bind FadeImageTapEvent, Mode=OneWay}" />
-
+                <!--#endregion-->
 
                 <!--<local:SeparatorLine
                 Grid.Row="0"
@@ -320,6 +320,158 @@
                 HorizontalAlignment="Left"
                 Background="{StaticResource GradientHorizontalBrush}" />-->
 
+                <!--#region [Vertical Expander Menu]-->
+
+                <!--  [Left Side Vertical Menu]  -->
+                <local:CustomExpander
+                    Grid.Row="1"
+                    Grid.RowSpan="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Width="310"
+                    Height="110"
+                    Margin="0"
+                    Padding="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Background="{StaticResource GradientLeftMenuBrush}"
+                    ExpandDirection="Up">
+                    <local:CustomExpander.Header>
+                        <local:CompositionShadow
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            BlurRadius="2"
+                            OffsetX="1.5"
+                            OffsetY="1.5"
+                            ShadowOpacity="1"
+                            Color="#559AD0">
+                            <TextBlock
+                                FontSize="{StaticResource FontSizeLarge}"
+                                Foreground="{StaticResource PrimaryBrush}"
+                                Text="Vertical Menu" />
+                        </local:CompositionShadow>
+                    </local:CustomExpander.Header>
+                    <local:CustomExpander.RenderTransform>
+                        <CompositeTransform
+                            Rotation="90"
+                            ScaleX="1"
+                            ScaleY="1"
+                            TranslateX="-95"
+                            TranslateY="105" />
+                    </local:CustomExpander.RenderTransform>
+                    <ScrollViewer
+                        CanBeScrollAnchor="False"
+                        FlowDirection="LeftToRight"
+                        HorizontalScrollBarVisibility="Visible"
+                        RenderTransformOrigin="0.5,0.5"
+                        VerticalScrollBarVisibility="Disabled">
+                        <StackPanel
+                            Padding="10"
+                            Orientation="Horizontal"
+                            RenderTransformOrigin="0.5,0.5"
+                            Spacing="10">
+                            <!--  These button controls are designed to only have a font icon and no text.  -->
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #1">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Wifi}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #2">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Globe}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #3">
+                                <FontIcon FontSize="16" Glyph="{StaticResource ActionCenter}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #4">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Audio}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #5">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Zoom}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #6">
+                                <FontIcon FontSize="16" Glyph="{StaticResource AreaChart}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #7">
+                                <FontIcon FontSize="16" Glyph="{StaticResource BandBattery3}" />
+                            </Button>
+                        </StackPanel>
+                    </ScrollViewer>
+                </local:CustomExpander>
+
+                <!--  [Right Side Vertical Menu]  -->
+                <!--<local:CustomExpander
+                    Grid.Row="1"
+                    Grid.RowSpan="2"
+                    Grid.Column="1"
+                    Grid.ColumnSpan="2"
+                    Width="310"
+                    Height="110"
+                    Margin="0"
+                    Padding="0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Background="{StaticResource GradientRightMenuBrush}"
+                    ExpandDirection="Down">
+                    <local:CustomExpander.Header>
+                        <local:CompositionShadow
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            BlurRadius="2"
+                            OffsetX="1.5"
+                            OffsetY="1.5"
+                            ShadowOpacity="1"
+                            Color="#559AD0">
+                            <TextBlock
+                                FontSize="{StaticResource FontSizeLarge}"
+                                Foreground="{StaticResource PrimaryBrush}"
+                                Text="Vertical Menu" />
+                        </local:CompositionShadow>
+                    </local:CustomExpander.Header>
+                    <local:CustomExpander.RenderTransform>
+                        <CompositeTransform
+                            Rotation="90"
+                            ScaleX="1"
+                            ScaleY="1"
+                            TranslateX="-95"
+                            TranslateY="105" />
+                    </local:CustomExpander.RenderTransform>
+                    <ScrollViewer
+                        CanBeScrollAnchor="False"
+                        FlowDirection="LeftToRight"
+                        HorizontalScrollBarVisibility="Visible"
+                        RenderTransformOrigin="0.5,0.5"
+                        VerticalScrollBarVisibility="Disabled">
+                        <StackPanel
+                            Padding="10"
+                            Orientation="Horizontal"
+                            RenderTransformOrigin="0.5,0.5"
+                            Spacing="10">
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #1">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Wifi}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #2">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Globe}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #3">
+                                <FontIcon FontSize="16" Glyph="{StaticResource ActionCenter}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #4">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Audio}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #5">
+                                <FontIcon FontSize="16" Glyph="{StaticResource Zoom}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #6">
+                                <FontIcon FontSize="16" Glyph="{StaticResource AreaChart}" />
+                            </Button>
+                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #7">
+                                <FontIcon FontSize="16" Glyph="{StaticResource BandBattery3}" />
+                            </Button>
+                        </StackPanel>
+                    </ScrollViewer>
+                </local:CustomExpander>-->
+
+                <!--#endregion-->
+
+                <!--#region [General Content]-->
                 <StackPanel
                     Grid.Row="1"
                     Grid.ColumnSpan="2"
@@ -342,6 +494,7 @@
                             FontSize="20"
                             Foreground="{StaticResource SecondaryBorderBrush}"
                             Text="{x:Bind local:App.DeviceModel}" />
+
                         <!--
                             If you want indeterminate behavior for the ProgressButton, don't set ProgressValue.
                         -->
@@ -835,6 +988,7 @@
                     <Image Source="ms-appx:///Assets/AltIcon5.png" />
                 </StackPanel>-->
                 </StackPanel>
+                <!--#endregion-->
 
                 <!--#region [InfoBar Content]-->
                 <StackPanel
@@ -857,7 +1011,6 @@
                 <!--#endregion-->
 
             </Grid>
-
 
         </SplitView>
 

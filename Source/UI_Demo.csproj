@@ -69,6 +69,14 @@
      <DefineConstants>IS_UNPACKAGED</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="Assets\Screenshot.png" />
+    <Content Remove="Assets\Screenshot2.png" />
+    <Content Remove="Assets\Screenshot3.png" />
+    <Content Remove="Assets\Screenshot4.png" />
+    <Content Remove="Assets\Screenshot5.png" />
+    <Content Remove="Assets\Screenshot6.png" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="Assets\AltIcon1.png" />
     <None Remove="Assets\AltIcon2.png" />
     <None Remove="Assets\AltIcon3.png" />

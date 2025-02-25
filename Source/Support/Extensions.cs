@@ -35,6 +35,7 @@ namespace UI_Demo;
 public static class Extensions
 {
     #region [Easing Functions]
+    
     // Quadratic Easing (t²): EaseInQuadratic → Starts slow, speeds up.  EaseOutQuadratic → Starts fast, slows down.  EaseInOutQuadratic → Symmetric acceleration-deceleration.
     public static double EaseInQuadratic(double t) => t * t;
     public static double EaseOutQuadratic(double t) => 1.0 - (1.0 - t) * (1.0 - t);
@@ -90,6 +91,7 @@ public static class Extensions
     public static double EaseInBack(double t) => 2.70158 * t * t * t - 1.70158 * t * t;
     public static double EaseOutBack(double t) => 1.0 + 2.70158 * Math.Pow(t - 1.0, 3.0) + 1.70158 * Math.Pow(t - 1.0, 2.0);
     public static double EaseInOutBack(double t) => t < 0.5 ? (Math.Pow(2.0 * t, 2.0) * ((2.59491 + 1.0) * 2.0 * t - 2.59491)) / 2.0 : (Math.Pow(2.0 * t - 2.0, 2.0) * ((2.59491 + 1.0) * (t * 2.0 - 2.0) + 2.59491) + 2.0) / 2.0;
+    
     #endregion
 
     public static bool IsStrongPasswordRegex(string pswd)
@@ -2603,26 +2605,6 @@ public static class Extensions
         return "";
     }
 
-    /// <summary>
-    /// Enables or disables the Header.
-    /// </summary>
-    public static void IsLocked(this Expander expander, bool locked)
-    {
-        var ctrl = (expander.Header as FrameworkElement)?.Parent as Control;
-        if (ctrl != null)
-            ctrl.IsEnabled = locked;
-    }
-
-    /// <summary>
-    /// Sets the desired Height for content when expanded.
-    /// </summary>
-    public static void SetContentHeight(this Expander expander, double contentHeight)
-    {
-        var ctrl = expander.Content as FrameworkElement;
-        if (ctrl != null)
-            ctrl.Height = contentHeight;
-    }
-
     public static void SetOrientation(this VirtualizingLayout layout, Orientation orientation)
     {
         // Note:
@@ -3549,7 +3531,6 @@ public static class Extensions
         return target.TransformToVisual(parent).TransformPoint(default(Windows.Foundation.Point));
     }
 
-
     public static bool IsCtrlKeyDown()
     {
         var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
@@ -3580,7 +3561,7 @@ public static class Extensions
 
         foreach (var controlType in controlTypes)
         {
-            Debug.WriteLine($"[FrameworkElement] {controlType.FullName}", $"ControlInheritingFrom");
+            Debug.WriteLine($"[FrameworkElement] ControlInheritingFrom: {controlType.FullName}");
         }
     }
 
@@ -3591,12 +3572,12 @@ public static class Extensions
             yield break;
         }
 
-        Type current = element;
+        Type? current = element;
 
         while (current != null && current != typeof(UIElement))
         {
             yield return current;
-            current = current.GetTypeInfo().BaseType;
+            current = current?.GetTypeInfo()?.BaseType;
         }
     }
 

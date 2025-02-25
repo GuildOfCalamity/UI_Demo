@@ -324,8 +324,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         wxm.XamlShutdownCompletedOnThread += (s, e) => { Debug.WriteLine($"[INFO] XamlShutdownCompleted"); };
     }
 
-    void ToggleFadeTooltip() => CustomTooltip.IsOpen = !CustomTooltip.IsOpen;
-
     #region [Events]
     void MainPageOnLoaded(object sender, RoutedEventArgs e)
     {
@@ -434,6 +432,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     Size = size++;
                 }
             });
+            
         }
         _loaded = true;
     }
@@ -1845,5 +1844,83 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             throw new Exception("Fake exception during ConvertToUpperAsync");
         return text.ToUpper();
     }
+    #endregion
+
+    #region [IBackgroundTask Experiment]
+    /// <summary>
+    ///   This method sets registry keys such that COM understands to launch
+    ///   the specified executable with parameters when no such process is
+    ///   running (to start the background task execution).
+    ///   
+    ///   This method must be called on installation of the sparse signed
+    ///   package. The DesktopBridge application populates this registry key
+    ///   automatically upon package deployment. These COM server properties
+    ///   are defined in the package manifest.
+    ///   
+    ///   The process that is responsible for handling a particular background
+    ///   task must call RegisterProcessForBackgroundTask on the IBackgroundTask
+    ///   derived class. So long as this process is registered with the aforementioned 
+    ///   API, it will be the process that has instances of the background task invoked.
+    /// </summary>
+    /// <remarks>
+    ///   https://github.com/microsoft/DesktopBridgeToUWP-Samples/blob/master/Samples/BackgroundTaskWinMainComSample/CS/MainWindow.xaml.cs
+    /// </remarks>
+    static void PopulateComRegistrationKeys(string ExecutablePath, Guid TaskClsid)
+    {
+        if (TaskClsid == Guid.Empty)
+            _ = Guid.TryParse("715EBBEE-2014-DEAD-BEEF-5B201C6A8056", out TaskClsid);
+
+        if (string.IsNullOrEmpty(ExecutablePath))
+            ExecutablePath = Environment.ProcessPath!;
+
+        Microsoft.Win32.RegistryKey? regKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
+        regKey = regKey?.OpenSubKey("Classes", true);
+        regKey = regKey?.OpenSubKey("CLSID", true);
+
+        regKey = regKey?.CreateSubKey(TaskClsid.ToString("B").ToUpper(), true);
+        regKey?.SetValue(null, System.IO.Path.GetFileName(ExecutablePath));
+
+        regKey = regKey?.CreateSubKey("LocalServer32", true);
+        regKey?.SetValue(null, $"\"{ExecutablePath}\"");
+
+        regKey?.Close();
+        return;
+    }
+
+    #region [Using WinAppSDK 1.7+]
+#if WINAPPSDK_1_7_OR_GREATER
+    /// <summary>
+    /// Microsoft.Windows.ApplicationModel.Background will be added in WinAppSDK 1.7+
+    /// https://github.com/microsoft/WindowsAppSDK-Samples/commit/e123eae14bec61a1b47b1128a7322bbcc23a5ff3
+    /// https://github.com/microsoft/WindowsAppSDK-Samples/tree/release/experimental/Samples/BackgroundTask/cs-winui/BackgroundTaskBuilder
+    /// </summary>
+    void registerTimeZoneChangedTask()
+    {
+        // Using the WinAppSDK BackgroundTaskBuilder API to register a background task
+        var taskBuilder = new Microsoft.Windows.ApplicationModel.Background.BackgroundTaskBuilder
+        {
+            Name = "TimeZoneChangedTask"
+        };
+        taskBuilder.SetTaskEntryPointClsid(typeof(BackgroundTask).GUID);
+        //taskBuilder.SetTaskEntryPointClsid(typeof(TimeTriggeredTask).GUID);
+        taskBuilder.SetTrigger(new Windows.ApplicationModel.Background.SystemTrigger(Windows.ApplicationModel.Background.SystemTriggerType.TimeZoneChange, false));
+        Windows.ApplicationModel.Background.BackgroundTaskRegistration task = taskBuilder.Register();
+    }
+
+    /// <summary>
+    /// https://github.com/microsoft/WindowsAppSDK-Samples/tree/release/experimental/Samples/BackgroundTask/cs-winui/BackgroundTaskBuilder
+    /// </summary>
+    void unregisterTasks()
+    {
+        var allRegistrations = Windows.ApplicationModel.Background.BackgroundTaskRegistration.AllTasks;
+        foreach (var taskPair in allRegistrations)
+        {
+            Windows.ApplicationModel.Background.IBackgroundTaskRegistration task = taskPair.Value;
+            task.Unregister(true);
+        }
+    }
+#endif
+    #endregion
+
     #endregion
 }
