@@ -1785,6 +1785,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             .AsTask());
     }
 
+    void ExpanderMenuButtonClick(object sender, RoutedEventArgs e)
+    {
+        var btn = sender as Button;
+        UpdateInfoBar($"Expander menu item '{btn?.Tag}' was clicked", MessageLevel.Information);
+    }
+
     /// <summary>
     /// Download simulation using <see cref="IAsyncOperationWithProgress{TResult, TProgress}"/>.
     /// </summary>
