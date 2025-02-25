@@ -14,7 +14,7 @@
 ## 🎛️ Description
 - A test application for changes and updates made to the [WindowsAppSDK](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/stable-channel).
 - I've added code examples for customizing `Microsoft.UI.Xaml.Controls.ContentDialog`, `Windows.UI.StartScreen.JumpList`, `Windows.ApplicationModel.Activation`, `Microsoft.UI.Windowing.AppWindow` and `Microsoft.UI.Windowing.DisplayArea` management, and creating gradient window backdrops via `Microsoft.UI.Composition.SpriteVisual`. The blur effects are created from scratch without the use of any 3rd party NuGets.
-- This source also contains plenty of tips and tricks for any application, including but not limited to: TaskBar, PubSub, Toast, Channels, DispatcherQueue, Image Capture, Split View, Profile Settings, Machine Environment, Stylers, Custom Controls, Converters, P/Invoke, Extensions, et al.
+- This source also contains plenty of tips and tricks for any application, including but not limited to: TaskBar, PubSub, Toast, Channels, DispatcherQueue, Image Capture, Split View, Profile Settings, Machine Environment, Stylers, Converters, P/Invoke, Extensions, et al.
 - There's a hidden surprise if you're watching the `SplitView` PubSub message queue while **CapsLock** is on.
 - Don't forget to give a ⭐ if you find any of my code helpful or educational.
 
@@ -39,6 +39,10 @@
 > JumpList
 
 ![JumpList](Source/Assets/Screenshot5.png)
+
+> Vertical Menu
+
+![JumpList](Source/Assets/Screenshot6.png)
 
 ## 🧾 License/Warranty
 * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish and distribute copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
