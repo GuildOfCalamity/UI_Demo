@@ -334,6 +334,7 @@
                     Padding="0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
+                    AutoCollapse="True"
                     Background="{StaticResource GradientLeftMenuBrush}"
                     ExpandDirection="Up">
                     <local:CustomExpander.Header>

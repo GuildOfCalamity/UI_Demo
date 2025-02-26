@@ -14,9 +14,11 @@ namespace UI_Demo;
 /// </summary>
 public partial class CustomExpander : Expander
 {
+    DispatcherTimer? _tmrCollapse;
     bool _initialized = false;
-    long ContentPropertyToken { get; set; }
+    long _cpToken { get; set; }
 
+    #region [Dependency Properties]
     public double ExpanderHeight
     {
         get => (double)GetValue(ExpanderHeightProperty);
@@ -26,7 +28,7 @@ public partial class CustomExpander : Expander
         nameof(ExpanderHeight),
         typeof(double),
         typeof(CustomExpander),
-        new PropertyMetadata(32, OnExpanderHeightChanged));
+        new PropertyMetadata(36, OnExpanderHeightChanged));
 
     static void OnExpanderHeightChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -53,10 +55,55 @@ public partial class CustomExpander : Expander
             control.SetContentWidth(newValue);
     }
 
+    public bool AutoCollapse
+    {
+        get => (bool)GetValue(AutoCollapseProperty);
+        set => SetValue(AutoCollapseProperty, value);
+    }
+    public static readonly DependencyProperty AutoCollapseProperty = DependencyProperty.Register(
+        nameof(AutoCollapse),
+        typeof(bool),
+        typeof(CustomExpander),
+        new PropertyMetadata(false, OnAutoCollapseChanged));
+
+    static void OnAutoCollapseChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (CustomExpander)d;
+        if (e.NewValue is bool newValue)
+            control.SetAutoCollapse(newValue);
+    }
+    void SetAutoCollapse(bool enabled)
+    {
+        if (enabled)
+        {
+            if (_tmrCollapse == null)
+            {
+                _tmrCollapse = new DispatcherTimer();
+                _tmrCollapse.Interval = TimeSpan.FromSeconds(5);
+                _tmrCollapse.Tick += CollapseTimerOnTick;
+                //_tmrCollapse.Start();
+            }
+            else
+                _tmrCollapse?.Stop();
+        }
+        else
+        {
+            if (_tmrCollapse != null)
+            {
+                _tmrCollapse.Tick -= CollapseTimerOnTick;
+                _tmrCollapse?.Stop();
+                _tmrCollapse = null;
+            }
+        }
+    }
+    #endregion
+
     public CustomExpander()
     {
         this.Loaded += OnCustomExpanderLoaded;
         this.Unloaded += OnCustomExpanderUnloaded;
+        this.PointerExited += OnPointerExited;
+        this.PointerEntered += OnPointerEntered;
     }
 
     protected override void OnApplyTemplate()
@@ -66,10 +113,37 @@ public partial class CustomExpander : Expander
         _initialized = true;
     }
 
+    void OnPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        Debug.WriteLine($"[INFO] Expander => PointerEntered {DateTime.Now.ToLongTimeString()}");
+        if (AutoCollapse)
+            _tmrCollapse?.Stop();
+    }
+
+    void OnPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        Debug.WriteLine($"[INFO] Expander => PointerExited {DateTime.Now.ToLongTimeString()}");
+        if (AutoCollapse)
+            _tmrCollapse?.Start();
+    }
+
+    void CollapseTimerOnTick(object? sender, object e)
+    {
+        if (this.IsExpanded)
+        {
+            Debug.WriteLine($"[INFO] Expander => TimerTick: COLLAPSE");
+            this.IsExpanded = false;
+            _tmrCollapse?.Stop();
+        }
+        else
+        {
+            Debug.WriteLine($"[INFO] Expander => TimerTick: IGNORE");
+        }
+    }
 
     void OnCustomExpanderLoaded(object sender, RoutedEventArgs e)
     {
-        ContentPropertyToken = RegisterPropertyChangedCallback(Expander.ContentProperty, OnContentPropertyChanged);
+        _cpToken = RegisterPropertyChangedCallback(Expander.ContentProperty, OnContentPropertyChanged);
     }
 
     void OnContentPropertyChanged(DependencyObject sender, DependencyProperty dp)
@@ -79,7 +153,7 @@ public partial class CustomExpander : Expander
 
     void OnCustomExpanderUnloaded(object sender, RoutedEventArgs e)
     {
-        UnregisterPropertyChangedCallback(Expander.ContentProperty, ContentPropertyToken);
+        UnregisterPropertyChangedCallback(Expander.ContentProperty, _cpToken);
     }
 }
 
