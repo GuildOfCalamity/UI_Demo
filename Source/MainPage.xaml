@@ -473,31 +473,59 @@
                             Orientation="Horizontal"
                             RenderTransformOrigin="0.5,0.5"
                             Spacing="10">
-                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #1">
+                            <Button
+                                Click="ExpanderMenuButtonClick"
+                                Style="{StaticResource RotatedButton}"
+                                Tag="emb1"
+                                ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Wifi}" />
                             </Button>
-                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #2">
+                            <Button
+                                Click="ExpanderMenuButtonClick"
+                                Style="{StaticResource RotatedButton}"
+                                Tag="emb2"
+                                ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Globe}" />
                             </Button>
-                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #3">
+                            <Button
+                                Click="ExpanderMenuButtonClick"
+                                Style="{StaticResource RotatedButton}"
+                                Tag="emb3"
+                                ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource ActionCenter}" />
                             </Button>
-                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #4">
+                            <Button
+                                Click="ExpanderMenuButtonClick"
+                                Style="{StaticResource RotatedButton}"
+                                Tag="emb4"
+                                ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Audio}" />
                             </Button>
-                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #5">
+                            <Button
+                                Click="ExpanderMenuButtonClick"
+                                Style="{StaticResource RotatedButton}"
+                                Tag="emb5"
+                                ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Zoom}" />
                             </Button>
-                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #6">
+                            <Button
+                                Click="ExpanderMenuButtonClick"
+                                Style="{StaticResource RotatedButton}"
+                                Tag="emb6"
+                                ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource AreaChart}" />
                             </Button>
-                            <Button Style="{StaticResource RotatedButton}" ToolTipService.ToolTip="Menu option #7">
+                            <Button
+                                Click="ExpanderMenuButtonClick"
+                                Style="{StaticResource RotatedButton}"
+                                Tag="emb7"
+                                ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource BandBattery3}" />
                             </Button>
                         </StackPanel>
                     </ScrollViewer>
                 </local:CustomExpander>-->
-
+                
                 <!--#endregion-->
 
                 <!--#region [General Content]-->
