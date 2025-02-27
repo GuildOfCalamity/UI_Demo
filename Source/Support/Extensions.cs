@@ -91,8 +91,16 @@ public static class Extensions
     public static double EaseInBack(double t) => 2.70158 * t * t * t - 1.70158 * t * t;
     public static double EaseOutBack(double t) => 1.0 + 2.70158 * Math.Pow(t - 1.0, 3.0) + 1.70158 * Math.Pow(t - 1.0, 2.0);
     public static double EaseInOutBack(double t) => t < 0.5 ? (Math.Pow(2.0 * t, 2.0) * ((2.59491 + 1.0) * 2.0 * t - 2.59491)) / 2.0 : (Math.Pow(2.0 * t - 2.0, 2.0) * ((2.59491 + 1.0) * (t * 2.0 - 2.0) + 2.59491) + 2.0) / 2.0;
-    
+
     #endregion
+
+    public static string SanitizeFileNameOrPath(this string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+            return string.Empty;
+
+        return string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
+    }
 
     public static bool IsStrongPasswordRegex(string pswd)
     {
@@ -782,6 +790,31 @@ public static class Extensions
     }
 
     /// <summary>
+    /// Similar to <see cref="GetReadableTime(TimeSpan)"/>.
+    /// </summary>
+    /// <param name="timeSpan"><see cref="TimeSpan"/></param>
+    /// <returns>formatted text</returns>
+    public static string ToReadableString(this TimeSpan span)
+    {
+        var parts = new StringBuilder();
+        if (span.Days > 0)
+            parts.Append($"{span.Days} day{(span.Days == 1 ? string.Empty : "s")} ");
+        if (span.Hours > 0)
+            parts.Append($"{span.Hours} hour{(span.Hours == 1 ? string.Empty : "s")} ");
+        if (span.Minutes > 0)
+            parts.Append($"{span.Minutes} minute{(span.Minutes == 1 ? string.Empty : "s")} ");
+        if (span.Seconds > 0)
+            parts.Append($"{span.Seconds} second{(span.Seconds == 1 ? string.Empty : "s")} ");
+        if (span.Milliseconds > 0)
+            parts.Append($"{span.Milliseconds} millisecond{(span.Milliseconds == 1 ? string.Empty : "s")} ");
+
+        if (parts.Length == 0) // result was less than 1 millisecond
+            return $"{span.TotalMilliseconds:N4} milliseconds"; // similar to span.Ticks
+        else
+            return parts.ToString().Trim();
+    }
+
+    /// <summary>
     /// Display a readable sentence as to when that time happened.
     /// e.g. "5 minutes ago" or "in 2 days"
     /// </summary>
@@ -987,6 +1020,21 @@ public static class Extensions
     }
 
     /// <summary>
+    /// Over-engineered using LINQ
+    /// </summary>
+    public static string ConvertToBinary(this int number) => Enumerable.Range(0, (int)Math.Log(number, 2) + 1).Aggregate(string.Empty, (collected, bitshifts) => ((number >> bitshifts) & 1) + collected);
+
+    /// <summary>
+    /// Removes all non-numerics values from a string.
+    /// </summary>
+    public static string ToNumeric(this string str) => Regex.Replace(str, "[^0-9]", "");
+
+    /// <summary>
+    /// Removes all non-numerics values from a string and formats to currency.
+    /// </summary>
+    public static string ToNumericCurrency(this decimal dec) => Regex.Replace(string.Format("{0:c}", dec), "[^0-9]", "");
+
+    /// <summary>
     /// Returns the AppData path including the <paramref name="moduleName"/>.
     /// e.g. "C:\Users\UserName\AppData\Local\MenuDemo\Settings"
     /// </summary>
@@ -1172,31 +1220,6 @@ public static class Extensions
     }
 
     public static int GetDecimalPlacesCount(this string valueString) => valueString.SkipWhile(c => c.ToString(CultureInfo.CurrentCulture) != CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator).Skip(1).Count();
-
-    /// <summary>
-    /// Similar to <see cref="GetReadableTime(TimeSpan)"/>.
-    /// </summary>
-    /// <param name="timeSpan"><see cref="TimeSpan"/></param>
-    /// <returns>formatted text</returns>
-    public static string ToReadableString(this TimeSpan span)
-    {
-        var parts = new StringBuilder();
-        if (span.Days > 0)
-            parts.Append($"{span.Days} day{(span.Days == 1 ? string.Empty : "s")} ");
-        if (span.Hours > 0)
-            parts.Append($"{span.Hours} hour{(span.Hours == 1 ? string.Empty : "s")} ");
-        if (span.Minutes > 0)
-            parts.Append($"{span.Minutes} minute{(span.Minutes == 1 ? string.Empty : "s")} ");
-        if (span.Seconds > 0)
-            parts.Append($"{span.Seconds} second{(span.Seconds == 1 ? string.Empty : "s")} ");
-        if (span.Milliseconds > 0)
-            parts.Append($"{span.Milliseconds} millisecond{(span.Milliseconds == 1 ? string.Empty : "s")} ");
-
-        if (parts.Length == 0) // result was less than 1 millisecond
-            return $"{span.TotalMilliseconds:N4} milliseconds"; // similar to span.Ticks
-        else
-            return parts.ToString().Trim();
-    }
 
     /// <summary>
     /// This should only be used on instantiated objects, not static objects.
@@ -3431,6 +3454,191 @@ public static class Extensions
         }
         else
             throw new Exception("Method is only viable with a packaged application.");
+    }
+
+    /// <summary>
+    /// Reads the lines of a <see cref="StorageFile"/> asynchronously.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to read.</param>
+    /// <returns>An asynchronous operation that returns an enumerable collection of strings representing the lines of the file.</returns>
+    public static async Task<IList<string>> ReadStorageFileLinesAsync(this IStorageFile file)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+
+        return await FileIO.ReadLinesAsync(file);
+    }
+
+    /// <summary>
+    /// Reads the entire contents of a <see cref="StorageFile"/> as a byte array asynchronously.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to read.</param>
+    /// <returns>An asynchronous operation that returns a byte array containing the file's contents.</returns>
+    public static async Task<byte[]> ReadStorageFileBufferAsync(this IStorageFile file)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+
+        var fileBuffer = await FileIO.ReadBufferAsync(file);
+        
+        // Convert the IBuffer to a byte array
+        byte[] fileData = new byte[fileBuffer.Length];
+        fileBuffer.CopyTo(fileData);
+        
+        return fileData;
+    }
+
+    /// <summary>
+    /// Reads the contents of a <see cref="StorageFile"/> as a string.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to read.</param>
+    /// <returns>The contents of the file as a string.</returns>
+    public static async Task<string> ReadStorageFileAsStringAsync(this IStorageFile file)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+
+        using (var stream = await file.OpenAsync(FileAccessMode.Read))
+        {
+            using (var reader = new StreamReader(stream.AsStreamForRead()))
+            {
+                return await reader.ReadToEndAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads the contents of a file as a string.
+    /// </summary>
+    /// <param name="file">Full path to the file to read.</param>
+    /// <returns>The contents of the file as a string.</returns>
+    public static async Task<string> ReadStorageFileAsStringAsync(string filePath)
+    {
+        if (string.IsNullOrEmpty(filePath))
+            throw new ArgumentNullException(nameof(filePath));
+
+        var file = await StorageFile.GetFileFromPathAsync(filePath);
+        using (var stream = await file.OpenAsync(FileAccessMode.Read))
+        {
+            using (var reader = new StreamReader(stream.AsStreamForRead()))
+            {
+                return await reader.ReadToEndAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads the contents of a <see cref="StorageFile"/> as a byte array.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to read.</param>
+    /// <returns>The contents of the file as a byte array.</returns>
+    public static async Task<byte[]> ReadStorageFileAsByteArrayAsync(this IStorageFile file)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+
+        using (var stream = await file.OpenAsync(FileAccessMode.Read))
+        {
+            using (var reader = new BinaryReader(stream.AsStreamForRead()))
+            {
+                return reader.ReadBytes((int)stream.Size);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Write the entire contents of <paramref name="buffer"/> asynchronously.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to read.</param>
+    /// <returns>An asynchronous operation that returns a byte array containing the file's contents.</returns>
+    public static async Task WriteStorageFileBufferAsync(this IStorageFile file, byte[] buffer)
+    {
+        if (buffer.Length == 0)
+            throw new ArgumentException(nameof(buffer));
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+
+        await FileIO.WriteBufferAsync(file, buffer.AsBuffer());
+    }
+
+
+    /// <summary>
+    /// Writes an array of strings to a <see cref="StorageFile"/> asynchronously.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to write to.</param>
+    /// <param name="lines">The array of strings to write.</param>
+    public static async Task WriteStorageFileLinesAsync(this IStorageFile file, string[] lines, bool append = true)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+        if (lines == null)
+            throw new ArgumentNullException(nameof(lines));
+
+        if (append)
+            await FileIO.AppendLinesAsync(file, lines);
+        else
+            await FileIO.WriteLinesAsync(file, lines);
+    }
+
+    /// <summary>
+    /// Writes an array of strings to a <see cref="StorageFile"/> asynchronously.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to write to.</param>
+    /// <param name="lines">The IEnumerable strings to write.</param>
+    public static async Task WriteStorageFileLinesAsync(this IStorageFile file, IEnumerable<string> lines, bool append = true)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+        if (lines == null)
+            throw new ArgumentNullException(nameof(lines));
+
+        if (append)
+            await FileIO.AppendLinesAsync(file, lines);
+        else
+            await FileIO.WriteLinesAsync(file, lines);
+    }
+
+    /// <summary>
+    /// Writes a string to a <see cref="StorageFile"/>.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to write to.</param>
+    /// <param name="content">The string to write.</param>
+    public static async Task WriteStringToStorageFileAsync(this IStorageFile file, string content)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+
+        if (string.IsNullOrEmpty(content))
+            throw new ArgumentException("Content cannot be null or empty.", nameof(content));
+
+        using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+        {
+            using (var writer = new StreamWriter(stream.AsStreamForWrite()))
+            {
+                await writer.WriteAsync(content);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes a byte array to a <see cref="StorageFile"/>.
+    /// </summary>
+    /// <param name="file">The <see cref="StorageFile"/> to write to.</param>
+    /// <param name="data">The byte array to write.</param>
+    public static async Task WriteByteArrayToStorageFileAsync(this IStorageFile file, byte[] data)
+    {
+        if (file == null)
+            throw new ArgumentNullException(nameof(file));
+        if (data == null)
+            throw new ArgumentNullException(nameof(data));
+
+        using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+        {
+            using (var writer = new BinaryWriter(stream.AsStreamForWrite()))
+            {
+                writer.Write(data);
+            }
+        }
     }
 
     /// <summary>

@@ -265,6 +265,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         });
 
         #region [ColorAnimationHelper test]
+        /*
         BasicButton.PointerEntered += (s, e) =>
         {
             ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand);
@@ -289,6 +290,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    ColorAnimationHelper.StopAnimation(s as Button);
         //    ColorAnimationHelper.CreateAndStartOneTimeAnimation(s as Button, Colors.White, Colors.Orchid, TimeSpan.FromSeconds(0.25));
         //};
+        */
         #endregion
 
         #region [Testing IAsyncOperations]

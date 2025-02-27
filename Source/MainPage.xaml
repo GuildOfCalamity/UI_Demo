@@ -525,7 +525,7 @@
                         </StackPanel>
                     </ScrollViewer>
                 </local:CustomExpander>-->
-                
+
                 <!--#endregion-->
 
                 <!--#region [General Content]-->
@@ -948,33 +948,6 @@
                                 </FontIcon.RenderTransform>
                             </FontIcon>-->
                             <Button
-                                x:Name="WinUIButton"
-                                Width="40"
-                                Height="40"
-                                Padding="0"
-                                CornerRadius="20"
-                                PointerEntered="ButtonCompositePointerEntered"
-                                PointerExited="ButtonCompositePointerExited"
-                                RenderTransformOrigin="0.5,0.5"
-                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
-                                Tapped="ButtonCompositeTapped">
-                                <Button.RenderTransform>
-                                    <CompositeTransform
-                                        x:Name="ButtonTransform1"
-                                        ScaleX="1"
-                                        ScaleY="1" />
-                                </Button.RenderTransform>
-                                <Button.Content>
-                                    <!--<SymbolIcon
-                                        Margin="0"
-                                        VerticalAlignment="Bottom"
-                                        Foreground="{ThemeResource GradientLine2Brush}"
-                                        RenderTransformOrigin="0.5,0.5"
-                                        Symbol="HangUp" />-->
-                                    <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
-                                </Button.Content>
-                            </Button>
-                            <Button
                                 Width="40"
                                 Height="40"
                                 Padding="0"
@@ -1002,13 +975,46 @@
                                 </Button.Content>
                             </Button>
                             <Button
-                                x:Name="BasicButton"
-                                Width="70"
-                                Height="32"
+                                x:Name="WinUIButton"
+                                Width="40"
+                                Height="40"
                                 Padding="0"
-                                Content="Basic"
-                                Foreground="Black"
-                                Style="{StaticResource BasicButton}" />
+                                CornerRadius="20"
+                                PointerEntered="ButtonCompositePointerEntered"
+                                PointerExited="ButtonCompositePointerExited"
+                                RenderTransformOrigin="0.5,0.5"
+                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                Tapped="ButtonCompositeTapped">
+                                <Button.RenderTransform>
+                                    <CompositeTransform
+                                        x:Name="ButtonTransform1"
+                                        ScaleX="1"
+                                        ScaleY="1" />
+                                </Button.RenderTransform>
+                                <Button.Content>
+                                    <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
+                                </Button.Content>
+                            </Button>
+                            <Button
+                                Width="40"
+                                Height="40"
+                                Padding="0"
+                                CornerRadius="20"
+                                PointerEntered="ButtonCompositePointerEntered"
+                                PointerExited="ButtonCompositePointerExited"
+                                RenderTransformOrigin="0.5,0.5"
+                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                Tapped="ButtonCompositeTapped">
+                                <Button.RenderTransform>
+                                    <CompositeTransform
+                                        x:Name="ButtonTransform3"
+                                        ScaleX="1"
+                                        ScaleY="1" />
+                                </Button.RenderTransform>
+                                <Button.Content>
+                                    <Image Width="40" Source="ms-appx:///Assets/Spinner39.png" />
+                                </Button.Content>
+                            </Button>
                         </StackPanel>
                     </local:GroupBox>
                     <StackPanel Orientation="Horizontal" Spacing="20">
