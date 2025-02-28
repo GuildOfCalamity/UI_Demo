@@ -32,6 +32,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 
 using WinRT.Interop;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UI_Demo;
 
@@ -58,7 +59,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     readonly int _maxMessages = 50;
     readonly ObservableCollection<ApplicationMessage>? _coreMessages;
     readonly DispatcherQueue _localDispatcher;
-
+    DispatcherQueueSynchronizationContext? _syncContext;
+    static Windows.UI.Color[] _colorScale1 = Extensions.CreateColorScale(0, 10, 100);
+    static Windows.UI.Color[] _colorScale2 = Extensions.CreateColorScale(0, 10, 200);
+    static Windows.UI.Color[] _colorScaleFull = Extensions.GetAllColors();
     public Action? ProgressButtonClickEvent { get; set; }
     public Action? FadeImageTapEvent { get; set; }
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -134,6 +138,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     public ICommand SwitchDelayCommand { get; private set; }
     public ICommand ProgressCommand { get; private set; }
+    public ICommand KeyboardAcceleratorCommand { get; private set; }
 
     public MainPage()
     {
@@ -144,6 +149,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         MessageSplitView.PaneClosed += OnPaneOpenedOrClosed;
         App.WindowSizeChanged += SizeChangeEvent;
         PopulateAssets();
+
+        _localDispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        _syncContext = new Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(_localDispatcher);
+        SynchronizationContext.SetSynchronizationContext(_syncContext);
 
         #region [Action example for our ProgressButton control]
         ProgressButtonClickEvent += async () =>
@@ -204,7 +213,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             _lvl5 = new SolidColorBrush(Colors.Red);
         #endregion
 
-        _localDispatcher = DispatcherQueue.GetForCurrentThread();
         _coreMessages = new();
         Binding binding = new Binding { Mode = BindingMode.OneWay, Source = _coreMessages };
         BindingOperations.SetBinding(lvChannelMessages, ListView.ItemsSourceProperty, binding);
@@ -263,6 +271,28 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 Debug.WriteLine($"[WARNING] Parameter was not a string, nothing to do.");
             }
         });
+
+        // Configure example keyboard relay command.
+        KeyboardAcceleratorCommand = new RelayCommand<KeyboardAcceleratorInvokedEventArgs>(ExecuteKeyboardAcceleratorCommand);
+
+        #region [Keyboard Accelerators]
+        AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Up, static (_, kaea) => {
+            if (kaea.Element is Page ctrl) {
+                var clr1 = _colorScale1[Random.Shared.Next(0, _colorScale1.Length)];
+                var clr2 = _colorScaleFull[Random.Shared.Next(0, _colorScaleFull.Length)];
+                ctrl.Background = Extensions.CreateLinearGradientBrush(Colors.Transparent, clr1, clr2);
+                kaea.Handled = true;
+            }
+        });
+        AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Down, static (_, kaea) => {
+            if (kaea.Element is Page ctrl) {
+                var clr1 = _colorScale1[Random.Shared.Next(0, _colorScale1.Length)];
+                var clr2 = _colorScaleFull[Random.Shared.Next(0, _colorScaleFull.Length)];
+                ctrl.Background = Extensions.CreateLinearGradientBrush(Colors.Transparent, clr1, clr2);
+                kaea.Handled = true;
+            }
+        });
+        #endregion
 
         #region [ColorAnimationHelper test]
         /*
@@ -1143,7 +1173,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         // Angle animation
         DoubleAnimation rotateAnimation = new DoubleAnimation
         {
-            To = scale switch { 1.0 => 0, > 1.1 => 160, > 1.0 => 90, _ => 0 },
+            To = scale switch { 1.0 => 0, > 1.1 => 90, > 1.0 => 60, _ => 0 },
             Duration = TimeSpan.FromMilliseconds(ms),
             AutoReverse = scale switch { 1.0 => false, > 1.1 => true, > 1.0 => false, _ => false },
             EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut },
@@ -1278,6 +1308,40 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             Assets.Add(f);
         }
+    }
+
+    /// <summary>
+    ///   <c>Post()</c> is the asynchronous method used in marshaling the delegate to the UI thread.
+    ///   <c>Send()</c> is the synchronous method used in marshaling the delegate to the UI thread.
+    /// </summary>
+    public void UseSyncContext(Action? action, bool usePost = true)
+    {
+        if (_syncContext is null)
+        {
+            _syncContext = new Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
+            SynchronizationContext.SetSynchronizationContext(_syncContext);
+            /* [When to Use SetSynchronizationContext]
+            Before Starting Asynchronous Operations:
+              - Set the synchronization context at the beginning of your application, typically in the constructor 
+                of your main window or application class. This ensures that any asynchronous operations that follow 
+                will use the correct context for UI updates.
+            When Using DispatcherQueue:
+              - If your application uses the DispatcherQueue for managing UI updates, you should set the synchronization 
+                context to an instance of DispatcherQueueSynchronizationContext. This allows your asynchronous code to post 
+                work back to the UI thread correctly.
+            In Background Threads:
+              - If you are running background tasks that need to update the UI, set the synchronization context to ensure 
+                that these updates are marshaled back to the UI thread. This is crucial for avoiding cross-thread exceptions.
+            Handling WebView2:
+              - If your application integrates with WebView2, you may need to set the synchronization context to ensure 
+                that the WebView can interact with the UI thread properly, especially during initialization.
+            */
+        }
+
+        if (usePost)
+            _syncContext?.Post(_ => action?.Invoke(), null);
+        else
+            _syncContext?.Send(_ => action?.Invoke(), null);
     }
     #endregion
 
@@ -1486,6 +1550,54 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
         }
         catch (InvalidOperationException) { }
+    }
+    #endregion
+
+    #region [Keyboard Accelerator]
+    /// <summary>
+    /// Helper for injecting keyboard commands for the application.
+    /// </summary>
+    public void AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers keyModifiers, Windows.System.VirtualKey key, Windows.Foundation.TypedEventHandler<KeyboardAccelerator, KeyboardAcceleratorInvokedEventArgs> handler)
+    {
+        var accelerator = new KeyboardAccelerator()
+        {
+            Modifiers = keyModifiers,
+            Key = key
+        };
+        accelerator.Invoked += handler;
+        KeyboardAccelerators.Add(accelerator);
+    }
+
+    /// <summary>
+    /// For testing XAML KeyboardAccelerator Key="Number1" Modifiers="Control"
+    /// </summary>
+    /// <param name="e"><see cref="KeyboardAcceleratorInvokedEventArgs"/></param>
+    void KeyboardAcceleratorOnInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) => ExecuteKeyboardAcceleratorCommand(args);
+    void ExecuteKeyboardAcceleratorCommand(KeyboardAcceleratorInvokedEventArgs? e)
+    {
+        if (e is null)
+            return;
+
+        var ctrl = e.Element as FrameworkElement;
+        if (ctrl is not null)
+            UseSyncContext(() => tbMessages.Text = $"ActualSize is {ctrl.ActualSize}");
+
+        int menuOption = e.KeyboardAccelerator.Key switch
+        {
+            Windows.System.VirtualKey.Number0 => 0, Windows.System.VirtualKey.NumberPad0 => 0,
+            Windows.System.VirtualKey.Number1 => 1, Windows.System.VirtualKey.NumberPad1 => 1,
+            Windows.System.VirtualKey.Number2 => 2, Windows.System.VirtualKey.NumberPad2 => 2,
+            Windows.System.VirtualKey.Number3 => 3, Windows.System.VirtualKey.NumberPad3 => 3,
+            Windows.System.VirtualKey.Number4 => 4, Windows.System.VirtualKey.NumberPad4 => 4,
+            Windows.System.VirtualKey.Number5 => 5, Windows.System.VirtualKey.NumberPad5 => 5,
+            Windows.System.VirtualKey.Number6 => 6, Windows.System.VirtualKey.NumberPad6 => 6,
+            Windows.System.VirtualKey.Number7 => 7, Windows.System.VirtualKey.NumberPad7 => 7,
+            Windows.System.VirtualKey.Number8 => 8, Windows.System.VirtualKey.NumberPad8 => 8,
+            Windows.System.VirtualKey.Number9 => 9, Windows.System.VirtualKey.NumberPad9 => 9,
+            _ => 0,
+        };
+
+        e.Handled = true;
     }
     #endregion
 
@@ -1842,6 +1954,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     async Task<string> ReadSomethingAsync()
     {
         await Task.Delay(1000);
+        UseSyncContext(() => { tbMessages.Text = "Synchronization Context"; });
         return "Some example data to be used for uppercase.";
     }
 

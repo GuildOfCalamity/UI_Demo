@@ -24,6 +24,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -93,6 +94,28 @@ public static class Extensions
     public static double EaseInOutBack(double t) => t < 0.5 ? (Math.Pow(2.0 * t, 2.0) * ((2.59491 + 1.0) * 2.0 * t - 2.59491)) / 2.0 : (Math.Pow(2.0 * t - 2.0, 2.0) * ((2.59491 + 1.0) * (t * 2.0 - 2.0) + 2.59491) + 2.0) / 2.0;
 
     #endregion
+
+    /// <summary>
+    /// Can be passed a list of repeats and will tally and sort a result of their frequency.
+    /// </summary>
+    public static List<KeyValuePair<string, int>> CountAndSortCategories(this List<string> categories)
+    {
+        try
+        {
+            var categoryCounts = categories
+                .GroupBy(category => category)
+                .Select(group => new KeyValuePair<string, int>(group.Key, group.Count()))
+                .OrderByDescending(pair => pair.Value)
+                .ToList();
+
+            return categoryCounts;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WARNING] CountAndSortCategories: {ex.Message}");
+            return new List<KeyValuePair<string, int>>();
+        }
+    }
 
     public static string SanitizeFileNameOrPath(this string fileName)
     {
@@ -619,10 +642,126 @@ public static class Extensions
     }
 
     /// <summary>
+    /// Compares two currency amounts formatted as <see cref="string"/>s.
+    /// </summary>
+    public static bool AreAmountsSimilar(string? amount1, string amount2)
+    {
+        if (string.IsNullOrEmpty(amount1))
+            return false;
+
+        if (TryParseDollarAmount(amount1, out decimal value1) && TryParseDollarAmount(amount2, out decimal value2))
+            return value1 == value2;
+
+        // If either parsing fails, consider the amounts not equal.
+        return false;
+    }
+
+    public static bool TryParseDollarAmount(string amount, out decimal value)
+    {
+        if (string.IsNullOrEmpty(amount))
+        {
+            value = 0;
+            return false;
+        }
+
+        // Remove the dollar sign if present
+        string cleanedAmount = amount.Replace(CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol, "").Trim();
+
+        // Attempt to parse the cleaned amount
+        return decimal.TryParse(cleanedAmount, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands | System.Globalization.NumberStyles.AllowCurrencySymbol, System.Globalization.CultureInfo.CurrentCulture, out value);
+        //return decimal.TryParse(cleanedAmount, NumberStyles.Currency, CultureInfo.InvariantCulture, out value);
+    }
+
+
+    /// <summary>
+    /// A more accurate averaging method by removing the outliers. 
+    /// <c>var median = CalculateMedianAdjustable(ListOfAmounts);</c>
+    /// </summary>
+    /// <param name="values"><see cref="List{T}"/></param>
+    /// <returns>the average of the <param name="values"</returns>
+    public static double CalculateMedian(List<double> values)
+    {
+        if (values == null || values.Count == 0)
+            return 0d;
+
+        values.Sort();
+
+        // Find the middle index
+        int count = values.Count;
+        double medianAverage;
+
+        if (count % 2 == 0)
+        {   // Even number of elements: average the two middle elements
+            int mid1 = count / 2 - 1;
+            int mid2 = count / 2;
+            medianAverage = (values[mid1] + values[mid2]) / 2.0;
+        }
+        else
+        {   // Odd number of elements: take the middle element
+            int mid = count / 2;
+            medianAverage = values[mid];
+        }
+
+        return medianAverage;
+    }
+
+    /// <summary>
+    /// A more accurate averaging method by removing the outliers. 
+    /// <c>var median = CalculateMedianAdjustable(ListOfAmounts, ListOfAmounts.Count / 2);</c>
+    /// </summary>
+    /// <param name="values"><see cref="List{T}"/></param>
+    /// <param name="sampleCount">how many of the middle values to sample</param>
+    /// <returns>the average of the <param name="values"</returns>
+    public static double CalculateMedianAdjustable(List<double> values, int sampleCount)
+    {
+        if (values == null || values.Count == 0)
+            return 0d;
+
+        if (sampleCount <= 0)
+            sampleCount = values.Count / 2;
+
+        values.Sort();
+
+        int count = values.Count;
+
+        if (sampleCount >= count && count > 2)
+            sampleCount = count - 2;
+        else if (sampleCount >= count && count <= 2)
+            sampleCount = count - 1;
+
+        // Calculate the starting index of the middle elements
+        int startIndex = Math.Abs((count - sampleCount) / 2);
+
+        // Get the middle elements
+        var middleElements = values.Skip(startIndex).Take(sampleCount);
+
+        // Calculate the average of the middle elements
+        double middleAverage = middleElements.Average();
+
+        return middleAverage;
+    }
+
+
+    /// <summary>
     /// Checks to see if a date is between two dates.
     /// </summary>
     public static bool Between(this DateTime dt, DateTime rangeBeg, DateTime rangeEnd) => dt.Ticks >= rangeBeg.Ticks && dt.Ticks <= rangeEnd.Ticks;
 
+    /// <summary>
+    /// Compares two <see cref="DateTime"/>s ignoring the hours, minutes and seconds.
+    /// </summary>
+    public static bool AreDatesSimilar(this DateTime? date1, DateTime? date2)
+    {
+        if (date1 is null && date2 is null)
+            return true;
+
+        if (date1 is null || date2 is null)
+            return false;
+
+        return date1.Value.Year == date2.Value.Year &&
+               date1.Value.Month == date2.Value.Month &&
+               date1.Value.Day == date2.Value.Day;
+    }
 
     /// <summary>
     /// Calculates the remaining months in the given <see cref="DateTime"/>.
@@ -2614,6 +2753,41 @@ public static class Extensions
         }
     }
 
+    /// <summary><code>
+    ///   Extensions.AddKeyboardAccelerator(SomePage, Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Up, static (_, kaea) => 
+    ///   {
+    ///      if (kaea.Element is Page ctrl) 
+    ///      {
+    ///         ctrl.Background = CreateLinearGradientBrush(Colors.Transparent, Colors.DodgerBlue, Colors.MidnightBlue);
+    ///         kaea.Handled = true;
+    ///      }
+    ///   });
+    /// </code></summary>
+    public static void AddKeyboardAccelerator(UIElement element, Windows.System.VirtualKeyModifiers keyModifiers, Windows.System.VirtualKey key, Windows.Foundation.TypedEventHandler<KeyboardAccelerator, KeyboardAcceleratorInvokedEventArgs> handler)
+    {
+        var accelerator = new KeyboardAccelerator()
+        {
+            Modifiers = keyModifiers,
+            Key = key
+        };
+        accelerator.Invoked += handler;
+        element.KeyboardAccelerators.Add(accelerator);
+    }
+
+    /// <summary>
+    /// Renders a snapshot of the <see cref="Microsoft.UI.Xaml.UIElement"/> 
+    /// visual tree to an <see cref="Microsoft.UI.Xaml.Media.ImageSource"/>.
+    /// </summary>
+    /// <param name="canvas"><see cref="Microsoft.UI.Xaml.Controls.Canvas"/></param>
+    /// <returns><see cref="Microsoft.UI.Xaml.Media.ImageBrush"/></returns>
+    public static async Task<Microsoft.UI.Xaml.Media.ImageBrush> CreateBrushFromCanvas(this Microsoft.UI.Xaml.Controls.Canvas canvas)
+    {
+        var renderTargetBitmap = new Microsoft.UI.Xaml.Media.Imaging.RenderTargetBitmap();
+        await renderTargetBitmap.RenderAsync(canvas);
+        var brush = new Microsoft.UI.Xaml.Media.ImageBrush { ImageSource = renderTargetBitmap };
+        return brush;
+    }
+
     /// <summary>
     /// Returns the selected item's content from a <see cref="ComboBox"/>.
     /// </summary>
@@ -2887,21 +3061,45 @@ public static class Extensions
     /// Generates a completely random <see cref="Windows.UI.Color"/>.
     /// </summary>
     /// <returns><see cref="Windows.UI.Color"/></returns>
-    public static Windows.UI.Color GetRandomWinUIColor()
+    public static Windows.UI.Color GetRandomWinUIColor(byte alpha = 255)
     {
         byte[] buffer = new byte[3];
         Random.Shared.NextBytes(buffer);
-        return Windows.UI.Color.FromArgb(255, buffer[0], buffer[1], buffer[2]);
+        return Windows.UI.Color.FromArgb(alpha, buffer[0], buffer[1], buffer[2]);
     }
 
-    public static Windows.UI.Color[] CreateColorScale(int start, int end)
+    public static Windows.UI.Color[] GetAllColors()
+    {
+        return typeof(Colors)
+            .GetProperties(BindingFlags.Public | BindingFlags.Static)
+            .Where(p => p.PropertyType == typeof(Windows.UI.Color))
+            .Select(p => (Windows.UI.Color)p.GetValue(null)!)
+            .ToArray();
+    }
+
+    public static Windows.UI.Color[] CreateBlueGreenColorScale(int start, int end)
     {
         var colors = new Windows.UI.Color[end - start + 1];
         for (int i = 0; i < colors.Length; i++)
         {
             float factor = ((float)i / (end - start)) * 255; // map the position to 0-255
             // Using red and green channels only.
-            colors[i] = Windows.UI.Color.FromArgb(255, (byte)(200 * factor), (byte)(255 - 10 * factor), 0); // create a color gradient from light to dark
+            colors[i] = Windows.UI.Color.FromArgb(255, 0, (byte)(255 - 10 * factor), (byte)(200 * factor)); // create a color gradient from light to dark
+        }
+        return colors;
+    }
+
+    public static Windows.UI.Color[] CreateColorScale(int start, int end, byte alpha = 255)
+    {
+        var colors = new Windows.UI.Color[end - start + 1];
+        for (int i = 0; i < colors.Length; i++)
+        {
+            float factor = (float)i / (end - start); // Normalize factor to 0-1
+            byte red = (byte)(200 * factor);         // Red increases
+            byte green = (byte)(255 - 10 * factor);  // Green decreases
+            byte blue = (byte)(155 - 10 * factor);   // Blue varies smoothly
+
+            colors[i] = Windows.UI.Color.FromArgb(alpha, red, green, blue);
         }
         return colors;
     }

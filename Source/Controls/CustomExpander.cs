@@ -55,6 +55,28 @@ public partial class CustomExpander : Expander
             control.SetContentWidth(newValue);
     }
 
+    public double AutoCollapseTime
+    {
+        get => (double)GetValue(AutoCollapseTimeProperty);
+        set => SetValue(AutoCollapseTimeProperty, value);
+    }
+    public static readonly DependencyProperty AutoCollapseTimeProperty = DependencyProperty.Register(
+        nameof(AutoCollapseTime),
+        typeof(double),
+        typeof(CustomExpander),
+        new PropertyMetadata(8d, OnCollapseTimeChanged));
+    static void OnCollapseTimeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (CustomExpander)d;
+        if (e.NewValue is double newValue)
+            control.SetCollapseTime(newValue);
+    }
+    void SetCollapseTime(double newValue)
+    {
+         if (_tmrCollapse is not null)
+             _tmrCollapse.Interval = TimeSpan.FromSeconds(AutoCollapseTime);
+    }
+ 
     public bool AutoCollapse
     {
         get => (bool)GetValue(AutoCollapseProperty);
@@ -79,7 +101,7 @@ public partial class CustomExpander : Expander
             if (_tmrCollapse == null)
             {
                 _tmrCollapse = new DispatcherTimer();
-                _tmrCollapse.Interval = TimeSpan.FromSeconds(5);
+                _tmrCollapse.Interval = TimeSpan.FromSeconds(AutoCollapseTime);
                 _tmrCollapse.Tick += CollapseTimerOnTick;
                 //_tmrCollapse.Start();
             }

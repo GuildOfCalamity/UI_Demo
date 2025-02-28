@@ -194,6 +194,11 @@
                 <GradientStop Offset="0.3" Color="#F0305D7A" />
                 <GradientStop Offset="1.0" Color="#F0ADDBFF" />
             </LinearGradientBrush>
+            <LinearGradientBrush x:Key="GradientButtonDisabledBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="#F0909090" />
+                <GradientStop Offset="0.3" Color="#F0505050" />
+                <GradientStop Offset="1.0" Color="#F0202020" />
+            </LinearGradientBrush>
             <LinearGradientBrush x:Key="GradientStorageNormalBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Offset="0.0" Color="#F0F0F0F0" />
                 <GradientStop Offset="0.5" Color="#F066a9dd" />
@@ -336,8 +341,68 @@
             </Style>
             <!--#endregion-->
 
-            <!--#region [Basic Button Styler]-->
-            <Style x:Key="BasicButton" TargetType="Button">
+            <!--#region [Bare Button Styler]-->
+            <Style x:Key="BareButton" TargetType="Button">
+                <Setter Property="BackgroundSizing" Value="OuterBorderEdge" />
+                <Setter Property="MinWidth" Value="40" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter
+                                x:Name="ContentPresenter"
+                                Padding="{TemplateBinding Padding}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                AutomationProperties.AccessibilityView="Raw"
+                                Background="{TemplateBinding Background}"
+                                BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                ContentTransitions="{TemplateBinding ContentTransitions}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.BackgroundTransition>
+                                    <BrushTransition Duration="0:0:0.20" />
+                                </ContentPresenter.BackgroundTransition>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </ContentPresenter>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!--#endregion-->
+
+            <!--#region [Gradient Button Styler]-->
+            <Style x:Key="GradientButton" TargetType="Button">
                 <Setter Property="BackgroundSizing" Value="OuterBorderEdge" />
                 <Setter Property="MinWidth" Value="40" />
                 <Setter Property="BorderBrush" Value="{ThemeResource AccentButtonBorderBrush}" />
@@ -382,7 +447,7 @@
                                         <VisualState x:Name="Disabled">
                                             <Storyboard>
                                                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
-                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource AccentButtonBackgroundDisabled}" />
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource GradientButtonDisabledBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
                                             </Storyboard>
                                         </VisualState>

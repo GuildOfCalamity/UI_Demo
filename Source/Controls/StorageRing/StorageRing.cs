@@ -15,6 +15,8 @@ namespace UI_Demo;
 /// </remarks>
 public partial class StorageRing : RangeBase
 {
+    const double Epsilon = 0.000000000001;
+
     #region [Backing Members]
     double _containerSize;          // Size of the inner container after padding
     double _containerCenter;        // Center X and Y value of the inner container
@@ -977,7 +979,7 @@ public partial class StorageRing : RangeBase
         double angleDifference = Math.Abs(MaxAngle - MinAngle);
 
         // Check if the angle difference is equal to 360 degrees
-        return Math.Abs(angleDifference - 360) < Double.Epsilon;
+        return Math.Abs(angleDifference - 360) < Epsilon;
     }
 
     /*

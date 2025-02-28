@@ -9,6 +9,12 @@
     Background="Transparent"
     mc:Ignorable="d">
 
+    <!--#region [Page-wide keyboard event]-->
+    <!--<Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="Number1" Invoked="KeyboardAcceleratorOnInvoked" Modifiers="Control" />
+    </Page.KeyboardAccelerators>-->
+    <!--#endregion-->
+
     <Page.Resources>
         <!--#region [Settings Flyout]-->
         <Flyout
@@ -960,7 +966,7 @@
                                 Tapped="ButtonCompositeTapped">
                                 <Button.RenderTransform>
                                     <CompositeTransform
-                                        x:Name="ButtonTransform2"
+                                        x:Name="ButtonTransform1"
                                         ScaleX="1"
                                         ScaleY="1" />
                                 </Button.RenderTransform>
@@ -975,7 +981,6 @@
                                 </Button.Content>
                             </Button>
                             <Button
-                                x:Name="WinUIButton"
                                 Width="40"
                                 Height="40"
                                 Padding="0"
@@ -983,16 +988,16 @@
                                 PointerEntered="ButtonCompositePointerEntered"
                                 PointerExited="ButtonCompositePointerExited"
                                 RenderTransformOrigin="0.5,0.5"
-                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                Style="{StaticResource BareButton}"
                                 Tapped="ButtonCompositeTapped">
                                 <Button.RenderTransform>
                                     <CompositeTransform
-                                        x:Name="ButtonTransform1"
+                                        x:Name="ButtonTransform2"
                                         ScaleX="1"
                                         ScaleY="1" />
                                 </Button.RenderTransform>
                                 <Button.Content>
-                                    <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
+                                    <Image Width="40" Source="ms-appx:///Assets/SettingsIcon6.png" />
                                 </Button.Content>
                             </Button>
                             <Button
@@ -1003,7 +1008,7 @@
                                 PointerEntered="ButtonCompositePointerEntered"
                                 PointerExited="ButtonCompositePointerExited"
                                 RenderTransformOrigin="0.5,0.5"
-                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                Style="{StaticResource BareButton}"
                                 Tapped="ButtonCompositeTapped">
                                 <Button.RenderTransform>
                                     <CompositeTransform
@@ -1012,7 +1017,48 @@
                                         ScaleY="1" />
                                 </Button.RenderTransform>
                                 <Button.Content>
-                                    <Image Width="40" Source="ms-appx:///Assets/Spinner39.png" />
+                                    <Image Width="40" Source="ms-appx:///Assets/SettingsIcon10.png" />
+                                </Button.Content>
+                            </Button>
+                            <Button
+                                Width="40"
+                                Height="40"
+                                Padding="0"
+                                CornerRadius="20"
+                                PointerEntered="ButtonCompositePointerEntered"
+                                PointerExited="ButtonCompositePointerExited"
+                                RenderTransformOrigin="0.5,0.5"
+                                Style="{StaticResource BareButton}"
+                                Tapped="ButtonCompositeTapped">
+                                <Button.RenderTransform>
+                                    <CompositeTransform
+                                        x:Name="ButtonTransform4"
+                                        ScaleX="1"
+                                        ScaleY="1" />
+                                </Button.RenderTransform>
+                                <Button.Content>
+                                    <Image Width="30" Source="ms-appx:///Assets/SettingsIcon11.png" />
+                                </Button.Content>
+                            </Button>
+                            <Button
+                                x:Name="WinUIButton"
+                                Width="40"
+                                Height="40"
+                                Padding="0"
+                                CornerRadius="20"
+                                PointerEntered="ButtonCompositePointerEntered"
+                                PointerExited="ButtonCompositePointerExited"
+                                RenderTransformOrigin="0.5,0.5"
+                                Style="{StaticResource BareButton}"
+                                Tapped="ButtonCompositeTapped">
+                                <Button.RenderTransform>
+                                    <CompositeTransform
+                                        x:Name="ButtonTransform5"
+                                        ScaleX="1"
+                                        ScaleY="1" />
+                                </Button.RenderTransform>
+                                <Button.Content>
+                                    <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
                                 </Button.Content>
                             </Button>
                         </StackPanel>
