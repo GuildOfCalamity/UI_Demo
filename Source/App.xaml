@@ -61,6 +61,8 @@
             <Color x:Key="tt2">#DF4E91C4</Color>
             <Color x:Key="tt3">#DF3F769E</Color>
             <Color x:Key="tt4">#DF1E384C</Color>
+            <Color x:Key="ColorFrom">#FF4800FF</Color>
+            <Color x:Key="ColorTo">#FF10FFFF</Color>
             <!--#endregion-->
 
             <!--#region [Brushes]-->
@@ -100,21 +102,18 @@
                 <GradientStop Offset="0.6" Color="{StaticResource LinearBorder2}" />
                 <GradientStop Offset="1.0" Color="{StaticResource LinearBorder1}" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientFlyoutBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Offset="0.0" Color="{StaticResource SecondaryFill}" />
                 <GradientStop Offset="0.2" Color="{StaticResource LinearBorder3}" />
                 <GradientStop Offset="0.6" Color="{StaticResource LinearBorder2}" />
                 <GradientStop Offset="1.0" Color="{StaticResource SecondaryFill}" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientListBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#FF76b9ed" />
                 <GradientStop Offset="0.3" Color="#FFD0E0F0" />
                 <GradientStop Offset="0.5" Color="#FF66a9dd" />
                 <GradientStop Offset="1.0" Color="#FF304050" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientPipBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#FF304050" />
                 <GradientStop Offset="0.1" Color="#FF5483A8" />
@@ -122,43 +121,36 @@
                 <GradientStop Offset="0.9" Color="#FF5483A8" />
                 <GradientStop Offset="1.0" Color="#FF304050" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientSplitterBrush" StartPoint="0,1" EndPoint="1,1">
                 <GradientStop Offset="0.0" Color="#F066a9dd" />
                 <GradientStop Offset="0.3" Color="#F0305D7A" />
                 <GradientStop Offset="1.0" Color="#F0304050" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientSplitterHoverBrush" StartPoint="0,1" EndPoint="1,1">
                 <GradientStop Offset="0.0" Color="#F0304050" />
                 <GradientStop Offset="0.3" Color="#F0305D7A" />
                 <GradientStop Offset="1.0" Color="#F066a9dd" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientHorizontalBrush" StartPoint="0,1" EndPoint="1,1">
                 <GradientStop Offset="0.0" Color="#80505050" />
                 <GradientStop Offset="0.5" Color="#80E0E0E0" />
                 <GradientStop Offset="1.0" Color="#80505050" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientVerticalBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#80505050" />
                 <GradientStop Offset="0.5" Color="#80E0E0E0" />
                 <GradientStop Offset="1.0" Color="#80505050" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientLine1Brush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#F066a9dd" />
                 <GradientStop Offset="0.3" Color="#F0305D7A" />
                 <GradientStop Offset="1.0" Color="#F0304050" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientLine2Brush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#F0F0F0F0" />
                 <GradientStop Offset="0.3" Color="#F0A0B0C0" />
                 <GradientStop Offset="1.0" Color="#F076b9ed" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientDebugBrush" StartPoint="0,0.2" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="#F0F0F0F0" />
                 <GradientStop Offset="0.3" Color="#F0A0A0A0" />
@@ -185,19 +177,28 @@
                 <GradientStop Offset="1.0" Color="#F0FF3200" />
             </LinearGradientBrush>
             <LinearGradientBrush x:Key="GradientButtonNormalBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Offset="0.0" Color="#F0ADDBFF" />
-                <GradientStop Offset="0.3" Color="#F066BCFF" />
-                <GradientStop Offset="1.0" Color="#F0305D7A" />
+                <GradientStop Offset="0.0" Color="#BAE1FF" />
+                <GradientStop Offset="0.2" Color="#4885B5" />
+                <GradientStop Offset="0.5" Color="#376A89" />
+                <GradientStop Offset="1.0" Color="#274B60" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="GradientButtonPointerOverBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0.0" Color="#D8EEFF" />
+                <GradientStop Offset="0.2" Color="#4885B5" />
+                <GradientStop Offset="0.5" Color="#305D7A" />
+                <GradientStop Offset="1.0" Color="#274B60" />
             </LinearGradientBrush>
             <LinearGradientBrush x:Key="GradientButtonPressedBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Offset="0.0" Color="#F066BCFF" />
-                <GradientStop Offset="0.3" Color="#F0305D7A" />
-                <GradientStop Offset="1.0" Color="#F0ADDBFF" />
+                <GradientStop Offset="0.0" Color="#4076A0" />
+                <GradientStop Offset="0.2" Color="#93D0FF" />
+                <GradientStop Offset="0.5" Color="#376A89" />
+                <GradientStop Offset="1.0" Color="#274B60" />
             </LinearGradientBrush>
             <LinearGradientBrush x:Key="GradientButtonDisabledBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Offset="0.0" Color="#F0909090" />
-                <GradientStop Offset="0.3" Color="#F0505050" />
-                <GradientStop Offset="1.0" Color="#F0202020" />
+                <GradientStop Offset="0.0" Color="#808080" />
+                <GradientStop Offset="0.2" Color="#505050" />
+                <GradientStop Offset="0.5" Color="#404040" />
+                <GradientStop Offset="1.0" Color="#202020" />
             </LinearGradientBrush>
             <LinearGradientBrush x:Key="GradientStorageNormalBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Offset="0.0" Color="#F0F0F0F0" />
@@ -214,21 +215,18 @@
                 <GradientStop Offset="0.5" Color="#F0FF0000" />
                 <GradientStop Offset="1.0" Color="#F07A0000" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientToolTipBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0.0" Color="{StaticResource tt1}" />
                 <GradientStop Offset="0.1" Color="{StaticResource tt2}" />
                 <GradientStop Offset="0.2" Color="{StaticResource tt3}" />
                 <GradientStop Offset="1.0" Color="{StaticResource tt4}" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientLeftMenuBrush" StartPoint="1,1" EndPoint="1,0">
                 <GradientStop Offset="0.0" Color="#7F000000" />
                 <GradientStop Offset="0.3" Color="#7F202020" />
                 <GradientStop Offset="0.9" Color="#7F404040" />
                 <GradientStop Offset="1.0" Color="#7F909090" />
             </LinearGradientBrush>
-
             <LinearGradientBrush x:Key="GradientRightMenuBrush" StartPoint="1,1" EndPoint="1,0">
                 <GradientStop Offset="0.0" Color="#7F909090" />
                 <GradientStop Offset="0.1" Color="#7F404040" />
@@ -410,24 +408,42 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <ContentPresenter
-                                x:Name="ContentPresenter"
-                                Padding="{TemplateBinding Padding}"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                AutomationProperties.AccessibilityView="Raw"
-                                Background="{TemplateBinding Background}"
-                                BackgroundSizing="{TemplateBinding BackgroundSizing}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Content="{TemplateBinding Content}"
-                                ContentTemplate="{TemplateBinding ContentTemplate}"
-                                ContentTransitions="{TemplateBinding ContentTransitions}"
-                                CornerRadius="{TemplateBinding CornerRadius}"
-                                Foreground="{TemplateBinding Foreground}">
-                                <ContentPresenter.BackgroundTransition>
-                                    <BrushTransition Duration="0:0:0.20" />
-                                </ContentPresenter.BackgroundTransition>
+                            <!--
+                                The local:VisualExtensions.Scale="1,1,1" doesn't seem to have any effect and can probably be removed.
+                            -->
+                            <Grid
+                                x:Name="ContentGrid"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                local:VisualExtensions.Scale="1,1,1"
+                                RenderTransformOrigin="0.5,0.5">
+                                <!--
+                                    The RenderTransform must be included for the StoryBoards to work properly.
+                                -->
+                                <Grid.RenderTransform>
+                                    <ScaleTransform x:Name="ContentScale" ScaleX="1" ScaleY="1" />
+                                </Grid.RenderTransform>
+
+                                <ContentPresenter
+                                    x:Name="ContentPresenter"
+                                    Padding="{TemplateBinding Padding}"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    AutomationProperties.AccessibilityView="Raw"
+                                    Background="{TemplateBinding Background}"
+                                    BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    ContentTransitions="{TemplateBinding ContentTransitions}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    Foreground="{TemplateBinding Foreground}">
+                                    <ContentPresenter.BackgroundTransition>
+                                        <BrushTransition Duration="0:0:0.20" />
+                                    </ContentPresenter.BackgroundTransition>
+                                </ContentPresenter>
+
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="CommonStates">
                                         <VisualState x:Name="Normal">
@@ -435,6 +451,37 @@
                                                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
                                                     <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource GradientButtonNormalBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleX"
+                                                    To="1"
+                                                    Duration="0:0:0.1" />
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleY"
+                                                    To="1"
+                                                    Duration="0:0:0.1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource GradientButtonPointerOverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleX"
+                                                    To="1.05"
+                                                    Duration="0:0:0.1" />
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleY"
+                                                    To="1.05"
+                                                    Duration="0:0:0.1" />
                                             </Storyboard>
                                         </VisualState>
                                         <VisualState x:Name="Pressed">
@@ -442,6 +489,23 @@
                                                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
                                                     <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource GradientButtonPressedBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
+                                                <!--
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource PrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                -->
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleX"
+                                                    To="0.96"
+                                                    Duration="0:0:0.1" />
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleY"
+                                                    To="0.96"
+                                                    Duration="0:0:0.1" />
                                             </Storyboard>
                                         </VisualState>
                                         <VisualState x:Name="Disabled">
@@ -453,7 +517,8 @@
                                         </VisualState>
                                     </VisualStateGroup>
                                 </VisualStateManager.VisualStateGroups>
-                            </ContentPresenter>
+                            </Grid>
+
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
@@ -569,35 +634,62 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <ContentPresenter
-                                x:Name="ContentPresenter"
-                                Padding="{TemplateBinding Padding}"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                AutomationProperties.AccessibilityView="Raw"
-                                Background="{TemplateBinding Background}"
-                                BackgroundSizing="{TemplateBinding BackgroundSizing}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Content="{TemplateBinding Content}"
-                                ContentTemplate="{TemplateBinding ContentTemplate}"
-                                ContentTransitions="{TemplateBinding ContentTransitions}"
-                                CornerRadius="{TemplateBinding CornerRadius}"
-                                Foreground="{TemplateBinding Foreground}">
-                                <ContentPresenter.BackgroundTransition>
-                                    <BrushTransition Duration="0:0:0.40" />
-                                </ContentPresenter.BackgroundTransition>
-                                <ContentPresenter.RenderTransform>
-                                    <CompositeTransform
-                                        Rotation="-90"
-                                        ScaleX="1"
-                                        ScaleY="1"
-                                        TranslateX="-1"
-                                        TranslateY="25" />
-                                </ContentPresenter.RenderTransform>
+
+                            <Grid x:Name="ContentGrid" RenderTransformOrigin="0.5,0.5">
+                                <!--
+                                    The RenderTransform must be included for the StoryBoards to work properly.
+                                -->
+                                <Grid.RenderTransform>
+                                    <ScaleTransform x:Name="ContentScale" ScaleX="1" ScaleY="1" />
+                                </Grid.RenderTransform>
+
+                                <ContentPresenter
+                                    x:Name="ContentPresenter"
+                                    Padding="{TemplateBinding Padding}"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    AutomationProperties.AccessibilityView="Raw"
+                                    Background="{TemplateBinding Background}"
+                                    BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    ContentTransitions="{TemplateBinding ContentTransitions}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    Foreground="{TemplateBinding Foreground}">
+                                    <ContentPresenter.BackgroundTransition>
+                                        <BrushTransition Duration="0:0:0.40" />
+                                    </ContentPresenter.BackgroundTransition>
+                                    <ContentPresenter.RenderTransform>
+                                        <CompositeTransform
+                                            Rotation="-90"
+                                            ScaleX="1"
+                                            ScaleY="1"
+                                            TranslateX="-1"
+                                            TranslateY="25" />
+                                    </ContentPresenter.RenderTransform>
+                                </ContentPresenter>
+
+
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="CommonStates">
-                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="Normal">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleX"
+                                                    To="1"
+                                                    Duration="0:0:0.2" />
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleY"
+                                                    To="1"
+                                                    Duration="0:0:0.2" />
+                                            </Storyboard>
+                                        </VisualState>
                                         <VisualState x:Name="PointerOver">
                                             <Storyboard>
                                                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
@@ -609,6 +701,18 @@
                                                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
                                                     <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource AccentButtonForegroundPointerOver}" />
                                                 </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleX"
+                                                    To="1.08"
+                                                    Duration="0:0:0.2" />
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleY"
+                                                    To="1.08"
+                                                    Duration="0:0:0.2" />
                                             </Storyboard>
                                         </VisualState>
                                         <VisualState x:Name="Pressed">
@@ -622,6 +726,18 @@
                                                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
                                                     <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource AccentButtonForegroundPressed}" />
                                                 </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleX"
+                                                    To="0.95"
+                                                    Duration="0:0:0.2" />
+                                                <DoubleAnimation
+                                                    EnableDependentAnimation="True"
+                                                    Storyboard.TargetName="ContentScale"
+                                                    Storyboard.TargetProperty="ScaleY"
+                                                    To="0.95"
+                                                    Duration="0:0:0.2" />
                                             </Storyboard>
                                         </VisualState>
                                         <VisualState x:Name="Disabled">
@@ -642,7 +758,7 @@
                                         </VisualState>
                                     </VisualStateGroup>
                                 </VisualStateManager.VisualStateGroups>
-                            </ContentPresenter>
+                            </Grid>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

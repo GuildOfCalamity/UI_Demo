@@ -283,7 +283,7 @@ public static class ColorAnimationHelper
     /// Blends two Windows.UI.Color inputs based on the given ratio.
     /// <example><code>
     ///   /* Blend 75% blue and 25% red */
-    ///   Color blendedMoreTowardsBlue = ColorHelper.BlendColors(Colors.Red, Colors.Blue, 0.75);
+    ///   Color blendMoreTowardsBlue = ColorHelper.BlendColors(Colors.Red, Colors.Blue, 0.75);
     /// </code></example>
     /// </summary>
     /// <param name="color1">The first color.</param>

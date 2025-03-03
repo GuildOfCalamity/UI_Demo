@@ -63,6 +63,19 @@ public partial class App : Application
     public static CancellationTokenSource? CoreChannelToken;
 
     /// <summary>
+    /// Starting with the Windows 10 Fall Creators Update, Visual Studio provides a new 
+    ///   XAML designer that targets the Windows 10 Fall Creators Update and later.
+    /// Windows.ApplicationModel.DesignMode.DesignModeEnabled returns true when called 
+    ///   from user code running inside any version of the XAML designer, regardless of 
+    ///   which SDK version you target.
+    /// Use Windows.ApplicationModel.DesignMode.DesignMode2Enabled to differentiate code 
+    ///   that depends on functionality only enabled for a XAML designer that targets the 
+    ///   Windows 10 Fall Creators Update SDK or later.
+    /// </summary>
+    public static bool IsDesignModeEnabled => Windows.ApplicationModel.DesignMode.DesignModeEnabled;
+    public static bool IsDesignMode2Enabled => Windows.ApplicationModel.DesignMode.DesignMode2Enabled;
+
+    /// <summary>
     /// Testing for JsonDataHelper serialization.
     /// </summary>
     public static JsonDataHelper<List<ApplicationMessage>>? MessageLog { get; set; }

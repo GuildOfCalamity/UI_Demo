@@ -1107,7 +1107,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    transform.Rotation = 90;
         //}
         StartComboAnimation((Button)sender, 1.1, 200);
-        ColorAnimationHelper.CreateOrStartAnimation(sender as Button, Colors.White, Colors.DodgerBlue, TimeSpan.FromSeconds(0.8));
+        //ColorAnimationHelper.CreateOrStartAnimation(sender as Button, Colors.White, Colors.DodgerBlue, TimeSpan.FromSeconds(0.8));
     }
 
     void ButtonCompositePointerExited(object sender, PointerRoutedEventArgs e)
@@ -1121,7 +1121,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //    transform.Rotation = 0;
         //}
         StartComboAnimation((Button)sender, 1.0, 200);
-        ColorAnimationHelper.StopAnimation(sender as Button);
+        //ColorAnimationHelper.StopAnimation(sender as Button);
     }
 
     void ButtonCompositeTapped(object sender, TappedRoutedEventArgs e)

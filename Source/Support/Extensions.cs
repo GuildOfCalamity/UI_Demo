@@ -4161,6 +4161,220 @@ public static class Extensions
         return pennerEquation;
     }
 
+    /// <summary>
+    /// Converts a <see cref="string"/> value to a <see cref="Vector2"/> value.
+    /// This method always assumes the invariant culture for parsing values (',' separates numbers, '.' is the decimal separator).
+    /// The input text can either represents a single number (mapped to <see cref="Vector2(float)"/>, or multiple components.
+    /// Additionally, the format "&lt;float, float&gt;" is also allowed (though less efficient to parse).
+    /// </summary>
+    /// <param name="text">A <see cref="string"/> with the values to parse.</param>
+    /// <returns>The parsed <see cref="Vector2"/> value.</returns>
+    /// <exception cref="FormatException">Thrown when <paramref name="text"/> doesn't represent a valid <see cref="Vector2"/> value.</exception>
+    [Pure]
+    public static System.Numerics.Vector2 ToVector2(this string text)
+    {
+        if (text.Length == 0)
+        {
+            return System.Numerics.Vector2.Zero;
+        }
+        else
+        {
+            // The format <x> or <x, y> is supported
+            text = Unbracket(text);
+
+            // Skip allocations when only a component is used
+            if (text.IndexOf(',') == -1)
+            {
+                if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float x))
+                {
+                    return new(x);
+                }
+            }
+            else
+            {
+                string[] values = text.Split(',');
+
+                if (values.Length == 2)
+                {
+                    if (float.TryParse(values[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x) &&
+                        float.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y))
+                    {
+                        return new(x, y);
+                    }
+                }
+            }
+        }
+
+        return Throw(text);
+
+        static System.Numerics.Vector2 Throw(string text) => throw new FormatException($"Cannot convert \"{text}\" to {nameof(System.Numerics.Vector2)}. Use the format \"float, float\"");
+    }
+
+    /// <summary>
+    /// Converts a <see cref="string"/> value to a <see cref="Vector3"/> value.
+    /// This method always assumes the invariant culture for parsing values (',' separates numbers, '.' is the decimal separator).
+    /// The input text can either represents a single number (mapped to <see cref="Vector3(float)"/>, or multiple components.
+    /// Additionally, the format "&lt;float, float, float&gt;" is also allowed (though less efficient to parse).
+    /// </summary>
+    /// <param name="text">A <see cref="string"/> with the values to parse.</param>
+    /// <returns>The parsed <see cref="Vector3"/> value.</returns>
+    /// <exception cref="FormatException">Thrown when <paramref name="text"/> doesn't represent a valid <see cref="Vector3"/> value.</exception>
+    [Pure]
+    public static System.Numerics.Vector3 ToVector3(this string text)
+    {
+        if (text.Length == 0)
+        {
+            return System.Numerics.Vector3.Zero;
+        }
+        else
+        {
+            text = Unbracket(text);
+
+            if (text.IndexOf(',') == -1)
+            {
+                if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float x))
+                {
+                    return new(x);
+                }
+            }
+            else
+            {
+                string[] values = text.Split(',');
+
+                if (values.Length == 3)
+                {
+                    if (float.TryParse(values[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x) &&
+                        float.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y) &&
+                        float.TryParse(values[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z))
+                    {
+                        return new(x, y, z);
+                    }
+                }
+                else if (values.Length == 2)
+                {
+                    return new(text.ToVector2(), 0);
+                }
+            }
+        }
+
+        return Throw(text);
+
+        static System.Numerics.Vector3 Throw(string text) => throw new FormatException($"Cannot convert \"{text}\" to {nameof(System.Numerics.Vector3)}. Use the format \"float, float, float\"");
+    }
+
+    /// <summary>
+    /// Converts a <see cref="string"/> value to a <see cref="Vector4"/> value.
+    /// This method always assumes the invariant culture for parsing values (',' separates numbers, '.' is the decimal separator).
+    /// The input text can either represents a single number (mapped to <see cref="Vector4(float)"/>, or multiple components.
+    /// Additionally, the format "&lt;float, float, float, float&gt;" is also allowed (though less efficient to parse).
+    /// </summary>
+    /// <param name="text">A <see cref="string"/> with the values to parse.</param>
+    /// <returns>The parsed <see cref="Vector4"/> value.</returns>
+    /// <exception cref="FormatException">Thrown when <paramref name="text"/> doesn't represent a valid <see cref="Vector4"/> value.</exception>
+    [Pure]
+    public static System.Numerics.Vector4 ToVector4(this string text)
+    {
+        if (text.Length == 0)
+        {
+            return System.Numerics.Vector4.Zero;
+        }
+        else
+        {
+            text = Unbracket(text);
+
+            if (text.IndexOf(',') == -1)
+            {
+                if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float x))
+                {
+                    return new(x);
+                }
+            }
+            else
+            {
+                string[] values = text.Split(',');
+
+                if (values.Length == 4)
+                {
+                    if (float.TryParse(values[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x) &&
+                        float.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y) &&
+                        float.TryParse(values[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z) &&
+                        float.TryParse(values[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float w))
+                    {
+                        return new(x, y, z, w);
+                    }
+                }
+                else if (values.Length == 3)
+                {
+                    return new(text.ToVector3(), 0);
+                }
+                else if (values.Length == 2)
+                {
+                    return new(text.ToVector2(), 0, 0);
+                }
+            }
+        }
+
+        return Throw(text);
+
+        static System.Numerics.Vector4 Throw(string text) => throw new FormatException($"Cannot convert \"{text}\" to {nameof(System.Numerics.Vector4)}. Use the format \"float, float, float, float\"");
+    }
+
+    /// <summary>
+    /// Converts a <see cref="string"/> value to a <see cref="Quaternion"/> value.
+    /// This method always assumes the invariant culture for parsing values (',' separates numbers, '.' is the decimal separator).
+    /// Additionally, the format "&lt;float, float, float, float&gt;" is also allowed (though less efficient to parse).
+    /// </summary>
+    /// <param name="text">A <see cref="string"/> with the values to parse.</param>
+    /// <returns>The parsed <see cref="Quaternion"/> value.</returns>
+    /// <exception cref="FormatException">Thrown when <paramref name="text"/> doesn't represent a valid <see cref="Quaternion"/> value.</exception>
+    [Pure]
+    public static System.Numerics.Quaternion ToQuaternion(this string text)
+    {
+        if (text.Length == 0)
+        {
+            return new();
+        }
+        else
+        {
+            text = Unbracket(text);
+
+            string[] values = text.Split(',');
+
+            if (values.Length == 4)
+            {
+                if (float.TryParse(values[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x) &&
+                    float.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y) &&
+                    float.TryParse(values[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z) &&
+                    float.TryParse(values[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float w))
+                {
+                    return new(x, y, z, w);
+                }
+            }
+        }
+
+        return Throw(text);
+
+        static System.Numerics.Quaternion Throw(string text) => throw new FormatException($"Cannot convert \"{text}\" to {nameof(System.Numerics.Quaternion)}. Use the format \"float, float, float, float\"");
+    }
+
+    /// <summary>
+    /// Converts an angle bracketed <see cref="string"/> value to its unbracketed form (e.g. "&lt;float, float&gt;" to "float, float").
+    /// If the value is already unbracketed, this method will return the value unchanged.
+    /// </summary>
+    /// <param name="text">A bracketed <see cref="string"/> value.</param>
+    /// <returns>The unbracketed <see cref="string"/> value.</returns>
+    static string Unbracket(string text)
+    {
+        if (text.Length >= 2 &&
+            text[0] == '<' &&
+            text[text.Length - 1] == '>')
+        {
+            text = text.Substring(1, text.Length - 2);
+        }
+
+        return text;
+    }
+
 #if COMMUNITY_TOOLKIT
     /// <summary>
     /// <para>
