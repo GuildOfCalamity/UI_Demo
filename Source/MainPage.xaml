@@ -626,7 +626,10 @@
                             IsEnabled="{x:Bind IsBusy, Mode=OneWay, Converter={StaticResource BooleanInverter}}"
                             Style="{StaticResource EnhancedButton}" />
                     </Grid>
-                    <StackPanel Orientation="Horizontal" Spacing="24">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="24">
                         <ToggleSwitch
                             x:Name="tsBlur"
                             Margin="0,5,0,0"
@@ -648,7 +651,10 @@
                             Unchecked="CheckBoxChanged" />
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="20">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="20">
                         <Slider
                             x:Name="sldrDays"
                             MinWidth="120"
@@ -662,6 +668,7 @@
                             Value="180" />
                         <Grid>
                             <local:StorageRing
+                                x:Name="storageRing"
                                 Width="64"
                                 Height="64"
                                 FlowDirection="LeftToRight"

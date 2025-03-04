@@ -348,25 +348,20 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         });
         #endregion
 
-        #region [Glow test]
-        Microsoft.UI.Composition.LayerVisual? layerVis = null;
-        storageBar.Loaded += (s, e) =>
+        #region [Bloom effect test]
+        storageRing.Loaded += (s, e) =>
         {
             var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
             var grid = parent?.FirstOrDefault();
             if (grid is not null)
-            {
-                layerVis = AddGlow((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 61, 174, 255));
-            }
+                AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 245, 245, 245));
         };
-        storageBar.Unloaded += (s, e) =>
+        storageRing.Unloaded += (s, e) =>
         {
             var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
             var grid = parent?.FirstOrDefault();
-            if (grid is not null && layerVis is not null)
-            {
-                 RemoveGlow((UIElement)s, grid, layerVis);
-            }
+            if (grid is not null)
+                 RemoveBloom((UIElement)s, grid, null);
         };
         #endregion
 
@@ -1398,19 +1393,20 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     #endregion
 
     /// <summary>
-    /// This defeats any existing animations the control has because ExpressionAnimations 
-    /// are created to facilitate the glow effect via the control's VisualCollection.
-    /// Animations may still occur if they are manually performed by the control (e.g. a custom control).
+    /// A down-n-dirty bloom effect for any <see cref="UIElement"/> that has a <see cref="Grid"/> parent.
+    /// This defeats any existing animations the control has because ExpressionAnimations are created 
+    /// to facilitate the bloom effect via the control's <see cref="Microsoft.UI.Composition.VisualCollection"/>.
+    /// Animations may still occur if they are internally performed by the control (e.g. a custom control).
     /// </summary>
-    public Microsoft.UI.Composition.LayerVisual? AddGlow(UIElement element, UIElement parent, Windows.UI.Color color, float blurRadius = 10)
+    public void AddBloom(UIElement element, UIElement parent, Windows.UI.Color color, float blurRadius = 10)
     {
         if (element == null || parent == null)
         {
-            Debug.WriteLine($"[WARNING] One or more UIElement is null, cannot continue.");
-            return null;
+            Debug.WriteLine($"[WARNING] One (or more) UIElement is null, cannot continue.");
+            return;
         }
 
-        // We're making a copy of the original and then applying the glow effect to its copy.
+        // We're making a copy of the original and then applying the bloom effect to its copy.
         var visual = ElementCompositionPreview.GetElementVisual(element);
         visual.Opacity = 0;
         var compositor = visual.Compositor;
@@ -1446,19 +1442,33 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             parentContainerVisual.RelativeSizeAdjustment = Vector2.One;
             ElementCompositionPreview.SetElementChildVisual(parent, parentContainerVisual);
         }
-
         parentContainerVisual.Children.InsertAtTop(lVisual);
-        return lVisual;
     }
 
-    public void RemoveGlow(UIElement element, UIElement parent, Microsoft.UI.Composition.LayerVisual lv)
+    /// <summary>
+    /// Removes the bloom effect from the specified <see cref="UIElement"/>.
+    /// If <paramref name="lv"/> is null, all <see cref="Microsoft.UI.Composition.Visual"/>s will be removed from the parent container.
+    /// </summary>
+    public void RemoveBloom(UIElement element, UIElement parent, Microsoft.UI.Composition.LayerVisual? lv)
     {
         if (element == null || parent == null || lv == null) { return; }
         var visual = ElementCompositionPreview.GetElementVisual(element);
         visual.Opacity = (float)element.Opacity;
         var parentContainerVisual = ElementCompositionPreview.GetElementChildVisual(parent) as Microsoft.UI.Composition.ContainerVisual;
         if (parentContainerVisual != null)
-            parentContainerVisual.Children.Remove(lv);
+        {
+            if (lv is not null)
+            {
+                parentContainerVisual.Children.Remove(lv);
+            }
+            else
+            {
+                foreach (var vis in parentContainerVisual.Children)
+                {
+                    parentContainerVisual.Children.Remove(vis);
+                }
+            }
+        }
     }
 
 
