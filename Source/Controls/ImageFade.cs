@@ -40,14 +40,14 @@ public enum FadeImageStyle
 {
     Fade,                   // Default opacity fade (mandatory for other styles)
     SlideRight,             // Moves in from left
-    SlideLeft,              // Moves in from left
+    SlideLeft,              // Moves in from right
     Zoom,                   // Scales up from small size
     ZoomAndRotate,          // Scales up and rotates
     RotateClockwise,        // 0-360 degree rotation
     RotateCounterClockwise  // 360-0 degree rotation
 }
 
-[TemplatePartAttribute(Name = "PART_Image", Type = typeof(Microsoft.UI.Xaml.Controls.Image))]
+[TemplatePart(Name = "PART_Image", Type = typeof(Microsoft.UI.Xaml.Controls.Image))]
 public sealed partial class FadeImage : Control
 {
     bool _initialized = false;
@@ -57,7 +57,7 @@ public sealed partial class FadeImage : Control
     Image? _image;
 
     /// <summary>
-    ///   Be sure to include a styler in you App.xaml
+    ///   Be sure to include a styler in your App.xaml
     /// </summary>
     public FadeImage()
     {
@@ -490,7 +490,7 @@ public sealed partial class FadeImage : Control
     {
         Debug.WriteLine($"[INFO] FadeOutStoryboard was completed.");
         this.Visibility = Visibility.Collapsed;
-        _switching = false; // This must be kept after the visibility change.
+        _switching = false; // This line must be kept after the visibility change.
     }
 
 }

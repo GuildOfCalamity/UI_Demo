@@ -550,7 +550,7 @@
                             x:Name="tbMessages"
                             HorizontalAlignment="Center"
                             FontSize="32"
-                            Text="WindowsAppSDK v1.6.25" />
+                            Text="WindowsAppSDK v1.6.25+" />
                         <TextBlock
                             x:Name="tbVersion"
                             HorizontalAlignment="Center"
@@ -683,21 +683,24 @@
                             </local:CompositionShadow>
                         </Grid>
 
-                        <local:StorageBar
-                            Width="200"
-                            HorizontalAlignment="Stretch"
-                            Background="#A0808080"
-                            BarShape="Round"
-                            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                            BorderThickness="2"
-                            CornerRadius="3"
-                            FlowDirection="LeftToRight"
-                            IsEnabled="True"
-                            PercentCaution="60"
-                            PercentCritical="85"
-                            TrackBarHeight="4.0"
-                            ValueBarHeight="8.0"
-                            Value="{x:Bind Size, Mode=OneWay}" />
+                        <Grid>
+                            <local:StorageBar
+                                x:Name="storageBar"
+                                Width="200"
+                                HorizontalAlignment="Stretch"
+                                Background="#A0808080"
+                                BarShape="Round"
+                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                BorderThickness="2"
+                                CornerRadius="3"
+                                FlowDirection="LeftToRight"
+                                IsEnabled="True"
+                                PercentCaution="60"
+                                PercentCritical="85"
+                                TrackBarHeight="4.0"
+                                ValueBarHeight="8.0"
+                                Value="{x:Bind Size, Mode=OneWay}" />
+                        </Grid>
 
                     </StackPanel>
 
@@ -797,7 +800,11 @@
                                 FontSize="{StaticResource FontSizeLarge}"
                                 IsEnabled="{Binding ProgressCommand.CanExecute, Mode=OneWay}">
                                 <ToolTipService.ToolTip>
-                                    <ToolTip Background="{StaticResource GradientToolTipBrush}" BackgroundSizing="OuterBorderEdge">
+                                    <ToolTip
+                                        Background="{StaticResource GradientToolTipBrush}"
+                                        BackgroundSizing="OuterBorderEdge"
+                                        Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                        Translation="0,0,32">
                                         <StackPanel
                                             Background="Transparent"
                                             BorderThickness="0"
@@ -824,7 +831,11 @@
                                 Unchecked="ToggleOnChanged">
                                 <FontIcon FontSize="24" Glyph="{StaticResource Message}" />
                                 <ToolTipService.ToolTip>
-                                    <ToolTip Background="{StaticResource GradientToolTipBrush}" BackgroundSizing="OuterBorderEdge">
+                                    <ToolTip
+                                        Background="{StaticResource GradientToolTipBrush}"
+                                        BackgroundSizing="OuterBorderEdge"
+                                        Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                        Translation="0,0,32">
                                         <StackPanel
                                             Background="Transparent"
                                             BorderThickness="0"
@@ -857,7 +868,9 @@
                                             Background="{StaticResource GradientToolTipBrush}"
                                             BorderBrush="{StaticResource GradientDebugBrush}"
                                             BorderThickness="1"
-                                            CornerRadius="6">
+                                            CornerRadius="6"
+                                            Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
+                                            Translation="0,0,32">
                                             <StackPanel
                                                 CornerRadius="6"
                                                 Orientation="Vertical"
@@ -961,7 +974,6 @@
                                 PointerEntered="ButtonCompositePointerEntered"
                                 PointerExited="ButtonCompositePointerExited"
                                 RenderTransformOrigin="0.5,0.5"
-                                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
                                 Style="{StaticResource EnhancedButton}"
                                 Tapped="ButtonCompositeTapped">
                                 <Button.RenderTransform>
@@ -1061,6 +1073,76 @@
                                     <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
                                 </Button.Content>
                             </Button>
+                            <Button
+                                Width="70"
+                                Height="34"
+                                Content="Test"
+                                FontSize="{StaticResource FontSizeMedium}"
+                                Foreground="Black"
+                                IsEnabled="True"
+                                Style="{StaticResource GradientButton}" />
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <!--
+                                    Wrap ButtonEx in a grid if you intend on using the scaling animation.
+                                -->
+                                <local:ButtonEx
+                                    Width="70"
+                                    Height="34"
+                                    BorderThickness="2"
+                                    ColorFrom="{StaticResource ColorFrom}"
+                                    ColorTo="{StaticResource ColorTo}"
+                                    Content="Test"
+                                    CornerRadius="5"
+                                    EnableScaleAnimation="True"
+                                    FontSize="{StaticResource FontSizeMedium}"
+                                    Foreground="White"
+                                    ScaleTime="0.15">
+                                    <local:ButtonEx.Flyout>
+                                        <MenuFlyout Placement="Top">
+                                            <ToggleMenuFlyoutItem
+                                                Height="32"
+                                                Padding="2,0"
+                                                Click="{x:Bind OnMenuItemClicked}"
+                                                Tag="1"
+                                                Text="Item 1">
+                                                <ToggleMenuFlyoutItem.Icon>
+                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientInfoBrush}" />
+                                                </ToggleMenuFlyoutItem.Icon>
+                                            </ToggleMenuFlyoutItem>
+                                            <ToggleMenuFlyoutItem
+                                                Height="32"
+                                                Padding="2,0"
+                                                Click="{x:Bind OnMenuItemClicked}"
+                                                Tag="2"
+                                                Text="Item 2">
+                                                <ToggleMenuFlyoutItem.Icon>
+                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientImportantBrush}" />
+                                                </ToggleMenuFlyoutItem.Icon>
+                                            </ToggleMenuFlyoutItem>
+                                            <ToggleMenuFlyoutItem
+                                                Height="32"
+                                                Padding="2,0"
+                                                Click="{x:Bind OnMenuItemClicked}"
+                                                Tag="3"
+                                                Text="Item 3">
+                                                <ToggleMenuFlyoutItem.Icon>
+                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientWarningBrush}" />
+                                                </ToggleMenuFlyoutItem.Icon>
+                                            </ToggleMenuFlyoutItem>
+                                            <ToggleMenuFlyoutItem
+                                                Height="32"
+                                                Padding="2,0"
+                                                Click="{x:Bind OnMenuItemClicked}"
+                                                Tag="4"
+                                                Text="Item 4">
+                                                <ToggleMenuFlyoutItem.Icon>
+                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientErrorBrush}" />
+                                                </ToggleMenuFlyoutItem.Icon>
+                                            </ToggleMenuFlyoutItem>
+                                        </MenuFlyout>
+                                    </local:ButtonEx.Flyout>
+                                </local:ButtonEx>
+                            </Grid>
                         </StackPanel>
                     </local:GroupBox>
                     <StackPanel Orientation="Horizontal" Spacing="20">
@@ -1122,6 +1204,29 @@
             </Grid>
 
         </SplitView>
+
+        <!--
+        <Border x:Name="BackIcon"
+          Grid.Row="2"
+          Grid.Column="0"
+          Width="40"
+          Height="40"
+          Margin="4,0,0,0"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center"
+          local:VisualExtensions.NormalizedCenterPoint="0.5,0.5"
+          Background="{ThemeResource AccentFillColorDefaultBrush}"
+          BorderBrush="{ThemeResource AccentControlElevationBorderBrush}"
+          BorderThickness="2"
+          Canvas.ZIndex="64"
+          CornerRadius="20">
+          <FontIcon
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+              Glyph="{StaticResource Back}" />
+        </Border>
+        -->
 
         <!--#region [blur test via control instead of compositor]-->
         <Image

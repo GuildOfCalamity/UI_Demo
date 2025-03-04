@@ -4057,74 +4057,92 @@ public static class Extensions
         switch (pennerType)
         {
             case "SineEaseIn":
+            case "EaseInSine":
                 controlPoint1 = new System.Numerics.Vector2(0.47f, 0.0f);
                 controlPoint2 = new System.Numerics.Vector2(0.745f, 0.715f);
                 break;
             case "SineEaseOut":
+            case "EaseOutSine":
                 controlPoint1 = new System.Numerics.Vector2(0.39f, 0.575f);
                 controlPoint2 = new System.Numerics.Vector2(0.565f, 1.0f);
                 break;
             case "SineEaseInOut":
+            case "EaseInOutSine":
                 controlPoint1 = new System.Numerics.Vector2(0.445f, 0.05f);
                 controlPoint2 = new System.Numerics.Vector2(0.55f, 0.95f);
                 break;
             case "QuadEaseIn":
+            case "EaseInQuad":
                 controlPoint1 = new System.Numerics.Vector2(0.55f, 0.085f);
                 controlPoint2 = new System.Numerics.Vector2(0.68f, 0.53f);
                 break;
             case "QuadEaseOut":
+            case "EaseOutQuad":
                 controlPoint1 = new System.Numerics.Vector2(0.25f, 0.46f);
                 controlPoint2 = new System.Numerics.Vector2(0.45f, 0.94f);
                 break;
             case "QuadEaseInOut":
+            case "EaseInOutQuad":
                 controlPoint1 = new System.Numerics.Vector2(0.445f, 0.03f);
                 controlPoint2 = new System.Numerics.Vector2(0.515f, 0.955f);
                 break;
             case "CubicEaseIn":
+            case "EaseInCubic":
                 controlPoint1 = new System.Numerics.Vector2(0.55f, 0.055f);
                 controlPoint2 = new System.Numerics.Vector2(0.675f, 0.19f);
                 break;
             case "CubicEaseOut":
+            case "EaseOutCubic":
                 controlPoint1 = new System.Numerics.Vector2(0.215f, 0.61f);
                 controlPoint2 = new System.Numerics.Vector2(0.355f, 1.0f);
                 break;
             case "CubicEaseInOut":
+            case "EaseInOutCubic":
                 controlPoint1 = new System.Numerics.Vector2(0.645f, 0.045f);
                 controlPoint2 = new System.Numerics.Vector2(0.355f, 1.0f);
                 break;
             case "QuarticEaseIn":
+            case "EaseInQuartic":
                 controlPoint1 = new System.Numerics.Vector2(0.895f, 0.03f);
                 controlPoint2 = new System.Numerics.Vector2(0.685f, 0.22f);
                 break;
             case "QuarticEaseOut":
+            case "EaseOutQuartic":
                 controlPoint1 = new System.Numerics.Vector2(0.165f, 0.84f);
                 controlPoint2 = new System.Numerics.Vector2(0.44f, 1.0f);
                 break;
             case "QuarticEaseInOut":
+            case "EaseInOutQuartic":
                 controlPoint1 = new System.Numerics.Vector2(0.77f, 0.0f);
                 controlPoint2 = new System.Numerics.Vector2(0.175f, 1.0f);
                 break;
             case "QuinticEaseIn":
+            case "EaseInQuintic":
                 controlPoint1 = new System.Numerics.Vector2(0.755f, 0.05f);
                 controlPoint2 = new System.Numerics.Vector2(0.855f, 0.06f);
                 break;
             case "QuinticEaseOut":
+            case "EaseOutQuintic":
                 controlPoint1 = new System.Numerics.Vector2(0.23f, 1.0f);
                 controlPoint2 = new System.Numerics.Vector2(0.32f, 1.0f);
                 break;
             case "QuinticEaseInOut":
+            case "EaseInOutQuintic":
                 controlPoint1 = new System.Numerics.Vector2(0.86f, 0.0f);
                 controlPoint2 = new System.Numerics.Vector2(0.07f, 1.0f);
                 break;
             case "ExponentialEaseIn":
+            case "EaseInExponential":
                 controlPoint1 = new System.Numerics.Vector2(0.95f, 0.05f);
                 controlPoint2 = new System.Numerics.Vector2(0.795f, 0.035f);
                 break;
             case "ExponentialEaseOut":
+            case "EaseOutExponential":
                 controlPoint1 = new System.Numerics.Vector2(0.19f, 1.0f);
                 controlPoint2 = new System.Numerics.Vector2(0.22f, 1.0f);
                 break;
             case "ExponentialEaseInOut":
+            case "EaseInOutExponential":
                 controlPoint1 = new System.Numerics.Vector2(1.0f, 0.0f);
                 controlPoint2 = new System.Numerics.Vector2(0.0f, 1.0f);
                 break;

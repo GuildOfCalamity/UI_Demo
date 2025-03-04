@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 
@@ -78,6 +79,17 @@ public class ButtonEx : Button
         typeof(double),
         typeof(ButtonEx),
         new PropertyMetadata(1.1d));
+
+    public double ScaleTime
+    {
+        get => (double)GetValue(ScaleTimeProperty);
+        set => SetValue(ScaleTimeProperty, value);
+    }
+    public static readonly DependencyProperty ScaleTimeProperty = DependencyProperty.Register(
+        nameof(ScaleTime),
+        typeof(double),
+        typeof(ButtonEx),
+        new PropertyMetadata(0.12d));
     #endregion
 
     public ButtonEx()
@@ -93,8 +105,6 @@ public class ButtonEx : Button
     {
         base.OnApplyTemplate();
         this.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5);
-        //this.CornerRadius = new CornerRadius(5);
-        //this.BorderThickness = new Thickness(2);
         _initialized = true;
     }
 
@@ -116,7 +126,7 @@ public class ButtonEx : Button
         this.ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand);
         AnimateUIElementColor(ColorTo, ColorFrom, (UIElement)sender);
         if (EnableScaleAnimation)
-            AnimateUIElementScale(1.0d, ScaleAmount, TimeSpan.FromSeconds(_timeScale), (UIElement)sender, "QuadEaseOut");
+            AnimateUIElementScale(1.0d, ScaleAmount, TimeSpan.FromSeconds(ScaleTime), (UIElement)sender, "QuarticEaseOut");
     }
 
     void OnPointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -124,7 +134,7 @@ public class ButtonEx : Button
         this.ProtectedCursor = null;
         AnimateUIElementColor(ColorFrom, ColorTo, (UIElement)sender);
         if (EnableScaleAnimation)
-            AnimateUIElementScale(ScaleAmount, 1.0d, TimeSpan.FromSeconds(_timeScale), (UIElement)sender, "QuadEaseIn");
+            AnimateUIElementScale(ScaleAmount, 1.0d, TimeSpan.FromSeconds(ScaleTime), (UIElement)sender, "QuarticEaseIn");
     }
     #endregion
 
@@ -230,13 +240,13 @@ public class ButtonEx : Button
         var batch = targetVisual.Compositor.CreateScopedBatch(Microsoft.UI.Composition.CompositionBatchTypes.Animation);
         batch.Completed += (s, e) => { Debug.WriteLine($"[INFO] Scale animation completed for {target.GetType().Name}"); };
         targetVisual.StartAnimation("Offset", scaleAnimation);
-        batch.End(); // You must call End to get the completed event to fire.
+        batch.End(); // You must call End() to get the completed event to fire.
         targetVisual.StartAnimation("Scale", scaleAnimation);
     }
     #endregion
 
     /// <summary>
-    /// Blends two Windows.UI.Color inputs based on the given ratio.
+    /// Blends two <see cref="Windows.UI.Color"/> inputs based on the given ratio.
     /// <example><code>
     ///   /* Blend 75% blue and 25% red */
     ///   Color blendMoreTowardsBlue = ColorHelper.BlendColors(Colors.Red, Colors.Blue, 0.75);

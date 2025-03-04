@@ -69,6 +69,7 @@
      <DefineConstants>IS_UNPACKAGED</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="Assets\AppIcon.svg" />
     <Content Remove="Assets\Screenshot.png" />
     <Content Remove="Assets\Screenshot2.png" />
     <Content Remove="Assets\Screenshot3.png" />
@@ -214,6 +215,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Formula.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\GraphIcon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Level1.png">

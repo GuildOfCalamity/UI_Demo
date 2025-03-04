@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -24,6 +25,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 
@@ -344,6 +346,28 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 DispatcherQueue.TryEnqueue(() => tbVersion.Text = $"AsyncStatus(error): {ex.Message}");
             }
         });
+        #endregion
+
+        #region [Glow test]
+        Microsoft.UI.Composition.LayerVisual? layerVis = null;
+        storageBar.Loaded += (s, e) =>
+        {
+            var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
+            var grid = parent?.FirstOrDefault();
+            if (grid is not null)
+            {
+                layerVis = AddGlow((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 61, 174, 255));
+            }
+        };
+        storageBar.Unloaded += (s, e) =>
+        {
+            var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
+            var grid = parent?.FirstOrDefault();
+            if (grid is not null && layerVis is not null)
+            {
+                 RemoveGlow((UIElement)s, grid, layerVis);
+            }
+        };
         #endregion
 
         // WindowsXamlManager is part of the Windows App SDK XAML hosting API. This API enables non-WinAppSDK
@@ -1343,7 +1367,100 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         else
             _syncContext?.Send(_ => action?.Invoke(), null);
     }
+
+    public ToggleMenuFlyoutItem CreateToggleMenuFlyoutItem(string text, string tag, SolidColorBrush foreground, Action? onClicked)
+    {
+        var tmfi = new ToggleMenuFlyoutItem() { Text = text, Tag = tag };
+        if (Application.Current.Resources.TryGetValue($"PathIcons.WebAsset", out object pathData))
+        {
+            tmfi.Icon = new PathIcon()
+            {
+                Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), (string)pathData),
+                Foreground = foreground
+            };
+        }
+        else
+        {
+            Debug.WriteLine($"[WARNING] Could not get path data from Application.Current.Resources");
+        }
+        tmfi.Click += (s, e) => onClicked?.Invoke();
+        return tmfi;
+    }
+
+    public void OnMenuItemClicked(object sender, RoutedEventArgs args)
+    {
+        ToggleMenuFlyoutItem tmfi = sender as ToggleMenuFlyoutItem;
+        if (tmfi is not null && tmfi.Tag is not null)
+        {
+            UpdateInfoBar($"Got ToggleMenuFlyoutItem.Tag: {tmfi.Tag}");
+        }
+    }
     #endregion
+
+    /// <summary>
+    /// This defeats any existing animations the control has because ExpressionAnimations 
+    /// are created to facilitate the glow effect via the control's VisualCollection.
+    /// Animations may still occur if they are manually performed by the control (e.g. a custom control).
+    /// </summary>
+    public Microsoft.UI.Composition.LayerVisual? AddGlow(UIElement element, UIElement parent, Windows.UI.Color color, float blurRadius = 10)
+    {
+        if (element == null || parent == null)
+        {
+            Debug.WriteLine($"[WARNING] One or more UIElement is null, cannot continue.");
+            return null;
+        }
+
+        // We're making a copy of the original and then applying the glow effect to its copy.
+        var visual = ElementCompositionPreview.GetElementVisual(element);
+        visual.Opacity = 0;
+        var compositor = visual.Compositor;
+
+        var sizeBind = compositor.CreateExpressionAnimation("visual.Size");
+        sizeBind.SetReferenceParameter("visual", visual);
+
+        var offsetBind = compositor.CreateExpressionAnimation("visual.Offset");
+        offsetBind.SetReferenceParameter("visual", visual);
+
+        var rVisual = compositor.CreateRedirectVisual(visual);
+        rVisual.StartAnimation("Size", sizeBind);
+
+        var lVisual = compositor.CreateLayerVisual();
+        lVisual.StartAnimation("Size", sizeBind);
+        lVisual.StartAnimation("Offset", offsetBind);
+
+        lVisual.Children.InsertAtTop(rVisual);
+
+        var shadow = compositor.CreateDropShadow();
+        shadow.BlurRadius = blurRadius;
+        shadow.Color = color;
+        shadow.SourcePolicy = Microsoft.UI.Composition.CompositionDropShadowSourcePolicy.InheritFromVisualContent;
+
+        lVisual.Shadow = shadow;
+        lVisual.Opacity = (float)element.Opacity;
+
+        var parentContainerVisual = ElementCompositionPreview.GetElementChildVisual(parent) as Microsoft.UI.Composition.ContainerVisual;
+
+        if (parentContainerVisual == null)
+        {
+            parentContainerVisual = compositor.CreateContainerVisual();
+            parentContainerVisual.RelativeSizeAdjustment = Vector2.One;
+            ElementCompositionPreview.SetElementChildVisual(parent, parentContainerVisual);
+        }
+
+        parentContainerVisual.Children.InsertAtTop(lVisual);
+        return lVisual;
+    }
+
+    public void RemoveGlow(UIElement element, UIElement parent, Microsoft.UI.Composition.LayerVisual lv)
+    {
+        if (element == null || parent == null || lv == null) { return; }
+        var visual = ElementCompositionPreview.GetElementVisual(element);
+        visual.Opacity = (float)element.Opacity;
+        var parentContainerVisual = ElementCompositionPreview.GetElementChildVisual(parent) as Microsoft.UI.Composition.ContainerVisual;
+        if (parentContainerVisual != null)
+            parentContainerVisual.Children.Remove(lv);
+    }
+
 
     #region [Blur Effect Compositor]
 
