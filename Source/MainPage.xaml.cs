@@ -251,6 +251,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
         #endregion
 
+        #region [Relay Commands]
         // Configure delay time relay command.
         SwitchDelayCommand = new AsyncRelayCommand(async (param) =>
         {
@@ -276,6 +277,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
         // Configure example keyboard relay command.
         KeyboardAcceleratorCommand = new RelayCommand<KeyboardAcceleratorInvokedEventArgs>(ExecuteKeyboardAcceleratorCommand);
+        #endregion
 
         #region [Keyboard Accelerators]
         AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Up, static (_, kaea) => {
@@ -354,15 +356,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             storageRing.Loaded += (s, e) =>
             {
-                var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
-                var grid = parent?.FirstOrDefault();
+                var grid = BloomHelper.FindParentGrid((UIElement)s);
                 if (grid is not null)
                     BloomHelper.AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 249, 249, 249), Vector3.Zero);
             };
             storageRing.Unloaded += (s, e) =>
             {
-                var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
-                var grid = parent?.FirstOrDefault();
+                var grid = BloomHelper.FindParentGrid((UIElement)s);
                 if (grid is not null)
                     BloomHelper.RemoveBloom((UIElement)s, grid, null);
             };
@@ -374,8 +374,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (!currentLevel.Equals("safe"))
                 {
-                    var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
-                    var grid = parent?.FirstOrDefault();
+                    var grid = BloomHelper.FindParentGrid((UIElement)s);
                     if (grid is not null)
                     {
                         BloomHelper.RemoveBloom((UIElement)s, grid, null);
@@ -388,8 +387,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (!currentLevel.Equals("caution"))
                 {
-                    var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
-                    var grid = parent?.FirstOrDefault();
+                    var grid = BloomHelper.FindParentGrid((UIElement)s);
                     if (grid is not null)
                     {
                         BloomHelper.RemoveBloom((UIElement)s, grid, null);
@@ -402,8 +400,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (!currentLevel.Equals("critical"))
                 {
-                    var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
-                    var grid = parent?.FirstOrDefault();
+                    var grid = BloomHelper.FindParentGrid((UIElement)s);
                     if (grid is not null)
                     {
                         BloomHelper.RemoveBloom((UIElement)s, grid, null);
@@ -534,8 +531,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 }
             });
 
-            var parent = ((UIElement)FlipViewPipsPager).GetAncestorsOfType<Grid>();
-            var grid = parent?.FirstOrDefault();
+            #region [Blend Test Via Bloom]
+            var grid = BloomHelper.FindParentGrid((UIElement)FlipViewPipsPager);
             if (grid is not null)
             {
                 BloomHelper.AddBloom((UIElement)FlipViewPipsPager, grid, Windows.UI.Color.FromArgb(190, 250, 250, 250), 8);
@@ -544,6 +541,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             else
                 Debug.WriteLine($"[WARNING] '{nameof(FlipViewPipsPager)}' must reside inside a grid.");
+            #endregion
 
         }
         _loaded = true;

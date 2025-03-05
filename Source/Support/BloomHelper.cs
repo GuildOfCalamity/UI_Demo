@@ -6,6 +6,7 @@ using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Xaml.Media;
 
 namespace UI_Demo;
 
@@ -106,4 +107,51 @@ public static class BloomHelper
         }
     }
 
+    /// <summary>
+    ///   Removes all child <see cref="Microsoft.UI.Composition.Visual"/>s from the given <see cref="UIElement"/>.
+    /// </summary>
+    /// <param name="element"><see cref="UIElement"/></param>
+    public static void RemoveAllChildVisuals(UIElement element)
+    {
+        var visual = ElementCompositionPreview.GetElementChildVisual(element) as ContainerVisual;
+        if (visual != null)
+            visual.Children.RemoveAll();
+    }
+
+    /// <summary>
+    ///   Finds the nearest Grid parent and removes any child <see cref="Microsoft.UI.Composition.Visual"/>s.
+    /// </summary>
+    /// <param name="childElement"><see cref="UIElement"/></param>
+    public static void RemoveAllParentGridVisuals(UIElement childElement)
+    {
+        Grid? parentGrid = FindParentGrid(childElement);
+        if (parentGrid != null)
+        {
+            var visual = ElementCompositionPreview.GetElementChildVisual(parentGrid) as ContainerVisual;
+            if (visual != null)
+                visual.Children.RemoveAll();
+        }
+    }
+
+    /// <summary>
+    ///   Finds the nearest Grid parent of the given <see cref="UIElement"/>.
+    /// </summary>
+    /// <param name="element"><see cref="UIElement"/></param>
+    /// <returns>Parent <see cref="Grid"/> if successful, otherwise <see cref="null"/>.</returns>
+    public static Grid? FindParentGrid(UIElement element)
+    {
+        if (element == null)
+            return null;
+
+        DependencyObject parent = element;
+        while (parent != null)
+        {
+            parent = VisualTreeHelper.GetParent(parent);
+            if (parent is Grid grid)
+                return grid;
+        }
+
+        // No Grid parent found
+        return null;
+    }
 }
