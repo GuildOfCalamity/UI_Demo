@@ -349,20 +349,70 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         #endregion
 
         #region [Bloom effect test]
-        storageRing.Loaded += (s, e) =>
+        bool simpleBloomLogic = false;
+        if (simpleBloomLogic)
         {
-            var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
-            var grid = parent?.FirstOrDefault();
-            if (grid is not null)
-                AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 245, 245, 245));
-        };
-        storageRing.Unloaded += (s, e) =>
+            storageRing.Loaded += (s, e) =>
+            {
+                var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
+                var grid = parent?.FirstOrDefault();
+                if (grid is not null)
+                    BloomHelper.AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 249, 249, 249), Vector3.Zero);
+            };
+            storageRing.Unloaded += (s, e) =>
+            {
+                var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
+                var grid = parent?.FirstOrDefault();
+                if (grid is not null)
+                    BloomHelper.RemoveBloom((UIElement)s, grid, null);
+            };
+        }
+        else
         {
-            var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
-            var grid = parent?.FirstOrDefault();
-            if (grid is not null)
-                 RemoveBloom((UIElement)s, grid, null);
-        };
+            string currentLevel = string.Empty;
+            storageRing.SafeEvent += (s) =>
+            {
+                if (!currentLevel.Equals("safe"))
+                {
+                    var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
+                    var grid = parent?.FirstOrDefault();
+                    if (grid is not null)
+                    {
+                        BloomHelper.RemoveBloom((UIElement)s, grid, null);
+                        BloomHelper.AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 145, 250, 250));
+                    }
+                    currentLevel = "safe";
+                }
+            };
+            storageRing.CautionEvent += (s) =>
+            {
+                if (!currentLevel.Equals("caution"))
+                {
+                    var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
+                    var grid = parent?.FirstOrDefault();
+                    if (grid is not null)
+                    {
+                        BloomHelper.RemoveBloom((UIElement)s, grid, null);
+                        BloomHelper.AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 255, 163, 1));
+                    }
+                    currentLevel = "caution";
+                }
+            };
+            storageRing.CriticalEvent += (s) =>
+            {
+                if (!currentLevel.Equals("critical"))
+                {
+                    var parent = ((UIElement)s).GetAncestorsOfType<Grid>();
+                    var grid = parent?.FirstOrDefault();
+                    if (grid is not null)
+                    {
+                        BloomHelper.RemoveBloom((UIElement)s, grid, null);
+                        BloomHelper.AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 255, 35, 1));
+                    }
+                    currentLevel = "critical";
+                }
+            };
+        }
         #endregion
 
         // WindowsXamlManager is part of the Windows App SDK XAML hosting API. This API enables non-WinAppSDK
@@ -483,7 +533,18 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     Size = size++;
                 }
             });
-            
+
+            var parent = ((UIElement)FlipViewPipsPager).GetAncestorsOfType<Grid>();
+            var grid = parent?.FirstOrDefault();
+            if (grid is not null)
+            {
+                BloomHelper.AddBloom((UIElement)FlipViewPipsPager, grid, Windows.UI.Color.FromArgb(190, 250, 250, 250), 8);
+                BloomHelper.AddBloom((UIElement)FlipViewPipsPager, grid, Windows.UI.Color.FromArgb(190, 20, 20, 250), 12);
+                BloomHelper.AddBloom((UIElement)FlipViewPipsPager, grid, Windows.UI.Color.FromArgb(190, 20, 50, 220), 18);
+            }
+            else
+                Debug.WriteLine($"[WARNING] '{nameof(FlipViewPipsPager)}' must reside inside a grid.");
+
         }
         _loaded = true;
     }
@@ -1391,86 +1452,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
     #endregion
-
-    /// <summary>
-    /// A down-n-dirty bloom effect for any <see cref="UIElement"/> that has a <see cref="Grid"/> parent.
-    /// This defeats any existing animations the control has because ExpressionAnimations are created 
-    /// to facilitate the bloom effect via the control's <see cref="Microsoft.UI.Composition.VisualCollection"/>.
-    /// Animations may still occur if they are internally performed by the control (e.g. a custom control).
-    /// </summary>
-    public void AddBloom(UIElement element, UIElement parent, Windows.UI.Color color, float blurRadius = 10)
-    {
-        if (element == null || parent == null)
-        {
-            Debug.WriteLine($"[WARNING] One (or more) UIElement is null, cannot continue.");
-            return;
-        }
-
-        // We're making a copy of the original and then applying the bloom effect to its copy.
-        var visual = ElementCompositionPreview.GetElementVisual(element);
-        visual.Opacity = 0;
-        var compositor = visual.Compositor;
-
-        var sizeBind = compositor.CreateExpressionAnimation("visual.Size");
-        sizeBind.SetReferenceParameter("visual", visual);
-
-        var offsetBind = compositor.CreateExpressionAnimation("visual.Offset");
-        offsetBind.SetReferenceParameter("visual", visual);
-
-        var rVisual = compositor.CreateRedirectVisual(visual);
-        rVisual.StartAnimation("Size", sizeBind);
-
-        var lVisual = compositor.CreateLayerVisual();
-        lVisual.StartAnimation("Size", sizeBind);
-        lVisual.StartAnimation("Offset", offsetBind);
-
-        lVisual.Children.InsertAtTop(rVisual);
-
-        var shadow = compositor.CreateDropShadow();
-        shadow.BlurRadius = blurRadius;
-        shadow.Color = color;
-        shadow.SourcePolicy = Microsoft.UI.Composition.CompositionDropShadowSourcePolicy.InheritFromVisualContent;
-
-        lVisual.Shadow = shadow;
-        lVisual.Opacity = (float)element.Opacity;
-
-        var parentContainerVisual = ElementCompositionPreview.GetElementChildVisual(parent) as Microsoft.UI.Composition.ContainerVisual;
-
-        if (parentContainerVisual == null)
-        {
-            parentContainerVisual = compositor.CreateContainerVisual();
-            parentContainerVisual.RelativeSizeAdjustment = Vector2.One;
-            ElementCompositionPreview.SetElementChildVisual(parent, parentContainerVisual);
-        }
-        parentContainerVisual.Children.InsertAtTop(lVisual);
-    }
-
-    /// <summary>
-    /// Removes the bloom effect from the specified <see cref="UIElement"/>.
-    /// If <paramref name="lv"/> is null, all <see cref="Microsoft.UI.Composition.Visual"/>s will be removed from the parent container.
-    /// </summary>
-    public void RemoveBloom(UIElement element, UIElement parent, Microsoft.UI.Composition.LayerVisual? lv)
-    {
-        if (element == null || parent == null || lv == null) { return; }
-        var visual = ElementCompositionPreview.GetElementVisual(element);
-        visual.Opacity = (float)element.Opacity;
-        var parentContainerVisual = ElementCompositionPreview.GetElementChildVisual(parent) as Microsoft.UI.Composition.ContainerVisual;
-        if (parentContainerVisual != null)
-        {
-            if (lv is not null)
-            {
-                parentContainerVisual.Children.Remove(lv);
-            }
-            else
-            {
-                foreach (var vis in parentContainerVisual.Children)
-                {
-                    parentContainerVisual.Children.Remove(vis);
-                }
-            }
-        }
-    }
-
 
     #region [Blur Effect Compositor]
 

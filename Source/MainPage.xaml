@@ -754,16 +754,18 @@
                         </FlipView.ItemTemplate>
                     </FlipView>
                     <!--  The SelectedPageIndex is bound to the FlipView to keep the PipsPager in sync.  -->
-                    <PipsPager
-                        x:Name="FlipViewPipsPager"
-                        HorizontalAlignment="Center"
-                        MaxVisiblePips="10"
-                        NextButtonStyle="{StaticResource NextButtonStyle}"
-                        NextButtonVisibility="Visible"
-                        NumberOfPages="{x:Bind Assets.Count}"
-                        PreviousButtonStyle="{StaticResource PreviousButtonStyle}"
-                        PreviousButtonVisibility="Visible"
-                        SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
+                    <Grid>
+                        <PipsPager
+                            x:Name="FlipViewPipsPager"
+                            HorizontalAlignment="Center"
+                            MaxVisiblePips="10"
+                            NextButtonStyle="{StaticResource NextButtonStyle}"
+                            NextButtonVisibility="Visible"
+                            NumberOfPages="{x:Bind Assets.Count}"
+                            PreviousButtonStyle="{StaticResource PreviousButtonStyle}"
+                            PreviousButtonVisibility="Visible"
+                            SelectedPageIndex="{x:Bind Path=Flipper.SelectedIndex, Mode=TwoWay}" />
+                    </Grid>
 
                     <local:GroupBox
                         Margin="5"

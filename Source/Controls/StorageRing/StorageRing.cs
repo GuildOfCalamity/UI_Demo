@@ -346,16 +346,68 @@ public partial class StorageRing : RangeBase
         {
             // Is the Percent value equal to or above the PercentCritical value
             if (Percent >= PercentCritical)
+            {
                 VisualStateManager.GoToState(this, CriticalStateName, true);
+                CriticalEvent?.Invoke(this); // for bloom pickup
+            }
             // Is the Percent value equal to or above the PercentCaution value
             else if (Percent >= PercentCaution)
+            {
                 VisualStateManager.GoToState(this, CautionStateName, true);
+                CautionEvent?.Invoke(this); // for bloom pickup
+            }
             // Else we use the Safe State (normal)
             else
+            {
                 VisualStateManager.GoToState(this, SafeStateName, true);
+                SafeEvent?.Invoke(this); // for bloom pickup
+            }
         }
     }
+    #endregion
 
+    #region [Events for bloom effect]
+    /// <summary>
+    /// The storage ring's safe event property.
+    /// </summary>
+    public Action<object>? SafeEvent
+    {
+        get => (Action<object>?)GetValue(SafeEventProperty);
+        set => SetValue(SafeEventProperty, value);
+    }
+    public static readonly DependencyProperty SafeEventProperty = DependencyProperty.Register(
+        nameof(SafeEvent),
+        typeof(Action<object>),
+        typeof(StorageRing),
+        new PropertyMetadata(null));
+
+    /// <summary>
+    /// The storage ring's caution event property.
+    /// </summary>
+    public Action<object>? CautionEvent
+    {
+        get => (Action<object>?)GetValue(CautionEventProperty);
+        set => SetValue(CautionEventProperty, value);
+    }
+    public static readonly DependencyProperty CautionEventProperty = DependencyProperty.Register(
+        nameof(CautionEvent),
+        typeof(Action<object>),
+        typeof(StorageRing),
+        new PropertyMetadata(null));
+
+    /// <summary>
+    /// The storage ring's critical event property.
+    /// </summary>
+    public Action<object>? CriticalEvent
+    {
+        get => (Action<object>?)GetValue(CriticalEventProperty);
+        set => SetValue(CriticalEventProperty, value);
+    }
+    public static readonly DependencyProperty CriticalEventProperty = DependencyProperty.Register(
+        nameof(CriticalEvent),
+        typeof(Action<object>),
+        typeof(StorageRing),
+        new PropertyMetadata(null));
     #endregion
 
     #region [Update Rings]
