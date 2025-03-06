@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -18,10 +19,14 @@ namespace UI_Demo.Dialogs;
 
 public sealed partial class ResultsDialog : ContentDialog
 {
+    static Windows.UI.Color bloomColor = Windows.UI.Color.FromArgb(230, 250, 250, 250);
+    
     public ResultsDialog()
     {
         this.InitializeComponent();
         this.Opened += DialogOnOpened;
+        this.GotFocus += OnGotFocus;
+        this.LostFocus += OnLostFocus;
     }
 
     public ResultsDialog(string? title, string? message, MessageLevel level) : this()
@@ -32,13 +37,29 @@ public sealed partial class ResultsDialog : ContentDialog
         if (!string.IsNullOrEmpty(message))
             tbMessage.Text = message;
 
+
         switch (level)
         {
-            case MessageLevel.Error:       imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation1.png")); break;
-            case MessageLevel.Warning:     imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation2.png")); break;
-            case MessageLevel.Information: imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation4.png")); break;
-            case MessageLevel.Important:   imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation3.png")); break;
-            case MessageLevel.Debug:       imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation5.png")); break;
+            case MessageLevel.Error:       
+                imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation1.png"));
+                bloomColor = Windows.UI.Color.FromArgb(230, 250, 123, 43);  // red
+                break;
+            case MessageLevel.Warning:     
+                imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation2.png"));
+                bloomColor = Windows.UI.Color.FromArgb(230, 250, 188, 35); // orange
+                break;
+            case MessageLevel.Important:   
+                imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation3.png"));
+                bloomColor = Windows.UI.Color.FromArgb(230, 250, 244, 32); // yellow
+                break;
+            case MessageLevel.Information: 
+                imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation4.png"));
+                bloomColor = Windows.UI.Color.FromArgb(230, 11, 203, 239); // blue
+                break;
+            case MessageLevel.Debug:       
+                imgIcon.Source = new BitmapImage(new Uri("ms-appx:///Assets/Exclamation5.png"));
+                bloomColor = Windows.UI.Color.FromArgb(230, 30, 250, 84);  // green
+                break;
         }
     }
 
@@ -60,4 +81,10 @@ public sealed partial class ResultsDialog : ContentDialog
         }
     }
 
+    /// <summary>
+    ///   The "parent" of the ContentDialog is the XamlRoot of the main 
+    ///   window, so we'll key off of the ContentDialog's title panel.
+    /// </summary>
+    void OnGotFocus(object sender, RoutedEventArgs e) => BloomHelper.AddBloom((UIElement)imgIcon, (UIElement)cdGrid, bloomColor, 14);
+    void OnLostFocus(object sender, RoutedEventArgs e) => BloomHelper.RemoveBloom((UIElement)imgIcon, (UIElement)cdGrid, null);
 }

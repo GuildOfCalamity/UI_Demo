@@ -356,15 +356,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             storageRing.Loaded += (s, e) =>
             {
-                var grid = BloomHelper.FindParentGrid((UIElement)s);
-                if (grid is not null)
-                    BloomHelper.AddBloom((UIElement)s, grid, Windows.UI.Color.FromArgb(255, 249, 249, 249), Vector3.Zero);
+                var pnl = BloomHelper.FindParentPanel((UIElement)s);
+                if (pnl is not null)
+                    BloomHelper.AddBloom((UIElement)s, pnl, Windows.UI.Color.FromArgb(255, 249, 249, 249), Vector3.Zero);
             };
             storageRing.Unloaded += (s, e) =>
             {
-                var grid = BloomHelper.FindParentGrid((UIElement)s);
-                if (grid is not null)
-                    BloomHelper.RemoveBloom((UIElement)s, grid, null);
+                var pnl = BloomHelper.FindParentPanel((UIElement)s);
+                if (pnl is not null)
+                    BloomHelper.RemoveBloom((UIElement)s, pnl, null);
             };
         }
         else
@@ -374,7 +374,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (!currentLevel.Equals("safe"))
                 {
-                    var grid = BloomHelper.FindParentGrid((UIElement)s);
+                    var grid = BloomHelper.FindParentPanel((UIElement)s);
                     if (grid is not null)
                     {
                         BloomHelper.RemoveBloom((UIElement)s, grid, null);
@@ -387,7 +387,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (!currentLevel.Equals("caution"))
                 {
-                    var grid = BloomHelper.FindParentGrid((UIElement)s);
+                    var grid = BloomHelper.FindParentPanel((UIElement)s);
                     if (grid is not null)
                     {
                         BloomHelper.RemoveBloom((UIElement)s, grid, null);
@@ -400,7 +400,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             {
                 if (!currentLevel.Equals("critical"))
                 {
-                    var grid = BloomHelper.FindParentGrid((UIElement)s);
+                    var grid = BloomHelper.FindParentPanel((UIElement)s);
                     if (grid is not null)
                     {
                         BloomHelper.RemoveBloom((UIElement)s, grid, null);
@@ -531,18 +531,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 }
             });
 
-            #region [Blend Test Via Bloom]
-            var grid = BloomHelper.FindParentGrid((UIElement)FlipViewPipsPager);
-            if (grid is not null)
-            {
-                BloomHelper.AddBloom((UIElement)FlipViewPipsPager, grid, Windows.UI.Color.FromArgb(190, 250, 250, 250), 8);
-                BloomHelper.AddBloom((UIElement)FlipViewPipsPager, grid, Windows.UI.Color.FromArgb(190, 20, 20, 250), 12);
-                BloomHelper.AddBloom((UIElement)FlipViewPipsPager, grid, Windows.UI.Color.FromArgb(190, 20, 50, 220), 18);
-            }
-            else
-                Debug.WriteLine($"[WARNING] '{nameof(FlipViewPipsPager)}' must reside inside a grid.");
+            #region [Bloom Effect]
+            var sldrParent = BloomHelper.FindParentPanel((UIElement)sldrDays);
+            if (sldrParent is not null)
+                BloomHelper.AddBloom((UIElement)sldrDays, sldrParent, Windows.UI.Color.FromArgb(190, 250, 250, 250), 8);
             #endregion
-
         }
         _loaded = true;
     }
@@ -952,9 +945,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             if (App.Profile != null)
                 App.Profile.LastCount = (int)e.NewValue;
 
-            if (((int)e.NewValue == sld.Minimum || (int)e.NewValue == sld.Maximum) && _loaded)
+            if ((int)e.NewValue == sld.Minimum && _loaded)
             {
-                //ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.RecreationDialog(), this.Content as FrameworkElement);
+                ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.RecreationDialog(), this.Content as FrameworkElement);
+                if (result is ContentDialogResult.Primary) { UpdateInfoBar("User clicked 'OK'", MessageLevel.Important); }
+                else if (result is ContentDialogResult.None) { UpdateInfoBar("User clicked 'Cancel'", MessageLevel.Warning); }
+            }
+            if ((int)e.NewValue == sld.Maximum && _loaded)
+            {
                 ContentDialogResult result = await DialogHelper.ShowAsync(new Dialogs.AboutDialog(), this.Content as FrameworkElement);
                 if (result is ContentDialogResult.Primary) { UpdateInfoBar("User clicked 'OK'", MessageLevel.Important); }
                 else if (result is ContentDialogResult.None) { UpdateInfoBar("User clicked 'Cancel'", MessageLevel.Warning); }
@@ -1113,7 +1111,19 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
     }
 
+    void MenuFlyoutOpened(object sender, object e)
+    {
+        var mf = sender as MenuFlyout;
+        if (mf is null) { return; }
+        List<ToggleMenuFlyoutItem>? flyoutItems = mf.Items.OfType<ToggleMenuFlyoutItem>().ToList();
+        foreach (var tmfi in flyoutItems)
+        {
+            Debug.WriteLine($"[DEBUG] Discovered flyout '{tmfi.Text}'");
+        }
+    }
+
     void TextBoxOnKeyUp(object sender, KeyRoutedEventArgs e) => UpdateInfoBar($"Key press: '{e.Key}'", MessageLevel.Information);
+    void ExpanderMenuButtonClick(object sender, RoutedEventArgs e) => UpdateInfoBar($"Expander menu item '{(sender as Button)?.Tag}' was clicked", MessageLevel.Information);
 
     /// <summary>
     /// Communal event for <see cref="MenuFlyoutItem"/> clicks.
@@ -1220,7 +1230,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     /// </summary>
     void StartComboAnimation(Button button, double scale, double ms)
     {
-        CompositeTransform transform = button.RenderTransform as CompositeTransform;
+        CompositeTransform? transform = button.RenderTransform as CompositeTransform;
 
         if (transform is null)
             return;
@@ -1268,7 +1278,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         //Storyboard.SetTarget(colorAnimation, button);
         //Storyboard.SetTargetProperty(colorAnimation, "(Control.Background).(SolidColorBrush.Color)");
 
-        /* Examples of some of commonly-used properties that use a Brush value include:
+        /* Examples of commonly-used properties that use a Brush value include:
          *   (Control.Background).(SolidColorBrush.Color)
          *   (Control.Foreground).(SolidColorBrush.Color)
          *   (Shape.Fill).(SolidColorBrush.Color)
@@ -1975,12 +1985,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         return AsyncInfo.Run(async (token) =>
         {
-            async Task<Windows.Storage.FileProperties.BasicProperties> GetFakeBasicProperties()
+            async Task<Windows.Storage.FileProperties.BasicProperties> GetBasicPropertiesTask()
             {
                 var streamedFile = await StorageFile.GetFileFromPathAsync(name);
                 return await streamedFile.GetBasicPropertiesAsync();
             }
-            return lastProps ?? (lastProps = await GetFakeBasicProperties());
+            return lastProps ?? (lastProps = await GetBasicPropertiesTask());
         });
     }
 
@@ -2003,12 +2013,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             .AndThen(c => 
             c.CopyAsync(ApplicationData.Current.TemporaryFolder, copyFileName, NameCollisionOption.ReplaceExisting)
             .AsTask());
-    }
-
-    void ExpanderMenuButtonClick(object sender, RoutedEventArgs e)
-    {
-        var btn = sender as Button;
-        UpdateInfoBar($"Expander menu item '{btn?.Tag}' was clicked", MessageLevel.Information);
     }
 
     /// <summary>

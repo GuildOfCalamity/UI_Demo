@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 
 using Microsoft.UI.Composition;
@@ -12,16 +13,18 @@ namespace UI_Demo;
 
 public static class BloomHelper
 {
-    static readonly Windows.UI.Color _defaultColor = Windows.UI.Color.FromArgb(180, 255, 255, 255);
+    static readonly Windows.UI.Color _defaultColor = Windows.UI.Color.FromArgb(190, 255, 255, 255);
 
     /// <summary>
-    ///   A down-n-dirty bloom effect for any <see cref="UIElement"/> that has a <see cref="Grid"/> parent.
+    ///   A down-n-dirty bloom effect for any <see cref="UIElement"/> that has a <see cref="Panel"/> parent.
     ///   This defeats any existing animations the control has because ExpressionAnimations are created 
     ///   to facilitate the bloom effect via the control's <see cref="Microsoft.UI.Composition.VisualCollection"/>.
     ///   Animations may still occur if they are internally performed by the control (e.g. a custom control).
     /// </summary>
     /// <remarks>
     ///   This can be applied multiple times to the <see cref="UIElement"/> for a stronger effect.
+    ///   Should never be applied more than one parent level up, since this will make offset adjustments
+    ///   to the <see cref="Microsoft.UI.Composition.LayerVisual"/>, this could result in undesired behavior.
     /// </remarks>
     public static void AddBloom(UIElement element, UIElement parent, Windows.UI.Color color, Vector3 offset, float blurRadius = 10)
     {
@@ -99,10 +102,12 @@ public static class BloomHelper
             }
             else
             {
-                foreach (var vis in parentContainerVisual.Children)
-                {
-                    parentContainerVisual.Children.Remove(vis);
-                }
+                //var visuals = parentContainerVisual.Children.ToList();
+                //foreach (var vis in visuals)
+                //{
+                //    parentContainerVisual.Children.Remove(vis);
+                //}
+                parentContainerVisual.Children.RemoveAll();
             }
         }
     }
@@ -119,26 +124,26 @@ public static class BloomHelper
     }
 
     /// <summary>
-    ///   Finds the nearest Grid parent and removes any child <see cref="Microsoft.UI.Composition.Visual"/>s.
+    ///   Finds the nearest <see cref="Panel"/> parent and removes any child <see cref="Microsoft.UI.Composition.Visual"/>s.
     /// </summary>
     /// <param name="childElement"><see cref="UIElement"/></param>
-    public static void RemoveAllParentGridVisuals(UIElement childElement)
+    public static void RemoveAllParentVisuals(UIElement childElement)
     {
-        Grid? parentGrid = FindParentGrid(childElement);
-        if (parentGrid != null)
+        var parentPanel = FindParentPanel(childElement);
+        if (parentPanel != null)
         {
-            var visual = ElementCompositionPreview.GetElementChildVisual(parentGrid) as ContainerVisual;
+            var visual = ElementCompositionPreview.GetElementChildVisual(parentPanel) as ContainerVisual;
             if (visual != null)
                 visual.Children.RemoveAll();
         }
     }
 
     /// <summary>
-    ///   Finds the nearest Grid parent of the given <see cref="UIElement"/>.
+    ///   Finds the nearest <see cref="Panel"/> parent of the given <see cref="UIElement"/>.
     /// </summary>
     /// <param name="element"><see cref="UIElement"/></param>
-    /// <returns>Parent <see cref="Grid"/> if successful, otherwise <see cref="null"/>.</returns>
-    public static Grid? FindParentGrid(UIElement element)
+    /// <returns>Parent <see cref="Panel"/> if successful, otherwise <see cref="null"/>.</returns>
+    public static Panel? FindParentPanel(UIElement element)
     {
         if (element == null)
             return null;
@@ -147,11 +152,20 @@ public static class BloomHelper
         while (parent != null)
         {
             parent = VisualTreeHelper.GetParent(parent);
-            if (parent is Grid grid)
-                return grid;
+            // Not including Primitives here, e.g. "LoopingSelectorPanel".
+            if (parent is StackPanel panel) { return panel; }
+            else if (parent is Grid grid) { return grid; }
+            else if (parent is Canvas cnvs) { return cnvs; }
+            else if (parent is ItemsStackPanel ispnl) { return ispnl; }
+            else if (parent is ItemsWrapGrid iwgrd) { return iwgrd; }
+            else if (parent is RelativePanel rpanel) { return rpanel; }
+            else if (parent is SwapChainPanel scpnl) { return scpnl; }
+            else if (parent is SwapChainBackgroundPanel scbpnl) { return scbpnl; }
+            else if (parent is VariableSizedWrapGrid vswgrd) { return vswgrd; }
+            else if (parent is VirtualizingPanel vpnl) { return vpnl; }
+            else if (parent is VirtualizingStackPanel vspnl) { return vspnl; }
+            else if (parent is WrapGrid wgrd) { return wgrd; }
         }
-
-        // No Grid parent found
-        return null;
+        return null; // not found
     }
 }

@@ -381,49 +381,50 @@
                             <Button
                                 Click="ExpanderMenuButtonClick"
                                 Style="{StaticResource RotatedButton}"
-                                Tag="emb1"
+                                Tag="Option1"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Wifi}" />
+
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"
                                 Style="{StaticResource RotatedButton}"
-                                Tag="emb2"
+                                Tag="Option2"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Globe}" />
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"
                                 Style="{StaticResource RotatedButton}"
-                                Tag="emb3"
+                                Tag="Option3"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource ActionCenter}" />
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"
                                 Style="{StaticResource RotatedButton}"
-                                Tag="emb4"
+                                Tag="Option4"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Audio}" />
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"
                                 Style="{StaticResource RotatedButton}"
-                                Tag="emb5"
+                                Tag="Option5"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource Zoom}" />
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"
                                 Style="{StaticResource RotatedButton}"
-                                Tag="emb6"
+                                Tag="Option6"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource AreaChart}" />
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"
                                 Style="{StaticResource RotatedButton}"
-                                Tag="emb7"
+                                Tag="Option7"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
                                 <FontIcon FontSize="16" Glyph="{StaticResource BandBattery3}" />
                             </Button>
@@ -652,13 +653,14 @@
                     </StackPanel>
 
                     <StackPanel
+                        Margin="10"
                         HorizontalAlignment="Center"
                         Orientation="Horizontal"
                         Spacing="20">
                         <Slider
                             x:Name="sldrDays"
                             MinWidth="120"
-                            Margin="10,6,10,2"
+                            Padding="8"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Maximum="365"
@@ -1107,7 +1109,7 @@
                                     Foreground="White"
                                     ScaleTime="0.15">
                                     <local:ButtonEx.Flyout>
-                                        <MenuFlyout Placement="Top">
+                                        <MenuFlyout Opened="MenuFlyoutOpened" Placement="Top">
                                             <ToggleMenuFlyoutItem
                                                 Height="32"
                                                 Padding="2,0"

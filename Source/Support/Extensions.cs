@@ -3987,6 +3987,16 @@ public static class Extensions
         }
     }
 
+    public static void DumpControlsInheritingFromPanel()
+    {
+        var controlAssembly = typeof(Microsoft.UI.Xaml.Controls.Control).GetTypeInfo().Assembly;
+        var controlTypes = controlAssembly.GetTypes().Where(type => type.IsSubclassOf(typeof(Microsoft.UI.Xaml.Controls.Panel)));
+        foreach (var controlType in controlTypes)
+        {
+            Debug.WriteLine($"[DEBUG] SubClassOfPanel: {controlType.FullName}");
+        }
+    }
+
     public static void DisplayRoutedEventsForUIElement()
     {
         Type uiElementType = typeof(Microsoft.UI.Xaml.UIElement);

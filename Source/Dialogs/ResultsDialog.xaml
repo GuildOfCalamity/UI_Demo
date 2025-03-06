@@ -45,7 +45,10 @@
         </Style>
     </ContentDialog.CloseButtonStyle>
     <ContentDialog.Title>
-        <Grid MinWidth="450" HorizontalAlignment="Stretch">
+        <Grid
+            x:Name="cdGrid"
+            MinWidth="450"
+            HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -53,18 +56,17 @@
             <TextBlock
                 x:Name="tbTitle"
                 Grid.Column="0"
-                Margin="0,4,0,0"
+                Margin="8,6,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 FontSize="{StaticResource FontSizeHuge}"
                 Foreground="{StaticResource SecondaryBrush}"
-                Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
                 Text="Task Successful" />
             <Image
                 x:Name="imgIcon"
                 Grid.Column="1"
                 Height="50"
-                Margin="0,0,4,0"
+                Margin="9"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 Source="ms-appx:///Assets/Exclamation5.png" />
@@ -74,15 +76,35 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+        <!--<Image
+            Grid.RowSpan="99"
+            MaxWidth="250"
+            MaxHeight="200"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Opacity="0.12"
+            Source="ms-appx:///Assets/GraphIcon.png"
+            Stretch="Fill" />-->
+
+        <!--#region [AppIcon SVG Test]-->
+        <Grid
+            Grid.RowSpan="2"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Stretch"
+            Opacity="0.12">
+            <PathIcon Data="{StaticResource PathIcons.AppIconLayer1}" Foreground="#7F3D11" />
+            <PathIcon Data="{StaticResource PathIcons.AppIconLayer2}" Foreground="#FF8F4F" />
+        </Grid>
+        <!--#endregion-->
+
         <TextBlock
             x:Name="tbMessage"
             Grid.Row="0"
             Margin="20,10,20,5"
             FontSize="{StaticResource FontSizeMedium}"
             Foreground="{StaticResource PrimaryBrush}"
-            Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
             Text="Process complete – check the logs for additional details."
             TextWrapping="Wrap" />
         <TextBlock
@@ -90,26 +112,8 @@
             Margin="20,5,20,20"
             FontSize="{StaticResource FontSizeNormal}"
             Foreground="{StaticResource SecondaryBrush}"
-            Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
             Text="You may close this dialog at your convenience."
             TextWrapping="Wrap" />
-        <StackPanel
-            Grid.Row="2"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Orientation="Horizontal"
-            Spacing="10">
-            <StackPanel.Resources>
-                <Style TargetType="Image">
-                    <Setter Property="Width" Value="80" />
-                    <Setter Property="Stretch" Value="Uniform" />
-                </Style>
-            </StackPanel.Resources>
-            <Image Source="ms-appx:///Assets/Level1.png" />
-            <Image Source="ms-appx:///Assets/Level2.png" />
-            <Image Source="ms-appx:///Assets/Level3.png" />
-            <Image Source="ms-appx:///Assets/Level4.png" />
-            <Image Source="ms-appx:///Assets/Level5.png" />
-        </StackPanel>
+
     </Grid>
 </ContentDialog>

@@ -176,20 +176,20 @@ public partial class App : Application
 
         AssemblyReferences = Extensions.GatherReferenceAssemblies(true);
 
-        // System.Threading.Channels test
+        /** System.Threading.Channels test **/
         //_ = Task.Run(() => ChannelProducerAsync(CoreChannelToken.Token));
         //_ = Task.Run(() => GenericProducerMessageService(CoreChannelToken.Token));
         
-        // PubSubService test
+        /** PubSubService test **/
         _ = Task.Run(() => PubSubHeartbeat());
 
-        // Widget test
-        _ = Task.Run(() => LaunchWidgetServiceProvider());
+        /** Widget test **/
         //var widgetTask = LaunchWidgetServiceProvider();
         //widgetTask.ContinueWith(t => { Debug.WriteLine("[INFO] LaunchWidgetServiceProvider ran to completion."); }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.FromCurrentSynchronizationContext());
         //widgetTask.ContinueWith(t => { Debug.WriteLine("[ERROR] LaunchWidgetServiceProvider has faulted."); }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.FromCurrentSynchronizationContext());
         //widgetTask.ContinueWith(t => { Debug.WriteLine("[WARNING] LaunchWidgetServiceProvider was canceled."); }, CancellationToken.None, TaskContinuationOptions.OnlyOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
 
+        // Load previous messages, if any exist.
         MessageLog = new JsonDataHelper<List<ApplicationMessage>>(System.IO.Path.Combine(GetCurrentDirectory(), "AppMessages.json"));
     }
 
@@ -494,14 +494,6 @@ public partial class App : Application
         //SentenceGeneratorAlt.RunTest();
     }
 
-    public static string GetAppRuntime()
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.AppendLine(AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WindowsAppRuntime")).FirstOrDefault() ?? "N/A");
-        sb.Append(AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WinUI")).FirstOrDefault() ?? "N/A");
-        return sb.ToString();
-    }
-
     #region [Window Helpers]
     /// <summary>
     /// This code example demonstrates how to retrieve an AppWindow from a WinUI3 window.
@@ -706,7 +698,7 @@ public partial class App : Application
     /// <summary>
     /// Returns the declaring type's namespace.
     /// </summary>
-    public static string? GetFormattedNamespace() => System.Reflection.MethodBase.GetCurrentMethod()?.DeclaringType?.Namespace?.SeparateCamelCase();
+    public static string? GetFormattedNamespace() => System.Reflection.MethodBase.GetCurrentMethod()?.DeclaringType?.Namespace?.Replace("_", " "); // Namespace?.SeparateCamelCase();
 
     /// <summary>
     /// Returns the declaring type's full name.
@@ -727,6 +719,14 @@ public partial class App : Application
     /// Returns the current assembly's folder location.
     /// </summary>
     public static string GetCurrentDirectory() => System.IO.Path.GetDirectoryName(Environment.ProcessPath)!;
+
+    public static string GetAppRuntime()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine(AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WindowsAppRuntime")).FirstOrDefault() ?? "N/A");
+        sb.Append(AssemblyReferences?.Where(ar => ar.StartsWith("Microsoft.WinUI")).FirstOrDefault() ?? "N/A");
+        return sb.ToString();
+    }
     #endregion
 
     #region [Dialog Helper]

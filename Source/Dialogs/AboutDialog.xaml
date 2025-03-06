@@ -40,12 +40,16 @@
         </Style>
     </ContentDialog.CloseButtonStyle>
     <ContentDialog.Title>
-        <Grid MinWidth="500" HorizontalAlignment="Stretch">
+        <Grid
+            x:Name="cdGrid"
+            MinWidth="500"
+            HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel
+                x:Name="cdStack"
                 Grid.Column="0"
                 Margin="0,4,0,0"
                 HorizontalAlignment="Left"
@@ -55,26 +59,18 @@
                 <TextBlock
                     FontSize="{StaticResource FontSizeHuge}"
                     Foreground="{StaticResource SecondaryBrush}"
-                    Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
                     Text="About&#x0020;" />
-                <root:CompositionShadow
-                    Grid.Row="1"
-                    BlurRadius="16"
-                    OffsetX="0"
-                    OffsetY="0"
-                    ShadowOpacity="0.82"
-                    Color="#C4DFFF">
-                    <TextBlock
-                        FontSize="{StaticResource FontSizeHuge}"
-                        Foreground="{StaticResource SecondaryBrush}"
-                        Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
-                        Text="{x:Bind root:App.GetCurrentNamespace()}" />
-                </root:CompositionShadow>
+                <TextBlock
+                    x:Name="tbTitle"
+                    FontSize="{StaticResource FontSizeHuge}"
+                    Foreground="{StaticResource SecondaryBrush}"
+                    Text="{x:Bind root:App.GetFormattedNamespace()}" />
             </StackPanel>
             <Image
+                x:Name="imgLevel"
                 Grid.Column="1"
                 Height="50"
-                Margin="0,1,3,0"
+                Margin="8"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 Source="ms-appx:///Assets/Exclamation4.png" />
@@ -93,7 +89,7 @@
             Margin="20,10,20,5"
             FontSize="{StaticResource FontSizeMedium}"
             Foreground="{StaticResource PrimaryBrush}"
-            Text="A sample app to test changes and enhancements to the WindowsAppSDK v1.6.x"
+            Text="A sample app to test changes and enhancements to the WindowsAppSDK v1.6.25"
             TextWrapping="Wrap" />
         <TextBlock
             Grid.Row="1"
@@ -137,7 +133,7 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Opacity="0.9"
-                Source="ms-appx:///Assets/Spinner31.png"
+                Source="ms-appx:///Assets/Spinner3.png"
                 Visibility="Visible">
                 <Image.Resources>
                     <Storyboard

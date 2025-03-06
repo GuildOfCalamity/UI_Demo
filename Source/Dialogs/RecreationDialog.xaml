@@ -41,7 +41,10 @@
         </Style>
     </ContentDialog.CloseButtonStyle>
     <ContentDialog.Title>
-        <Grid MinWidth="500" HorizontalAlignment="Stretch">
+        <Grid
+            x:Name="cdGrid"
+            MinWidth="500"
+            HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -63,14 +66,14 @@
                     <TextBlock
                         FontSize="{StaticResource FontSizeEnormous}"
                         Foreground="{StaticResource SecondaryBrush}"
-                        Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
                         Text="Testing" />
                 </root:CompositionShadow>
             </StackPanel>
             <Image
+                x:Name="imgIcon"
                 Grid.Column="1"
                 Height="50"
-                Margin="0,1,3,0"
+                Margin="12"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 Source="ms-appx:///Assets/SettingsIcon.png" />

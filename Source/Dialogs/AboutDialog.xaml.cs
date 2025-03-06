@@ -16,6 +16,24 @@ namespace UI_Demo.Dialogs
             this.Loaded += AboutDialogOnLoaded;
             this.Unloaded += AboutDialogOnUnloaded;
             this.Opened += DialogOnOpened;
+            this.GotFocus += OnGotFocus;
+            this.LostFocus += OnLostFocus;
+        }
+
+        /// <summary>
+        ///   The "parent" of the ContentDialog is the XamlRoot of the main 
+        ///   window, so we'll key off of the ContentDialog's title panel.
+        /// </summary>
+        void OnGotFocus(object sender, RoutedEventArgs e)
+        {
+            BloomHelper.AddBloom((UIElement)imgLevel, (UIElement)cdGrid, Windows.UI.Color.FromArgb(230, 11, 203, 239), 12);
+            BloomHelper.AddBloom((UIElement)tbTitle, (UIElement)cdStack, Windows.UI.Color.FromArgb(255, 255, 255, 255), 8);
+        }
+
+        void OnLostFocus(object sender, RoutedEventArgs e)
+        {
+            BloomHelper.RemoveBloom((UIElement)imgLevel, (UIElement)cdGrid, null);
+            BloomHelper.RemoveBloom((UIElement)tbTitle, (UIElement)cdStack, null);
         }
 
         void AboutDialogOnUnloaded(object sender, RoutedEventArgs e)

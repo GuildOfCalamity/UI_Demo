@@ -26,6 +26,8 @@ public sealed partial class RecreationDialog : ContentDialog
         this.Loaded += RecreationDialogOnLoaded;
         this.Unloaded += RecreationDialogOnUnloaded;
         this.Opened += DialogOnOpened;
+        this.GotFocus += OnGotFocus;
+        this.LostFocus += OnLostFocus;
     }
 
     void RecreationDialogOnLoaded(object sender, RoutedEventArgs e)
@@ -71,4 +73,15 @@ public sealed partial class RecreationDialog : ContentDialog
             };
         }
     }
+
+    /// <summary>
+    ///   The "parent" of the ContentDialog is the XamlRoot of the main 
+    ///   window, so we'll key off of the ContentDialog's title panel.
+    /// </summary>
+    void OnGotFocus(object sender, RoutedEventArgs e)
+    {
+        BloomHelper.AddBloom((UIElement)imgIcon, (UIElement)cdGrid, Windows.UI.Color.FromArgb(180, 255, 255, 255), 11);
+        BloomHelper.AddBloom((UIElement)imgIcon, (UIElement)cdGrid, Windows.UI.Color.FromArgb(220, 78, 66, 173), 22);
+    }
+    void OnLostFocus(object sender, RoutedEventArgs e) => BloomHelper.RemoveBloom((UIElement)imgIcon, (UIElement)cdGrid, null);
 }

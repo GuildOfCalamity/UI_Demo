@@ -88,7 +88,7 @@ public interface IJsonDataHelper<T>
     ///   <see cref="JsonSerializer.Deserialize{TValue}(string, JsonSerializerOptions?)"/>.
     /// </summary>
     /// <returns><typeparamref name="T"/></returns>
-    public T GetData();
+    public T? GetData();
 
     /// <summary>
     ///   Save the data of type <typeparamref name="T"/> via 
@@ -144,6 +144,10 @@ public class ModuleIdJsonConverter : JsonConverter<ModuleId>
     }
 }
 
+/// <summary>
+///   Type conversion in JSON can be tricky.
+///   This method is an attempt to read/write the type's fully qualified name.
+/// </summary>
 public class TypeJsonConverter : JsonConverter<Type>
 {
     public override Type? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
