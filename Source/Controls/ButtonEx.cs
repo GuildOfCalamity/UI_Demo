@@ -14,7 +14,7 @@ using Microsoft.UI.Xaml.Media;
 
 namespace UI_Demo;
 
-public class ButtonEx : Button
+public partial class ButtonEx : Button
 {
     bool _initialized = false;
     bool _addBlendedGradientStop = false;

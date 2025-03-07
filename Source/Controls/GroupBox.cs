@@ -18,6 +18,7 @@ namespace UI_Demo;
 [TemplatePart(Name = "PART_ChildPresenter", Type = typeof(ContentPresenter))]
 public sealed partial class GroupBox : ContentControl
 {
+    bool EnableBloomEffect { get; set; } = true;
     ContentPresenter? HeadingPresenter { get; set; }
     ContentPresenter? ChildPresenter { get; set; }
     Microsoft.UI.Xaml.Shapes.Path? BorderPath { get; set; }
@@ -28,7 +29,31 @@ public sealed partial class GroupBox : ContentControl
     public GroupBox()
     {
         this.DefaultStyleKey = typeof(GroupBox);
+        this.PointerEntered += GroupBox_PointerEntered;
+        this.PointerExited += GroupBox_PointerExited;
     }
+
+    #region [Bloom Effect]
+    void GroupBox_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (EnableBloomEffect)
+        {
+            var ceParent = BloomHelper.FindParentPanel((UIElement)sender);
+            if (ceParent is not null)
+                BloomHelper.AddBloom((UIElement)sender, ceParent, Windows.UI.Color.FromArgb(230, 25, 180, 255), 8);
+        }
+    }
+
+    void GroupBox_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (EnableBloomEffect)
+        {
+            var ceParent = BloomHelper.FindParentPanel((UIElement)sender);
+            if (ceParent is not null)
+                BloomHelper.RemoveBloom((UIElement)sender, ceParent, null);
+        }
+    }
+    #endregion
 
     #region [Overrides]
     /// <summary>
@@ -38,9 +63,9 @@ public sealed partial class GroupBox : ContentControl
     {
         base.OnApplyTemplate();
 
-        HeadingPresenter = GetTemplateChild("PART_HeadingPresenter") as ContentPresenter;
-        ChildPresenter = GetTemplateChild("PART_ChildPresenter") as ContentPresenter;
-        BorderPath = GetTemplateChild("PART_BorderPath") as Microsoft.UI.Xaml.Shapes.Path;
+        HeadingPresenter = GetTemplateChild("PART_HeadingPresenter") as ContentPresenter ?? throw new InvalidOperationException($"{nameof(FadeImage)}: Style template missing 'PART_HeadingPresenter', cannot continue.");
+        ChildPresenter = GetTemplateChild("PART_ChildPresenter") as ContentPresenter ?? throw new InvalidOperationException($"{nameof(FadeImage)}: Style template missing 'PART_ChildPresenter', cannot continue.");
+        BorderPath = GetTemplateChild("PART_BorderPath") as Microsoft.UI.Xaml.Shapes.Path ?? throw new InvalidOperationException($"{nameof(FadeImage)}: Style template missing 'PART_BorderPath', cannot continue.");
 
         // If these are always null, make sure you have a default styler in the project for the type GroupBox.
         if (HeadingPresenter is null || ChildPresenter is null || BorderPath is null)

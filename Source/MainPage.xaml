@@ -284,7 +284,7 @@
 
                 <!--#region [FadeImage Control]-->
                 <local:FadeImage
-                    x:Name="FadeImage"
+                    x:Name="imgFade"
                     Grid.RowSpan="2"
                     Grid.ColumnSpan="2"
                     Width="300"
@@ -293,7 +293,7 @@
                     VerticalAlignment="Center"
                     FadeDuration="0:0:1.25"
                     FadeStyle="ZoomAndRotate"
-                    IsVisible="True"
+                    IsVisible="False"
                     Source="ms-appx:///Assets/FadeImage.png"
                     TapEvent="{x:Bind FadeImageTapEvent, Mode=OneWay}" />
                 <!--#endregion-->
@@ -344,19 +344,22 @@
                     Background="{StaticResource GradientLeftMenuBrush}"
                     ExpandDirection="Up">
                     <local:CustomExpander.Header>
-                        <local:CompositionShadow
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Center"
-                            BlurRadius="2"
-                            OffsetX="1.5"
-                            OffsetY="1.5"
-                            ShadowOpacity="1"
-                            Color="#559AD0">
-                            <TextBlock
-                                FontSize="{StaticResource FontSizeLarge}"
-                                Foreground="{StaticResource PrimaryBrush}"
-                                Text="Vertical Menu" />
-                        </local:CompositionShadow>
+                        <Grid>
+                            <local:CompositionShadow
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                BlurRadius="2"
+                                OffsetX="1.5"
+                                OffsetY="1.5"
+                                ShadowOpacity="1"
+                                Color="#559AD0">
+                                <TextBlock
+                                    x:Name="vmHeader"
+                                    FontSize="{StaticResource FontSizeLarge}"
+                                    Foreground="{StaticResource PrimaryBrush}"
+                                    Text="Vertical Menu" />
+                            </local:CompositionShadow>
+                        </Grid>
                     </local:CustomExpander.Header>
                     <local:CustomExpander.RenderTransform>
                         <CompositeTransform
@@ -798,12 +801,14 @@
                         </local:GroupBox.Heading>
                         <StackPanel
                             x:Name="SettingsBar"
-                            Margin="10"
+                            Margin="0"
                             HorizontalAlignment="Center"
+                            Background="#00111111"
                             Orientation="Horizontal"
                             Spacing="20">
                             <Button
                                 x:Name="SettingsButton"
+                                Margin="10,10,5,10"
                                 Command="{x:Bind ProgressCommand}"
                                 Content="{StaticResource Settings}"
                                 Flyout="{StaticResource SettingsFlyout}"
@@ -837,6 +842,7 @@
                             </Button>
                             <ToggleButton
                                 x:Name="tbMessagePane"
+                                Margin="5,10,5,10"
                                 Checked="ToggleOnChanged"
                                 Style="{StaticResource ToolbarToggleButton}"
                                 Unchecked="ToggleOnChanged">
@@ -869,6 +875,7 @@
                             </ToggleButton>
                             <Button
                                 x:Name="tbButton"
+                                Margin="5,10,5,10"
                                 Click="ToolbarButtonOnClick"
                                 Style="{StaticResource ToolbarButton}">
                                 <ToolTipService.ToolTip>
@@ -980,6 +987,7 @@
                             <Button
                                 Width="40"
                                 Height="40"
+                                Margin="5,10,5,10"
                                 Padding="0"
                                 CornerRadius="20"
                                 PointerEntered="ButtonCompositePointerEntered"
@@ -1006,6 +1014,7 @@
                             <Button
                                 Width="40"
                                 Height="40"
+                                Margin="5,10,5,10"
                                 Padding="0"
                                 CornerRadius="20"
                                 PointerEntered="ButtonCompositePointerEntered"
@@ -1026,6 +1035,7 @@
                             <Button
                                 Width="40"
                                 Height="40"
+                                Margin="5,10,5,10"
                                 Padding="0"
                                 CornerRadius="20"
                                 PointerEntered="ButtonCompositePointerEntered"
@@ -1046,6 +1056,7 @@
                             <Button
                                 Width="40"
                                 Height="40"
+                                Margin="5,10,5,10"
                                 Padding="0"
                                 CornerRadius="20"
                                 PointerEntered="ButtonCompositePointerEntered"
@@ -1067,6 +1078,7 @@
                                 x:Name="WinUIButton"
                                 Width="40"
                                 Height="40"
+                                Margin="5,10,5,10"
                                 Padding="0"
                                 CornerRadius="20"
                                 PointerEntered="ButtonCompositePointerEntered"
@@ -1083,16 +1095,64 @@
                                 <Button.Content>
                                     <Image Width="30" Source="ms-appx:///Assets/WinUI3.png" />
                                 </Button.Content>
+                                <Button.Flyout>
+                                    <MenuFlyout Opened="MenuFlyoutOpened" Placement="Top">
+                                        <ToggleMenuFlyoutItem
+                                            Height="32"
+                                            Padding="2,0"
+                                            Click="{x:Bind OnMenuItemClicked}"
+                                            Tag="1"
+                                            Text="Item 1">
+                                            <ToggleMenuFlyoutItem.Icon>
+                                                <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientInfoBrush}" />
+                                            </ToggleMenuFlyoutItem.Icon>
+                                        </ToggleMenuFlyoutItem>
+                                        <ToggleMenuFlyoutItem
+                                            Height="32"
+                                            Padding="2,0"
+                                            Click="{x:Bind OnMenuItemClicked}"
+                                            Tag="2"
+                                            Text="Item 2">
+                                            <ToggleMenuFlyoutItem.Icon>
+                                                <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientImportantBrush}" />
+                                            </ToggleMenuFlyoutItem.Icon>
+                                        </ToggleMenuFlyoutItem>
+                                        <ToggleMenuFlyoutItem
+                                            Height="32"
+                                            Padding="2,0"
+                                            Click="{x:Bind OnMenuItemClicked}"
+                                            Tag="3"
+                                            Text="Item 3">
+                                            <ToggleMenuFlyoutItem.Icon>
+                                                <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientWarningBrush}" />
+                                            </ToggleMenuFlyoutItem.Icon>
+                                        </ToggleMenuFlyoutItem>
+                                        <ToggleMenuFlyoutItem
+                                            Height="32"
+                                            Padding="2,0"
+                                            Click="{x:Bind OnMenuItemClicked}"
+                                            Tag="4"
+                                            Text="Item 4">
+                                            <ToggleMenuFlyoutItem.Icon>
+                                                <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientErrorBrush}" />
+                                            </ToggleMenuFlyoutItem.Icon>
+                                        </ToggleMenuFlyoutItem>
+                                    </MenuFlyout>
+                                </Button.Flyout>
                             </Button>
                             <Button
                                 Width="70"
                                 Height="34"
+                                Margin="5,10,5,10"
                                 Content="Test"
                                 FontSize="{StaticResource FontSizeMedium}"
                                 Foreground="Black"
                                 IsEnabled="True"
                                 Style="{StaticResource GradientButton}" />
-                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid
+                                Margin="5,10,10,10"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
                                 <!--
                                     Wrap ButtonEx in a grid if you intend on using the scaling animation.
                                 -->
@@ -1107,52 +1167,7 @@
                                     EnableScaleAnimation="True"
                                     FontSize="{StaticResource FontSizeMedium}"
                                     Foreground="White"
-                                    ScaleTime="0.15">
-                                    <local:ButtonEx.Flyout>
-                                        <MenuFlyout Opened="MenuFlyoutOpened" Placement="Top">
-                                            <ToggleMenuFlyoutItem
-                                                Height="32"
-                                                Padding="2,0"
-                                                Click="{x:Bind OnMenuItemClicked}"
-                                                Tag="1"
-                                                Text="Item 1">
-                                                <ToggleMenuFlyoutItem.Icon>
-                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientInfoBrush}" />
-                                                </ToggleMenuFlyoutItem.Icon>
-                                            </ToggleMenuFlyoutItem>
-                                            <ToggleMenuFlyoutItem
-                                                Height="32"
-                                                Padding="2,0"
-                                                Click="{x:Bind OnMenuItemClicked}"
-                                                Tag="2"
-                                                Text="Item 2">
-                                                <ToggleMenuFlyoutItem.Icon>
-                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientImportantBrush}" />
-                                                </ToggleMenuFlyoutItem.Icon>
-                                            </ToggleMenuFlyoutItem>
-                                            <ToggleMenuFlyoutItem
-                                                Height="32"
-                                                Padding="2,0"
-                                                Click="{x:Bind OnMenuItemClicked}"
-                                                Tag="3"
-                                                Text="Item 3">
-                                                <ToggleMenuFlyoutItem.Icon>
-                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientWarningBrush}" />
-                                                </ToggleMenuFlyoutItem.Icon>
-                                            </ToggleMenuFlyoutItem>
-                                            <ToggleMenuFlyoutItem
-                                                Height="32"
-                                                Padding="2,0"
-                                                Click="{x:Bind OnMenuItemClicked}"
-                                                Tag="4"
-                                                Text="Item 4">
-                                                <ToggleMenuFlyoutItem.Icon>
-                                                    <PathIcon Data="{StaticResource PathIcons.Tag}" Foreground="{StaticResource GradientErrorBrush}" />
-                                                </ToggleMenuFlyoutItem.Icon>
-                                            </ToggleMenuFlyoutItem>
-                                        </MenuFlyout>
-                                    </local:ButtonEx.Flyout>
-                                </local:ButtonEx>
+                                    ScaleTime="0.15" />
                             </Grid>
                         </StackPanel>
                     </local:GroupBox>
@@ -1196,7 +1211,7 @@
                 <StackPanel
                     Grid.Row="2"
                     Grid.ColumnSpan="2"
-                    Margin="0"
+                    Margin="0,0,10,0"
                     VerticalAlignment="Bottom">
                     <!--
                         Wrap this in a StackPanel/Grid to support AnimateUIElementOffset

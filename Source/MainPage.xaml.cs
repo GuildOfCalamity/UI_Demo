@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -283,7 +284,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Up, static (_, kaea) => {
             if (kaea.Element is Page ctrl) {
                 var clr1 = _colorScale1[Random.Shared.Next(0, _colorScale1.Length)];
-                var clr2 = _colorScaleFull[Random.Shared.Next(0, _colorScaleFull.Length)];
+                var clr2 = _colorScale2[Random.Shared.Next(0, _colorScale2.Length)];
                 ctrl.Background = Extensions.CreateLinearGradientBrush(Colors.Transparent, clr1, clr2);
                 kaea.Handled = true;
             }
@@ -291,8 +292,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Down, static (_, kaea) => {
             if (kaea.Element is Page ctrl) {
                 var clr1 = _colorScale1[Random.Shared.Next(0, _colorScale1.Length)];
-                var clr2 = _colorScaleFull[Random.Shared.Next(0, _colorScaleFull.Length)];
-                ctrl.Background = Extensions.CreateLinearGradientBrush(Colors.Transparent, clr1, clr2);
+                var clr2 = _colorScale2[Random.Shared.Next(0, _colorScale2.Length)];
+                ctrl.Background = Extensions.CreateLinearGradientBrush(clr2, clr1, Colors.Transparent);
                 kaea.Handled = true;
             }
         });
@@ -520,6 +521,13 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
             _ = Task.Run(async () => 
             {
+
+                //var brsh = await Extensions.GetResourceAsync<Brush>("GradientSplitterBrush");
+                //Debug.WriteLine($"[BRUSH] {brsh}");
+                
+                foreach (var item in await ImageDeepSearchFuncAsync())
+                    Debug.WriteLine($"[DEEP] {item}");
+
                 int size = 0;
                 while (!App.IsClosing)
                 {
@@ -536,6 +544,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             if (sldrParent is not null)
                 BloomHelper.AddBloom((UIElement)sldrDays, sldrParent, Windows.UI.Color.FromArgb(190, 250, 250, 250), 8);
             #endregion
+
+            imgFade.IsVisible = true;
         }
         _loaded = true;
     }
@@ -991,10 +1001,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                         Debug.WriteLine($"[INFO] Ignoring non right-click event at {position}");
                         
                         // Testing custom FadeImage control.
-                        if (FadeImage.IsVisible)
-                            FadeImage.IsVisible = false;
+                        if (imgFade.IsVisible)
+                            imgFade.IsVisible = false;
                         else
-                            FadeImage.IsVisible = true;
+                            imgFade.IsVisible = true;
                     }
                 }
             }
@@ -1396,6 +1406,51 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             Assets.Add(f);
         }
+    }
+
+    public async Task<List<string>> ImageDeepSearchActionAsync()
+    {
+        return await Extensions.StartSTATask(() =>
+        {
+#if IS_UNPACKAGED
+            string assetPath = System.AppContext.BaseDirectory;
+#else
+            string assetPath = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+#endif
+            var paths = new List<string>();
+            foreach (var f in Directory.GetFiles(assetPath, "*.png", SearchOption.AllDirectories))
+                paths.Add(f);
+            foreach (var f in Directory.GetFiles(assetPath, "*.jpg", SearchOption.AllDirectories))
+                paths.Add(f);
+            foreach (var f in Directory.GetFiles(assetPath, "*.svg", SearchOption.AllDirectories))
+                paths.Add(f);
+            foreach (var f in Directory.GetFiles(assetPath, "*.ico", SearchOption.AllDirectories))
+                paths.Add(f);
+            return paths;
+        }) ?? new List<string>();
+    }
+
+    public async Task<List<string>> ImageDeepSearchFuncAsync()
+    {
+        var assetPaths = await Extensions.StartSTATask(() =>
+        {
+#if IS_UNPACKAGED
+            string assetPath = System.AppContext.BaseDirectory;
+#else
+            string assetPath = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+#endif
+            var paths = new List<string>();
+            foreach (var f in Directory.GetFiles(assetPath, "*.png", SearchOption.AllDirectories))
+                paths.Add(f);
+            foreach (var f in Directory.GetFiles(assetPath, "*.jpg", SearchOption.AllDirectories))
+                paths.Add(f);
+            foreach (var f in Directory.GetFiles(assetPath, "*.svg", SearchOption.AllDirectories))
+                paths.Add(f);
+            foreach (var f in Directory.GetFiles(assetPath, "*.ico", SearchOption.AllDirectories))
+                paths.Add(f);
+            return paths;
+        });
+        return assetPaths ?? new List<string>();
     }
 
     /// <summary>

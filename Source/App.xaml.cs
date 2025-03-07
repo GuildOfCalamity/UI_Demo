@@ -449,7 +449,7 @@ public partial class App : Application
         }
 
         m_window.Activate();
-
+        
         // Save the FrameworkElement for any future content dialogs.
         MainRoot = m_window.Content as FrameworkElement;
 
@@ -491,7 +491,6 @@ public partial class App : Application
 
         InitializeJumpList(Windows.UI.StartScreen.JumpListSystemGroupKind.None);
 
-        //SentenceGeneratorAlt.RunTest();
     }
 
     #region [Window Helpers]

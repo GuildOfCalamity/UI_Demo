@@ -2640,11 +2640,96 @@ public static class Extensions
     }
     #endregion
 
+    #region [TaskCompletionSource via Thread encapsulation]
+    public static Task StartSTATask(Func<Task> func)
+    {
+        var tcs = new TaskCompletionSource();
+        Thread t = new Thread(async () => {
+            try
+            {
+                await func();
+                tcs.TrySetResult();
+            }
+            catch (Exception ex)
+            {
+                //tcs.SetException(ex);
+                tcs.TrySetResult();
+                App.DebugLog($"StartSTATask(Func<Task>): {ex.Message}");
+            }
+        }){ IsBackground = true, Priority = ThreadPriority.Lowest };
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start();
+        return tcs.Task;
+    }
+
+    public static Task StartSTATask(Action action)
+    {
+        var tcs = new TaskCompletionSource();
+        Thread t = new Thread(() => {
+            try
+            {
+                action();
+                tcs.TrySetResult();
+            }
+            catch (Exception ex)
+            {
+                //tcs.SetException(ex);
+                tcs.TrySetResult();
+                App.DebugLog($"StartSTATask(Action): {ex.Message}");
+            }
+        }){ IsBackground = true, Priority = ThreadPriority.Lowest };
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start();
+        return tcs.Task;
+    }
+
+    public static Task<T?> StartSTATask<T>(Func<T> func)
+    {
+        var tcs = new TaskCompletionSource<T?>();
+        Thread t = new Thread(() => {
+            try
+            {
+                tcs.TrySetResult(func());
+            }
+            catch (Exception ex)
+            {
+                //tcs.SetException(ex);
+                tcs.TrySetResult(default);
+                App.DebugLog($"StartSTATask(Func<T>): {ex.Message}");
+            }
+        }){ IsBackground = true, Priority = ThreadPriority.Lowest };
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start();
+        return tcs.Task;
+    }
+
+    public static Task<T?> StartSTATask<T>(Func<Task<T>> func)
+    {
+        var tcs = new TaskCompletionSource<T?>();
+        Thread t = new Thread(async () => {
+            try
+            {
+                tcs.TrySetResult(await func());
+            }
+            catch (Exception ex)
+            {
+                //tcs.SetException(ex);
+                tcs.SetResult(default);
+                App.DebugLog($"StartSTATask(Func<Task<T>>): {ex.Message}");
+            }
+        }){ IsBackground = true, Priority = ThreadPriority.Lowest };
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start();
+        return tcs.Task;
+    }
+    #endregion
+
     #region [WinUI Specific]
     /// <summary>
     /// Can be useful if you only have a root (not merged) resource dictionary.
     /// var rdBrush = Extensions.GetResource{SolidColorBrush}("PrimaryBrush");
     /// </summary>
+    /// <remarks>Only call under UI sync context (on the UI thread)</remarks>
     public static T? GetResource<T>(string resourceName) where T : class
     {
         try
@@ -2659,6 +2744,30 @@ public static class Extensions
             Debug.WriteLine($"GetResource: {ex.Message}");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Can be useful if you only have a root (not merged) resource dictionary.
+    /// var rdBrush = Extensions.GetResource{SolidColorBrush}("PrimaryBrush");
+    /// </summary>
+    /// <remarks>Only call under UI sync context (on the UI thread)</remarks>
+    public static Task<T?> GetResourceAsync<T>(string resourceName) where T : class
+    {
+        var tcs = new TaskCompletionSource<T?>();
+        try
+        {
+            if (App.Current.Resources.TryGetValue($"{resourceName}", out object value))
+                tcs.TrySetResult((T)value);
+            else
+                tcs.TrySetResult(default(T));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"GetResourceAsync: {ex.Message}");
+            //tcs.SetException(ex);
+            tcs.SetResult(default(T));
+        }
+        return tcs.Task;
     }
 
     /// <summary>
