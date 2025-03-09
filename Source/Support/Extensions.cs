@@ -2355,6 +2355,35 @@ public static class Extensions
         return dp[len1, len2];
     }
 
+    /// <summary><para>
+    ///   Basic key/pswd generator for unique IDs. This employs the standard 
+    ///   MS key table which accounts for the 36 Latin letters and Arabic 
+    ///   numerals used in most Western European languages.
+    /// </para><para>
+    ///   24 chars are favored: 2346789 BCDFGHJKMPQRTVWXY
+    /// </para><para>
+    ///   12 chars are avoided: 015 AEIOU LNSZ
+    /// </para><para>
+    ///   Only 2 chars are occasionally mistaken: 8 & B (depends on the font).
+    /// </para><para>
+    ///   The base of possible codes is large (about 3.2 * 10^34).
+    /// </para></summary>
+    public static string GenerateKeyCode(int length = 8)
+    {
+        const string pwChars = "2346789BCDFGHJKMPQRTVWXY";
+        if (length < 1)
+            length = 1;
+
+        char[] charArray = pwChars.Distinct().ToArray();
+
+        var result = new char[length];
+
+        for (int x = 0; x < length; x++)
+            result[x] = pwChars[Random.Shared.Next() % pwChars.Length];
+
+        return (new string(result));
+    }
+
     #region [Task Helpers]
     public static async Task WithTimeoutAsync(this Task task, TimeSpan timeout)
     {

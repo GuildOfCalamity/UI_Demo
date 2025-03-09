@@ -67,7 +67,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Windows.UI.Color[] _colorScale2 = Extensions.CreateColorScale(0, 10, 200);
     static Windows.UI.Color[] _colorScaleFull = Extensions.GetAllColors();
     public Action? ProgressButtonClickEvent { get; set; }
-    public Action? FadeImageTapEvent { get; set; }
+    public Action? ActiveImageTapEvent { get; set; }
     public event PropertyChangedEventHandler? PropertyChanged;
     bool _isBusy = false;
     public bool IsBusy
@@ -139,15 +139,23 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
     #endregion
 
+    #region [ICommands]
     public ICommand SwitchDelayCommand { get; private set; }
     public ICommand ProgressCommand { get; private set; }
     public ICommand KeyboardAcceleratorCommand { get; private set; }
+    #endregion
 
     public MainPage()
     {
+        //PredicateTesting.ActionTest();
+        //LazyStopwatchTest.Run();
+        //LazyCacheTest.RunAsync();
+        CachHelperTest.Run();
+
         this.InitializeComponent();
         this.Loaded += MainPageOnLoaded;
         this.Unloaded += MainPageOnUnloaded;
+        this.AddHandler(UIElement.CharacterReceivedEvent, new TypedEventHandler<UIElement, CharacterReceivedRoutedEventArgs>(PageOnCharacterReceived), handledEventsToo: true);
         MessageSplitView.PaneOpened += OnPaneOpenedOrClosed;
         MessageSplitView.PaneClosed += OnPaneOpenedOrClosed;
         App.WindowSizeChanged += SizeChangeEvent;
@@ -182,10 +190,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         };
         #endregion
 
-        #region [Action example for our FadeImage control]
-        FadeImageTapEvent += () => 
+        #region [Action example for our ActiveImage control]
+        ActiveImageTapEvent += () => 
         { 
-            tbMessages.DispatcherQueue.TryEnqueue(() => Debug.WriteLine($"[INFO] FadeImage was tapped at {DateTime.Now.ToLongTimeString()}")); 
+            tbMessages.DispatcherQueue.TryEnqueue(() => Debug.WriteLine($"[INFO] ActiveImage was tapped at {DateTime.Now.ToLongTimeString()}")); 
         };
         #endregion
 
@@ -281,19 +289,21 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         #endregion
 
         #region [Keyboard Accelerators]
+        // Pressing up will change the main page background to a random gradient.
         AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Up, static (_, kaea) => {
             if (kaea.Element is Page ctrl) {
                 var clr1 = _colorScale1[Random.Shared.Next(0, _colorScale1.Length)];
                 var clr2 = _colorScale2[Random.Shared.Next(0, _colorScale2.Length)];
-                ctrl.Background = Extensions.CreateLinearGradientBrush(Colors.Transparent, clr1, clr2);
+                ctrl.Background = Extensions.CreateLinearGradientBrush(clr2, clr1, Colors.Transparent);
                 kaea.Handled = true;
             }
         });
+        // Pressing down will change the main page background to a random gradient.
         AddKeyboardAccelerator(Windows.System.VirtualKeyModifiers.None, Windows.System.VirtualKey.Down, static (_, kaea) => {
             if (kaea.Element is Page ctrl) {
                 var clr1 = _colorScale1[Random.Shared.Next(0, _colorScale1.Length)];
                 var clr2 = _colorScale2[Random.Shared.Next(0, _colorScale2.Length)];
-                ctrl.Background = Extensions.CreateLinearGradientBrush(clr2, clr1, Colors.Transparent);
+                ctrl.Background = Extensions.CreateLinearGradientBrush(Colors.Transparent, clr1, clr2);
                 kaea.Handled = true;
             }
         });
@@ -521,12 +531,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
             _ = Task.Run(async () => 
             {
-
-                //var brsh = await Extensions.GetResourceAsync<Brush>("GradientSplitterBrush");
-                //Debug.WriteLine($"[BRUSH] {brsh}");
-                
-                foreach (var item in await ImageDeepSearchFuncAsync())
-                    Debug.WriteLine($"[DEEP] {item}");
+                //foreach (var item in await ImageDeepSearchFuncAsync())
+                //    Debug.WriteLine($"[DEEP] {item}");
 
                 int size = 0;
                 while (!App.IsClosing)
@@ -567,6 +573,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
         if (_coreMessages.Count > 1)
             App.MessageLog?.SaveData(_coreMessages?.ToList());
+    }
+
+    /// <summary>
+    ///   Catches keyboard input when any UIElement has focus.
+    /// </summary>
+    void PageOnCharacterReceived(UIElement sender, CharacterReceivedRoutedEventArgs ea)
+    {
+        UpdateInfoBar($"[EVENT] CharacterReceived ⇒ {ea.Character}");
     }
 
     /// <summary>
@@ -1000,7 +1014,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     {
                         Debug.WriteLine($"[INFO] Ignoring non right-click event at {position}");
                         
-                        // Testing custom FadeImage control.
+                        // Testing custom ActiveImage control.
                         if (imgFade.IsVisible)
                             imgFade.IsVisible = false;
                         else
@@ -1235,6 +1249,17 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         StartComboAnimation((Button)sender, 1.11, 100);
     }
 
+    public void OnMenuItemClicked(object sender, RoutedEventArgs args)
+    {
+        ToggleMenuFlyoutItem tmfi = sender as ToggleMenuFlyoutItem;
+        if (tmfi is not null && tmfi.Tag is not null)
+        {
+            UpdateInfoBar($"Got ToggleMenuFlyoutItem.Tag: {tmfi.Tag}");
+        }
+    }
+    #endregion
+
+    #region [Helpers]
     /// <summary>
     /// Uses the given scale to determine the angle of rotation.
     /// </summary>
@@ -1310,9 +1335,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         storyboard.Children.Add(rotateAnimation);
         storyboard.Begin();
     }
-    #endregion
 
-    #region [Helpers]
     void UpdateInfoBar(string msg, MessageLevel level = MessageLevel.Information)
     {
         if (App.IsClosing || infoBar == null)
@@ -1506,13 +1529,58 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         return tmfi;
     }
 
-    public void OnMenuItemClicked(object sender, RoutedEventArgs args)
+    public async void PasteFromClipboard()
     {
-        ToggleMenuFlyoutItem tmfi = sender as ToggleMenuFlyoutItem;
-        if (tmfi is not null && tmfi.Tag is not null)
+        string? text = await Extensions.StartSTATask(async () =>
         {
-            UpdateInfoBar($"Got ToggleMenuFlyoutItem.Tag: {tmfi.Tag}");
+            var content = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+            if (content.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
+            {
+                return await content.GetTextAsync();
+            }
+            return null;
+        });
+
+        if (text != null)
+        {
+            Debug.WriteLine($"[INFO] Clipboard contains '{text}'");
         }
+    }
+
+    public async void CopyToClipboard(string text)
+    {
+        await Extensions.StartSTATask(async () =>
+        {
+            var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            dataPackage.SetText(text);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+        });
+        Debug.WriteLine($"[INFO] Text '{text}' copied to clipboard.");
+    }
+
+    public async Task<StorageFile?> OpenFileDialog()
+    {
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hWnd);
+        picker.ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail;
+        picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary;
+        picker.FileTypeFilter.Add(".bmp");
+        picker.FileTypeFilter.Add(".jpg");
+        picker.FileTypeFilter.Add(".jpeg");
+        picker.FileTypeFilter.Add(".png");
+        return await picker.PickSingleFileAsync();
+    }
+
+    public async Task<StorageFile?> SaveFileDialog()
+    {
+        var picker = new Windows.Storage.Pickers.FileSavePicker();
+        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hWnd);
+        picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+        picker.FileTypeChoices.Add("Text File", new List<string> { ".txt" });
+        picker.SuggestedFileName = "NewFile";
+        return await picker.PickSaveFileAsync();
     }
     #endregion
 

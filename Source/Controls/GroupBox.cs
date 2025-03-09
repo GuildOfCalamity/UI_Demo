@@ -63,9 +63,9 @@ public sealed partial class GroupBox : ContentControl
     {
         base.OnApplyTemplate();
 
-        HeadingPresenter = GetTemplateChild("PART_HeadingPresenter") as ContentPresenter ?? throw new InvalidOperationException($"{nameof(FadeImage)}: Style template missing 'PART_HeadingPresenter', cannot continue.");
-        ChildPresenter = GetTemplateChild("PART_ChildPresenter") as ContentPresenter ?? throw new InvalidOperationException($"{nameof(FadeImage)}: Style template missing 'PART_ChildPresenter', cannot continue.");
-        BorderPath = GetTemplateChild("PART_BorderPath") as Microsoft.UI.Xaml.Shapes.Path ?? throw new InvalidOperationException($"{nameof(FadeImage)}: Style template missing 'PART_BorderPath', cannot continue.");
+        HeadingPresenter = GetTemplateChild("PART_HeadingPresenter") as ContentPresenter ?? throw new InvalidOperationException($"{nameof(ActiveImage)}: Style template missing 'PART_HeadingPresenter', cannot continue.");
+        ChildPresenter = GetTemplateChild("PART_ChildPresenter") as ContentPresenter ?? throw new InvalidOperationException($"{nameof(ActiveImage)}: Style template missing 'PART_ChildPresenter', cannot continue.");
+        BorderPath = GetTemplateChild("PART_BorderPath") as Microsoft.UI.Xaml.Shapes.Path ?? throw new InvalidOperationException($"{nameof(ActiveImage)}: Style template missing 'PART_BorderPath', cannot continue.");
 
         // If these are always null, make sure you have a default styler in the project for the type GroupBox.
         if (HeadingPresenter is null || ChildPresenter is null || BorderPath is null)

@@ -21,16 +21,19 @@ public sealed partial class CloseDialog : ContentDialog
     {
         this.InitializeComponent();
         this.Opened += DialogOnOpened;
-        this.GotFocus += OnGotFocus;
-        this.LostFocus += OnLostFocus;
+        this.GotFocus += DialogOnGotFocus;
+        this.LostFocus += DialogOnLostFocus;
     }
 
-    /// <summary>
-    ///   The "parent" of the ContentDialog is the XamlRoot of the main 
-    ///   window, so we'll key off of the ContentDialog's title panel.
-    /// </summary>
-    void OnGotFocus(object sender, RoutedEventArgs e) => BloomHelper.AddBloom((UIElement)imgLevel, (UIElement)cdGrid, Windows.UI.Color.FromArgb(230, 250, 244, 32), 14);
-    void OnLostFocus(object sender, RoutedEventArgs e) => BloomHelper.RemoveBloom((UIElement)imgLevel, (UIElement)cdGrid, null);
+    void DialogOnLostFocus(object sender, RoutedEventArgs e)
+    {
+        img.IsVisible = false;
+    }
+
+    void DialogOnGotFocus(object sender, RoutedEventArgs e)
+    {
+        img.IsVisible = true;
+    }
 
     void DialogOnOpened(ContentDialog sender, ContentDialogOpenedEventArgs args)
     {

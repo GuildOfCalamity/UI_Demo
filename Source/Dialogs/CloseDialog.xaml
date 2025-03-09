@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:UI_Demo.Dialogs"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:root="using:UI_Demo"
     BorderBrush="{StaticResource GradientBarBrush}"
     BorderThickness="3"
     CloseButtonText="Cancel"
@@ -61,13 +62,15 @@
                 FontSize="{StaticResource FontSizeHuge}"
                 Foreground="{StaticResource SecondaryBrush}"
                 Text="Exit?" />
-            <Image
-                x:Name="imgLevel"
+            <root:ActiveImage
+                x:Name="img"
                 Grid.Column="1"
                 Height="50"
-                Margin="8"
-                HorizontalAlignment="Right"
+                HorizontalAlignment="Center"
                 VerticalAlignment="Center"
+                FadeDuration="0:0:0.85"
+                FadeStyle="SlideRight"
+                IsVisible="False"
                 Source="ms-appx:///Assets/Exclamation3.png" />
         </Grid>
     </ContentDialog.Title>

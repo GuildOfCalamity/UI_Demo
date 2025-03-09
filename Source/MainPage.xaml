@@ -282,8 +282,8 @@
                     <!--#endregion-->
                 </Grid.Resources>
 
-                <!--#region [FadeImage Control]-->
-                <local:FadeImage
+                <!--#region [ActiveImage Control]-->
+                <local:ActiveImage
                     x:Name="imgFade"
                     Grid.RowSpan="2"
                     Grid.ColumnSpan="2"
@@ -295,7 +295,7 @@
                     FadeStyle="ZoomAndRotate"
                     IsVisible="False"
                     Source="ms-appx:///Assets/FadeImage.png"
-                    TapEvent="{x:Bind FadeImageTapEvent, Mode=OneWay}" />
+                    TapEvent="{x:Bind ActiveImageTapEvent, Mode=OneWay}" />
                 <!--#endregion-->
 
                 <!--<local:SeparatorLine
