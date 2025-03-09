@@ -292,7 +292,7 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     FadeDuration="0:0:1.25"
-                    FadeStyle="ZoomAndRotate"
+                    ImageMode="ZoomAndRotate"
                     IsVisible="False"
                     Source="ms-appx:///Assets/FadeImage.png"
                     TapEvent="{x:Bind ActiveImageTapEvent, Mode=OneWay}" />

@@ -69,7 +69,7 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 FadeDuration="0:0:0.85"
-                FadeStyle="SlideRight"
+                ImageMode="SlideRight"
                 IsVisible="False"
                 Source="ms-appx:///Assets/Exclamation3.png" />
         </Grid>

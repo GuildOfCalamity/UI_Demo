@@ -36,7 +36,7 @@ namespace UI_Demo;
 </Style>
 */
 
-public enum ActiveImageStyle
+public enum ActiveImageMode
 {
     Fade,                   // Default opacity fade (mandatory for other styles)
     SlideRight,             // Moves in from left
@@ -195,20 +195,20 @@ public sealed partial class ActiveImage : Control
     }
 
     /// <summary>
-    ///   Dependency Property for <see cref="ActiveImageStyle"/>
+    ///   Dependency Property for <see cref="ActiveImageMode"/>
     /// </summary>
-    public static readonly DependencyProperty FadeStyleProperty = DependencyProperty.Register(
-        nameof(FadeStyle), 
-        typeof(ActiveImageStyle),
+    public static readonly DependencyProperty ImageModeProperty = DependencyProperty.Register(
+        nameof(ImageMode), 
+        typeof(ActiveImageMode),
         typeof(ActiveImage), 
-        new PropertyMetadata(ActiveImageStyle.Fade, OnFadeStyleChanged));
+        new PropertyMetadata(ActiveImageMode.Fade, OnImageModeChanged));
 
-    public ActiveImageStyle FadeStyle
+    public ActiveImageMode ImageMode
     {
-        get => (ActiveImageStyle)GetValue(FadeStyleProperty);
-        set => SetValue(FadeStyleProperty, value);
+        get => (ActiveImageMode)GetValue(ImageModeProperty);
+        set => SetValue(ImageModeProperty, value);
     }
-    static void OnFadeStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    static void OnImageModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (ActiveImage)d;
         control.InitializeAnimations();
@@ -287,7 +287,7 @@ public sealed partial class ActiveImage : Control
         _fadeOutStoryboard.Completed += FadeOutStoryboardOnCompleted;
         #endregion
         #region [Slide Right Effect]
-        if (FadeStyle == ActiveImageStyle.SlideRight)
+        if (ImageMode == ActiveImageMode.SlideRight)
         {
             /* NOTE: The styler must contain a CompositeTransform, e.g.
             <Image>
@@ -313,7 +313,7 @@ public sealed partial class ActiveImage : Control
         }
         #endregion
         #region [Slide Left Effect]
-        else if (FadeStyle == ActiveImageStyle.SlideLeft)
+        else if (ImageMode == ActiveImageMode.SlideLeft)
         {
             /* NOTE: The styler must contain a CompositeTransform, e.g.
             <Image>
@@ -339,7 +339,7 @@ public sealed partial class ActiveImage : Control
         }
         #endregion
         #region [Zoom Effect]
-        else if (FadeStyle == ActiveImageStyle.Zoom)
+        else if (ImageMode == ActiveImageMode.Zoom)
         {
             /* NOTE: The styler must contain a CompositeTransform, e.g.
             <Image>
@@ -374,7 +374,7 @@ public sealed partial class ActiveImage : Control
         }
         #endregion
         #region [Zoom & Rotate Effect]
-        else if (FadeStyle == ActiveImageStyle.ZoomAndRotate)
+        else if (ImageMode == ActiveImageMode.ZoomAndRotate)
         {
             /* NOTE: The styler must contain a CompositeTransform, e.g.
             <Image>
@@ -421,7 +421,7 @@ public sealed partial class ActiveImage : Control
         }
         #endregion
         #region [Rotate Clockwise Effect]
-        else if (FadeStyle == ActiveImageStyle.RotateClockwise)
+        else if (ImageMode == ActiveImageMode.RotateClockwise)
         {
             /* NOTE: The styler must contain a CompositeTransform, e.g.
             <Image>
@@ -444,7 +444,7 @@ public sealed partial class ActiveImage : Control
         }
         #endregion
         #region [Rotate Counter Clockwise Effect]
-        else if (FadeStyle == ActiveImageStyle.RotateCounterClockwise)
+        else if (ImageMode == ActiveImageMode.RotateCounterClockwise)
         {
             /* NOTE: The styler must contain a CompositeTransform, e.g.
             <Image>
