@@ -13,8 +13,9 @@
 
 ## 🎛️ Description
 - A test application for changes and updates made to the [WindowsAppSDK](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/stable-channel).
+- [WinUI 3](https://github.com/Microsoft/microsoft-ui-xaml) is the effort to lift official native Microsoft UI controls and features out of the operating system, so app developers can use the latest controls and visuals on any in-market version of the OS. C#/WinRT is needed to support the changes required for lifting the XAML APIs out of Windows.UI.XAML and into Microsoft.UI.XAML.
 - I've added code examples for customizing `Microsoft.UI.Xaml.Controls.ContentDialog`, `Windows.UI.StartScreen.JumpList`, `Windows.ApplicationModel.Activation`, `Microsoft.UI.Windowing.AppWindow` and `Microsoft.UI.Windowing.DisplayArea` management, and creating gradient window backdrops via `Microsoft.UI.Composition.SpriteVisual`. The blur effects are created from scratch without the use of any 3rd party NuGets.
-- This source also contains plenty of tips and tricks for any application, including but not limited to: TaskBar, PubSub, Toast, Channels, DispatcherQueue, Image Capture, Split View, Profile Settings, Machine Environment, Stylers, Converters, P/Invoke, Extensions, et al.
+- This source also contains plenty of tips and tricks for any application, including but not limited to: Compositor, TaskBar, PubSub, Toast, Channels, DispatcherQueue, Image Capture, Split View, Profile Settings, Machine Environment, Binding, Stylers, Converters, P/Invoke, Extensions, et al.
 - There's a hidden surprise if you're watching the `SplitView` PubSub message queue while **CapsLock** is on.
 - Don't forget to give a ⭐ if you find any of my code helpful or educational.
 
