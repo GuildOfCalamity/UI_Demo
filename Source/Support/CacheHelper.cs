@@ -294,7 +294,7 @@ public class CacheHelper<T> : IDisposable
                 if (_evictionTimer != null)
                 {
                     _cache.Clear();
-                    Debug.WriteLine($"[INFO] {nameof(_cache)} cleared during disposal");
+                    Debug.WriteLine($"[DEBUG] {nameof(_cache)} cleared during disposal");
                     _evictionTimer.Dispose();
                     _evictionTimer = null;
                 }
@@ -346,7 +346,7 @@ public class ObjectInfo<T>
 }
 
 /// <summary>
-/// Supporting class for <see cref="CacheHelper{T}"/> events.
+/// Inherits from <see cref="ObjectInfo{T}"/>.
 /// </summary>
 public class EvictionInfo<T> : ObjectInfo<T>
 {
@@ -366,7 +366,7 @@ public class CachHelperTest
     {
         _ = Task.Run(async () =>
         {
-            Debug.WriteLine("\r\n  Home-Brew Cache Test  \r\n↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓\r\n");
+            Debug.WriteLine("\r\n --== Home-Brew Cache Test ==-- \r\n");
             var cache = new CacheHelper<string>();
             cache.ItemEvicted += OnItemEvicted;
             cache.ItemUpdated += OnItemUpdated;
@@ -378,7 +378,7 @@ public class CachHelperTest
                 cache.AddOrUpdate("key4", Extensions.GenerateKeyCode(), DateTime.Now.AddMinutes(1));
                 cache.AddOrUpdate("key5", Extensions.GenerateKeyCode(), TimeSpan.FromSeconds(7));
                 var keys = cache.GetAllKeys();
-                Debug.WriteLine($"Current cache keys: {string.Join(", ", keys)}");
+                Debug.WriteLine($"[DEBUG] Current cache keys: {string.Join(", ", keys)}");
                 await Task.Delay(6000);
 
                 var key5 = cache.Get("key5"); // refresh the expire by fetching
@@ -391,17 +391,17 @@ public class CachHelperTest
 
                 await Task.Delay(6000);
 
-                Debug.WriteLine($"The current cache does {(cache.Contains("key1") ? "" : "not ")}contain the key \"key1\"");
-                Debug.WriteLine($"The current cache does {(cache.Contains("key2") ? "" : "not ")}contain the key \"key2\"");
-                Debug.WriteLine($"The current cache does {(cache.Contains("key3") ? "" : "not ")}contain the key \"key3\"");
-                Debug.WriteLine($"The current cache does {(cache.Contains("key5") ? "" : "not ")}contain the key \"key5\"");
+                Debug.WriteLine($"[DEBUG] The current cache does {(cache.Contains("key1") ? "" : "not ")}contain the key \"key1\"");
+                Debug.WriteLine($"[DEBUG] The current cache does {(cache.Contains("key2") ? "" : "not ")}contain the key \"key2\"");
+                Debug.WriteLine($"[DEBUG] The current cache does {(cache.Contains("key3") ? "" : "not ")}contain the key \"key3\"");
+                Debug.WriteLine($"[DEBUG] The current cache does {(cache.Contains("key5") ? "" : "not ")}contain the key \"key5\"");
                 Debug.WriteLine("");
 
                 cache.Remove("key2");
 
                 foreach (var ci in cache.GetCacheAsEnumerable())
                 {
-                    Debug.WriteLine($"Cache item {ci.Key} value: {ci.Value.Value}");
+                    Debug.WriteLine($"[DEBUG] Cache item {ci.Key} value: {ci.Value.Value}");
                 }
             }
             finally
@@ -414,15 +414,15 @@ public class CachHelperTest
 
     #region [Cache Events]
     static void OnItemUpdated(ObjectInfo<string> info) => Debug.WriteLine(
-        $"Cache item updated: Key='{info.Key}'\r\n" +
-        $"Value='{info.Value}'\r\n" +
-        $"Expiration='{info.ExpirationTime}'\r\n");
+        $" - Cache item updated: Key='{info.Key}'\r\n" +
+        $" - Value='{info.Value}'\r\n" +
+        $" - Expiration='{info.ExpirationTime}'\r\n");
 
     static void OnItemEvicted(EvictionInfo<string> info) => Debug.WriteLine(
-        $"Cache item evicted: Key='{info.Key}'\r\n" +
-        $"Value='{info.Value}'\r\n" +
-        $"Reason='{info.Reason}'\r\n" +
-        $"Expiration='{info.ExpirationTime}'\r\n");
+        $" - Cache item evicted: Key='{info.Key}'\r\n" +
+        $" - Value='{info.Value}'\r\n" +
+        $" - Reason='{info.Reason}'\r\n" +
+        $" - Expiration='{info.ExpirationTime}'\r\n");
     #endregion
 }
 #endregion

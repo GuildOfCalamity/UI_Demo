@@ -17,6 +17,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.AppLifecycle;
 
 using Windows.ApplicationModel.Activation;
+using Windows.Foundation.Metadata;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
 using Windows.System;
@@ -61,6 +62,7 @@ public partial class App : Application
 
     public static Channel<ChannelMessageType>? CoreMessageChannel;
     public static CancellationTokenSource? CoreChannelToken;
+    static ValueStopwatch StopWatch { get; set; }
 
     /// <summary>
     /// Starting with the Windows 10 Fall Creators Update, Visual Studio provides a new 
@@ -150,6 +152,8 @@ public partial class App : Application
         }
         #endregion
 
+        StopWatch = ValueStopwatch.StartNew();
+
         // Is there more than one of us?
         InstanceMutex = new Mutex(true, GetCurrentAssemblyName(), out bool isNew);
         if (isNew)
@@ -176,10 +180,12 @@ public partial class App : Application
 
         AssemblyReferences = Extensions.GatherReferenceAssemblies(true);
 
+        bool areWeTheRealDeal = ApiInformation.IsPropertyPresent("Microsoft.UI.Dispatching.DispatcherQueue", "HasThreadAccess");
+
         /** System.Threading.Channels test **/
         //_ = Task.Run(() => ChannelProducerAsync(CoreChannelToken.Token));
         //_ = Task.Run(() => GenericProducerMessageService(CoreChannelToken.Token));
-        
+
         /** PubSubService test **/
         _ = Task.Run(() => PubSubHeartbeat());
 
@@ -491,6 +497,20 @@ public partial class App : Application
 
         InitializeJumpList(Windows.UI.StartScreen.JumpListSystemGroupKind.None);
 
+
+
+        // Allocate a span on the stack.
+        Span<int> snums = stackalloc int[5000];
+        
+        for (int i = 0; i < 5000; i++) 
+            snums[i] = i + i + i;
+
+        snums.Split(snums.Length / 2, out var left, out var right);
+        
+        Debug.WriteLine($"[DEBUG] Span.FindLast={snums.FindLastIndexOf(200)}");
+        Debug.WriteLine($"[DEBUG] Span.Median={snums.Median()}");
+
+        Debug.WriteLine($"••••••••••••••••••••••••••••••••••••••••••••\r\n   Startup took {StopWatch.GetElapsedTime().ToReadableString()} \r\n••••••••••••••••••••••••••••••••••••••••••••");
     }
 
     #region [Window Helpers]
@@ -1251,7 +1271,7 @@ public partial class App : Application
         {
             while (!IsClosing)
             {
-                await Task.Delay(5000);
+                await Task.Delay(10000);
                 if (IsCapsLockOn())
                     PubSubEnhanced<ApplicationMessage>.Instance.SendMessage(new ApplicationMessage { Module = ModuleId.Gibberish, MessageText = $"🔔 {Gibberish.GenerateSentence()}", MessageType = typeof(string) });
                 else

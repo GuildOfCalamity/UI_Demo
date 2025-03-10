@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Numerics;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
@@ -28,6 +29,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.VisualBasic;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -125,6 +127,11 @@ public static class Extensions
         return string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
     }
 
+    /// <summary>
+    /// Minimum password length is 8 characters.
+    /// </summary>
+    /// <param name="pswd">the string to evaluate</param>
+    /// <returns><c>true</c> if password meets basic strength requirements, otherwise <c>false</c></returns>
     public static bool IsStrongPasswordRegex(string pswd)
     {
         return Regex.IsMatch(pswd ?? "", "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[\\-`\\]~\\[!@#$%^\\&*()\\\\_+={}:;<,>.?/|'\\\"])(?=.{8,})");
@@ -2379,10 +2386,237 @@ public static class Extensions
         var result = new char[length];
 
         for (int x = 0; x < length; x++)
-            result[x] = pwChars[Random.Shared.Next() % pwChars.Length];
+            result[x] = pwChars[Random.Shared.Next() % pwChars.Length]; //-or- "result[x] = pwChars[Random.Shared.Next(pwChars.Length)];"
 
         return (new string(result));
     }
+
+    /// <summary>
+    /// Basic attenuation function for light sources.
+    /// </summary>
+    public static float Attenuate(float distance, float radius, float maxIntensity, float falloff)
+    {
+        var tmp1 = distance / radius;
+        if (tmp1 >= 1f) { return 0f; }
+        var tmp2 = Square(tmp1);
+        return maxIntensity * Square(1f - tmp2) / (1 + falloff * tmp1);
+        float Square(float n) => n * n;
+    }
+
+    /// <summary>
+    /// Utilizes MD5 for <paramref name="fullPath"/>'s checksum.
+    /// </summary>
+    public static string CalculateFileChecksum(string fullPath)
+    {
+        if (!File.Exists(fullPath))
+            return string.Empty;
+        
+        var buffer = Encoding.UTF8.GetBytes(fullPath);
+        // Reserved word "stackalloc" (flexibility added in C# v7.2)
+        // The memory allocated using stackalloc is only valid within
+        // the scope of the current method or block. Once the method
+        // exits, the memory is automatically deallocated.
+        // The stack will always be faster than the heap, but use
+        // stackalloc with care, as it bypasses garbage collection
+        // and requires manual memory management.
+        Span<byte> hash = stackalloc byte[MD5.HashSizeInBytes];
+        MD5.HashData(buffer, hash);
+
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    public async static Task<string> CreateMD5Async(Stream stream, CancellationToken cancellationToken = default)
+    {
+        var bytes = await MD5.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(bytes).ToLower();
+    }
+
+    public async static Task<string> CreateSHA1Async(Stream stream, CancellationToken cancellationToken = default)
+    {
+        var bytes = await SHA1.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(bytes).ToLower();
+    }
+
+    public async static Task<string> CreateSHA256Async(Stream stream, CancellationToken cancellationToken = default)
+    {
+        var bytes = await SHA256.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(bytes).ToLower();
+    }
+
+    public async static Task<string> CreateSHA384Async(Stream stream, CancellationToken cancellationToken = default)
+    {
+        var bytes = await SHA384.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(bytes).ToLower();
+    }
+
+    public async static Task<string> CreateSHA512Async(Stream stream, CancellationToken cancellationToken = default)
+    {
+        var bytes = await SHA512.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(bytes).ToLower();
+    }
+
+    #region [Spans]
+    /// <summary>
+    /// Finds the first occurrence of a value within a span.
+    /// </summary>
+    public static int FindFirstIndexOf<T>(this Span<T> span, T value) where T : IEquatable<T>
+    {
+        for (int i = 0; i < span.Length; i++)
+        {
+            if (span[i].Equals(value))
+                return i;
+        }
+        return -1; // Not found
+    }
+
+    /// <summary>
+    /// Finds the last occurrence of a value within a span.
+    /// </summary>
+    /// <returns>the index of the first occurrence, otherwise -1 for not found</returns>
+    public static int FindLastIndexOf<T>(this Span<T> span, T value) where T : IEquatable<T>
+    {
+        for (int i = span.Length-1; i > -1; i--)
+        {
+            if (span[i].Equals(value))
+                return i;
+        }
+        return -1; // Not found
+    }
+
+    /// <summary>
+    /// Reverses the elements within a span.
+    /// </summary>
+    public static void Reverse<T>(this Span<T> span)
+    {
+        int left = 0;
+        int right = span.Length - 1;
+        while (left < right)
+        {
+            (span[left], span[right]) = (span[right], span[left]);
+            left++; right--;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a span contains only unique elements.
+    /// </summary>
+    public static bool IsUnique<T>(this Span<T> span) where T : IEquatable<T>
+    {
+        for (int i = 0; i < span.Length - 1; i++)
+        {
+            for (int j = i + 1; j < span.Length; j++)
+            {
+                if (span[i].Equals(span[j]))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if a span contains any of the elements from another span.
+    /// </summary>
+    public static bool ContainsAny<T>(this Span<T> span, Span<T> otherSpan) where T : IEquatable<T>
+    {
+        foreach (var element in otherSpan)
+        {
+            if (span.Contains(element))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Finds the index of the first occurrence of any element from another span.
+    /// </summary>
+    public static int IndexOfAny<T>(this Span<T> span, Span<T> otherSpan) where T : IEquatable<T>
+    {
+        for (int i = 0; i < span.Length; i++)
+        {
+            if (otherSpan.Contains(span[i]))
+                return i;
+        }
+        return -1; // Not found
+    }
+
+    /// <summary>
+    /// Fills a span with a specific <paramref name="value"/>.
+    /// </summary>
+    public static void Fill<T>(this Span<T> span, T value)
+    {
+        for (int i = 0; i < span.Length; i++)
+            span[i] = value;
+    }
+
+    /// <summary>
+    /// Bisects the <paramref name="span"/> at the given <paramref name="splitIndex"/>.
+    /// </summary>
+    /// <remarks>
+    /// A tuple return is not possible in this scenario due to the type 'Span<T>' 
+    /// may not be a ref struct or a type parameter allowing ref structs in order 
+    /// to use it as parameter 'T1' in the generic type or method '(T1, T2)'
+    /// </remarks>
+    public static void Split<T>(this Span<T> span, int splitIndex, out Span<T> left, out Span<T> right)
+    {
+        if (splitIndex < 0 || splitIndex >= span.Length)
+            throw new ArgumentOutOfRangeException(nameof(splitIndex));
+
+        left = span[0..splitIndex];
+        right = span[splitIndex..];
+    }
+
+    /// <summary>
+    /// Calculates the sum of all elements in a span of numeric types.
+    /// </summary>
+    public static T Sum<T>(this Span<T> span) where T : struct, IAdditionOperators<T, T, T>
+    {
+        T sum = default;
+        
+        for (int i = 0; i < span.Length; i++)
+            sum += span[i];
+
+        return sum;
+    }
+
+    /// <summary>
+    /// Calculates the average of all elements in a span of numeric types.
+    /// </summary>
+    public static double Average<T>(this Span<T> span) where T : struct, IAdditionOperators<T, T, T>, IConvertible
+    {
+        if (span.Length == 0)
+            return 0;
+
+        T sum = default;
+
+        for (int i = 0; i < span.Length; i++)
+            sum += span[i];
+
+        return (double)Convert.ChangeType(sum, typeof(double)) / span.Length;
+    }
+
+    /// <summary>
+    /// Calculates the median of a span of numeric values.
+    /// </summary>
+    public static double Median<T>(this Span<T> span) where T : struct, IComparable<T>
+    {
+        if (span.Length == 0)
+            throw new ArgumentException("Span cannot be empty.");
+
+        // Create a copy of the span in an array.
+        T[] array = new T[span.Length];
+        span.CopyTo(array);
+
+        // Sort the array in ascending order.
+        Array.Sort(array);
+
+        int middleIndex = array.Length / 2;
+
+        if (array.Length % 2 == 0) // If the length is even, the median is the average of the two middle elements.
+            return (Convert.ToDouble(array[middleIndex - 1]) + Convert.ToDouble(array[middleIndex])) / 2;
+        else // If the length is odd, the median is the middle element.
+            return Convert.ToDouble(array[middleIndex]);
+    }
+    #endregion
 
     #region [Task Helpers]
     public static async Task WithTimeoutAsync(this Task task, TimeSpan timeout)
@@ -2599,6 +2833,26 @@ public static class Extensions
             }
         }, TaskContinuationOptions.OnlyOnFaulted);
     }
+
+    public static bool IgnoreExceptions(Action action, Type? exceptionToIgnore = null, [CallerMemberName] string? caller = null)
+    {
+        try
+        {
+            action();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (exceptionToIgnore is null || exceptionToIgnore.IsAssignableFrom(ex.GetType()))
+            {
+                App.DebugLog($"{caller ?? "N/A"}: {ex.Message}");
+                return false;
+            }
+            else
+                throw;
+        }
+    }
+
 
     /// <summary>
     /// Gets the result of a <see cref="Task"/> if available, or <see langword="null"/> otherwise.

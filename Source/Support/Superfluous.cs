@@ -31,44 +31,41 @@ public class PredicateTesting
         string? result = names.Find(startsWithA);
         Debug.WriteLine("[INFO] Result: " + result ?? "No match found");
 
-        Predicate<Action> predicate = action => action.Method.Name == "TestMethod";
+        //Predicate<Action> predicate = action => action.Method.Name == "TestMethod";
     }
 
     public static void ActionTest()
     {
         List<Action> actions = new()
-    {
-        () => { Thread.Sleep(200);  Debug.WriteLine(" - Quick Task"); },
-        () => { Thread.Sleep(2500); Debug.WriteLine(" - Slow Task"); },
-        () => { Thread.Sleep(1000); Debug.WriteLine(" - Medium Task"); }
-    };
+        {
+            () => { Thread.Sleep(30);  Debug.WriteLine(" - Very Quick Task"); },
+            () => { Thread.Sleep(200);  Debug.WriteLine(" - Quick Task"); },
+            () => { Thread.Sleep(1000); Debug.WriteLine(" - Medium Task"); },
+            () => { Thread.Sleep(2500); Debug.WriteLine(" - Slow Task"); },
+        };
 
         Predicate<Action> isFastAction = action =>
         {
-            Stopwatch sw = Stopwatch.StartNew();
+            var vsw = ValueStopwatch.StartNew();
             action?.Invoke();
-            sw.Stop();
-            return sw.ElapsedMilliseconds <= 300;
+            return vsw.GetElapsedTime().TotalMilliseconds <= 300;
         };
 
         List<Action> fastActions = actions.Where(action => isFastAction(action)).ToList();
 
-        Debug.WriteLine("[INFO] Executing Fast Actions:");
-        foreach (var action in fastActions)
-        {
-            action();
-        }
+        //Debug.WriteLine("[INFO] Only execute actions less than 300ms:");
+        //foreach (var action in fastActions) { action(); }
     }
 
     public static void FuncTest()
     {
         List<Func<int>> functions = new()
-    {
-        () => 10,
-        () => -5,
-        () => 23,
-        () => -1
-    };
+        {
+            () => 10,
+            () => -5,
+            () => 23,
+            () => -1
+        };
 
         Predicate<Func<int>> isPositive = func => func() > 0;
 

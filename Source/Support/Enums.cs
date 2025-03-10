@@ -22,16 +22,17 @@ public enum ModuleId
     MainWindow = 2,
     MainPage = 3,
     ControlsPage = 4,
-    ProfileManager = 21,
-    ToastHelper = 22,
-    DialogHelper = 23,
-    BlurHelper = 24,
-    TaskbarHelper = 25,
-    UIThreadHelper = 26,
-    AppCapture = 27,
-    MessageService = 28,
-    Extensions = 29,
-    Gibberish = 30,
+    Cache = 20,
+    ProfileManager = 22,
+    ToastHelper = 24,
+    DialogHelper = 26,
+    BlurHelper = 28,
+    TaskbarHelper = 30,
+    UIThreadHelper = 32,
+    AppCapture = 34,
+    MessageService = 36,
+    Extensions = 38,
+    Gibberish = 40,
 }
 
 public enum ChannelMessageType
@@ -51,29 +52,11 @@ public enum DelayTime
     Long = 5
 }
 
-/// <summary>
-/// Defines constants that specify item type of the file system on Windows.
-/// </summary>
 public enum FileSystemItemType : byte
 {
-    /// <summary>
-    /// The item is a directory.
-    /// </summary>
     Directory = 0,
-
-    /// <summary>
-    /// The item is a file.
-    /// </summary>
     File = 1,
-
-    /// <summary>
-    /// The item is a symlink.
-    /// </summary>
-    [Obsolete("The symlink has no use for now here.")]
     Symlink = 2,
-
-    /// <summary>
-    /// The item is a library.
-    /// </summary>
     Library = 3,
+    Share = 4,
 }

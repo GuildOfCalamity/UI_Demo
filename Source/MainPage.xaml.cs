@@ -51,6 +51,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     static Brush? _lvl1, _lvl2, _lvl3, _lvl4, _lvl5;
     DispatcherTimer? _flyoutTimer;
     CancellationTokenSource? _ctsTask;
+    FileWatcher? _watcher;
 
     bool useSpringInsteadOfScalar = true;
     float _springMultiplier = 1.05f;
@@ -99,15 +100,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         get => _delay;
         set { _delay = value; NotifyPropertyChanged(nameof(Delay)); }
     }
-    public ObservableCollection<string> LogMessages { get; private set; } = new();
-    public ObservableCollection<string> Assets = new();
-    public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-    {
-        if (string.IsNullOrEmpty(propertyName)) { return; }
-        // Confirm that we're on the UI thread in the event that DependencyProperty is changed under forked thread.
-        DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
-    }
-
     public int ProcessorCount
     {
         get
@@ -137,6 +129,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             catch (KeyNotFoundException) { return 2; }
         }
     }
+    public CacheHelper<string> AssetCache { get; set; } = new();
+    public ObservableCollection<string> LogMessages { get; private set; } = new();
+    public ObservableCollection<string> Assets = new();
+    public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
+    {
+        if (string.IsNullOrEmpty(propertyName)) { return; }
+        // Confirm that we're on the UI thread in the event that DependencyProperty is changed under forked thread.
+        DispatcherQueue.InvokeOnUI(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
+    }
     #endregion
 
     #region [ICommands]
@@ -147,11 +148,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     public MainPage()
     {
-        //PredicateTesting.ActionTest();
-        //LazyStopwatchTest.Run();
-        //LazyCacheTest.RunAsync();
-        CachHelperTest.Run();
-
         this.InitializeComponent();
         this.Loaded += MainPageOnLoaded;
         this.Unloaded += MainPageOnUnloaded;
@@ -159,6 +155,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         MessageSplitView.PaneOpened += OnPaneOpenedOrClosed;
         MessageSplitView.PaneClosed += OnPaneOpenedOrClosed;
         App.WindowSizeChanged += SizeChangeEvent;
+        AssetCache.ItemEvicted += OnAssetItemEvicted;
+        AssetCache.ItemUpdated += OnAssetItemUpdated;
         PopulateAssets();
 
         _localDispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
@@ -423,6 +421,19 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         }
         #endregion
 
+        #region [FileSystemWatcher test]
+        List<string> watcherPaths = new();
+        if (App.IsPackaged)
+            watcherPaths.Add(Windows.ApplicationModel.Package.Current.InstalledLocation.Path);
+        else
+            watcherPaths.Add(AppContext.BaseDirectory);
+
+        _watcher = new FileWatcher(watcherPaths, subfolders: true);
+        _watcher.ItemAdded += OnWatcherEvent;
+        _watcher.ItemChanged += OnWatcherEvent;
+        _watcher.ItemDeleted += OnWatcherEvent;
+        #endregion
+
         // WindowsXamlManager is part of the Windows App SDK XAML hosting API. This API enables non-WinAppSDK
         // desktop applications to host any control that derives from Microsoft.UI.Xaml.UIElement in a UI element
         // that is associated with a window handle (HWND). This API can be used by desktop applications built
@@ -431,9 +442,38 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         // This event succeeds the AppWindow.Destroying() event.
         Microsoft.UI.Xaml.Hosting.WindowsXamlManager? wxm = Microsoft.UI.Xaml.Hosting.WindowsXamlManager.GetForCurrentThread();
         wxm.XamlShutdownCompletedOnThread += (s, e) => { Debug.WriteLine($"[INFO] XamlShutdownCompleted"); };
+
+        #region [Superfluous]
+        _ = Task.Run(async () =>
+        {
+            PredicateTesting.BasicTest();
+            //PredicateTesting.ActionTest();
+            //LazyStopwatchTest.Run();
+            //LazyCacheTest.RunAsync();
+            //CachHelperTest.Run();
+        });
+        #endregion
+    }
+
+    /// <summary>
+    /// Runs math op for <paramref name="seconds"/>.
+    /// </summary>
+    public void RunCPU(double seconds)
+    {
+        DateTime start = DateTime.Now;
+        while (DateTime.Now.Subtract(start).TotalSeconds < seconds)
+        {
+            var d = Math.Pow(Math.Sqrt(Math.PI), Math.PI);
+        }
     }
 
     #region [Events]
+    void OnWatcherEvent(object? sender, FileSystemEventArgs e)
+    {
+        if (_loaded)
+            UpdateInfoBar($"File watcher event ⇒ {e.Name} was {e.ChangeType}");
+    }
+
     void MainPageOnLoaded(object sender, RoutedEventArgs e)
     {
         if (!_loaded && this.Content != null)
@@ -529,7 +569,23 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             catch (Exception) { Debug.WriteLine($"[WARNING] Failed to load previous message list."); }
             #endregion
 
-            _ = Task.Run(async () => 
+            #region [Bloom Effect]
+            var sldrParent = BloomHelper.FindParentPanel((UIElement)sldrDays);
+            if (sldrParent is not null)
+                BloomHelper.AddBloom((UIElement)sldrDays, sldrParent, Windows.UI.Color.FromArgb(190, 250, 250, 250), 8);
+            #endregion
+
+            imgFade.IsVisible = true;
+
+            var lastPath = AssetCache.Get("LastAssetPath");
+            var exp = AssetCache.GetExpiration("LastAssetPath");
+            Debug.WriteLine($"[INFO] The cache item 'LastAssetPath' will expire at {exp}");
+            if (!string.IsNullOrEmpty(lastPath))
+            {
+                var md5 = Extensions.CalculateFileChecksum(lastPath);
+                Debug.WriteLine($"[INFO] The cache item checksum is {md5}");
+            }
+            _ = Task.Run(async () =>
             {
                 //foreach (var item in await ImageDeepSearchFuncAsync())
                 //    Debug.WriteLine($"[DEEP] {item}");
@@ -538,26 +594,20 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 while (!App.IsClosing)
                 {
                     //Size = Math.Round((DateTime.Now.Second / 60.0) * 100, 0, MidpointRounding.ToEven);
-                    int slope = (int)Extensions.EaseInQuadratic(size/10);
+                    int slope = (int)Extensions.EaseInQuadratic(size / 10);
                     await Task.Delay(95 - Math.Min(94, slope));
                     if (size > 100) { size = 0; }
                     Size = size++;
                 }
             });
-
-            #region [Bloom Effect]
-            var sldrParent = BloomHelper.FindParentPanel((UIElement)sldrDays);
-            if (sldrParent is not null)
-                BloomHelper.AddBloom((UIElement)sldrDays, sldrParent, Windows.UI.Color.FromArgb(190, 250, 250, 250), 8);
-            #endregion
-
-            imgFade.IsVisible = true;
         }
         _loaded = true;
     }
 
     void MainPageOnUnloaded(object sender, RoutedEventArgs e)
     {
+        _watcher?.Dispose();
+
         if (_pointLightButton != null)
         {
             _pointLightButton?.StopAnimation("Color");
@@ -1186,8 +1236,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionFirstRun", StringComparison.OrdinalIgnoreCase))
             {
-                // Reset first run flag.
-                App.Profile!.FirstRun = true;
+                App.Profile!.FirstRun = true; // Reset first run flag.
+                App.Profile.Save();
             }
             else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionToken", StringComparison.OrdinalIgnoreCase))
             {
@@ -1256,6 +1306,32 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         {
             UpdateInfoBar($"Got ToggleMenuFlyoutItem.Tag: {tmfi.Tag}");
         }
+    }
+
+    public void OnAssetItemEvicted(EvictionInfo<string> info)
+    {
+        if (_loaded)
+        {
+            //UpdateInfoBar($"Cache item evicted. Key='{info.Key}' Reason='{info.Reason}' Expiration='{info.ExpirationTime}' Value='{info.Value}'", MessageLevel.Information);
+            _localDispatcher.TryEnqueue(() =>
+            {
+                _coreMessages?.Insert(0, new ApplicationMessage
+                {
+                    Module = ModuleId.Cache,
+                    MessageType = typeof(string),
+                    MessageText = $"Cache item evicted. Key='{info.Key}' Reason='{info.Reason}' Expiration='{info.ExpirationTime}' Value='{info.Value}'",
+                    MessageTime = DateTime.Now,
+                });
+                // Re-fetch assets when cache item expires.
+                PopulateAssets();
+            });
+        }
+    }
+
+    public void OnAssetItemUpdated(ObjectInfo<string> info)
+    {
+        if (_loaded)
+            UpdateInfoBar($"Cache item updated. Key='{info.Key}' Expiration='{info.ExpirationTime}' Value='{info.Value}'", MessageLevel.Information);
     }
     #endregion
 
@@ -1428,6 +1504,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         foreach (var f in Directory.GetFiles(assetPath, "*.png", SearchOption.TopDirectoryOnly))
         {
             Assets.Add(f);
+            AssetCache.AddOrUpdate("LastAssetPath", f, TimeSpan.FromHours(2));
         }
     }
 

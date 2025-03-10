@@ -13,7 +13,7 @@
     -->
     <!-- https://www.youtube.com/watch?v=pExPo1VJ8Ks&t=1350s
 
-    They will introduce a new dedicated XAML control for the TitleBar, supposed to have been in 1.6?
+    They will introduce a new dedicated XAML control for the TitleBar, supposed to have been in 1.6.x, hopefully in 1.7.x?
 
     <TitleBar Title="Sample" Subtitle="Beta" IsBackButtonVisible="False" IsPaneToggleButtonVisible="False">
         // Header

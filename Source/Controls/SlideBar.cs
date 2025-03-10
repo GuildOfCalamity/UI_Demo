@@ -283,7 +283,6 @@ public partial class SlideBar : InfoBar
             // If we're already open we know the timer is running.
             if (_tmrClose != null)
             {
-                Debug.WriteLine($"[INFO] Resetting close timer.");
                 _tmrClose.Stop();
                 _tmrClose.Interval = AutoCloseInterval;
                 _tmrClose.Start();
