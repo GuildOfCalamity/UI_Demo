@@ -38,7 +38,7 @@ public class PredicateTesting
     {
         List<Action> actions = new()
         {
-            () => { Thread.Sleep(30);  Debug.WriteLine(" - Very Quick Task"); },
+            () => { Thread.Sleep(24);  Debug.WriteLine(" - Very Quick Task"); },
             () => { Thread.Sleep(200);  Debug.WriteLine(" - Quick Task"); },
             () => { Thread.Sleep(1000); Debug.WriteLine(" - Medium Task"); },
             () => { Thread.Sleep(2500); Debug.WriteLine(" - Slow Task"); },

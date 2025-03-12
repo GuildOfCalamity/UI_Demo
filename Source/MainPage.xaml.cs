@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -11,6 +13,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -35,7 +38,6 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 
 using WinRT.Interop;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UI_Demo;
 
@@ -100,6 +102,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         get => _delay;
         set { _delay = value; NotifyPropertyChanged(nameof(Delay)); }
     }
+    StorageFolder? _workingFolder = null;
+    public StorageFolder? WorkingFolder
+    {
+        get => _workingFolder;
+        set { _workingFolder = value; NotifyPropertyChanged(nameof(WorkingFolder)); }
+    }
     public int ProcessorCount
     {
         get
@@ -132,6 +140,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     public CacheHelper<string> AssetCache { get; set; } = new();
     public ObservableCollection<string> LogMessages { get; private set; } = new();
     public ObservableCollection<string> Assets = new();
+    public ObservableCollection<PdfPageModel> PdfPages = new();
     public void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
     {
         if (string.IsNullOrEmpty(propertyName)) { return; }
@@ -166,24 +175,34 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         #region [Action example for our ProgressButton control]
         ProgressButtonClickEvent += async () =>
         {
-            tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Running…");
             IsBusy = true;
-            DispatcherQueue.TryEnqueue(() => { CustomTooltip.IsOpen = IsBusy; });
+
+            //tbMessages.Text = "Before task…";
+            //await Task.Delay(2000).ConfigureAwait(true); // resume on UI thread when delay finishes
+            //tbMessages.Text = "…After task";
+
+            tbMessages.Text = "Running…";
+            CustomTooltip.IsOpen = IsBusy;
             Amount = 0;
             for (int i = 0; i < 100; i++)
             {
                 Amount += 1;
                 switch (Delay)
                 {
-                    case DelayTime.Short: await Task.Delay(6); break;
-                    case DelayTime.Medium: await Task.Delay(18); break;
-                    case DelayTime.Long: await Task.Delay(40); break;
-                    default: await Task.Delay(10); break;
+                    case DelayTime.Short: await Task.Delay(6).ConfigureAwait(true); 
+                        break;
+                    case DelayTime.Medium: await Task.Delay(18).ConfigureAwait(true); 
+                        break;
+                    case DelayTime.Long: await Task.Delay(40).ConfigureAwait(true); 
+                        break;
+                    default: await Task.Delay(10).ConfigureAwait(true); 
+                        break;
                 }
             }
-            tbMessages.DispatcherQueue.TryEnqueue(() => tbMessages.Text = "Finished");
+            tbMessages.Text = "Finished";
+
             IsBusy = false;
-            DispatcherQueue.TryEnqueue(() => { CustomTooltip.IsOpen = IsBusy; });
+            CustomTooltip.IsOpen = IsBusy;;
             //var dr = await DialogHelper.ShowAsync(new Dialogs.ResultsDialog("Action Result", "Progress button's action event was completed.", MessageLevel.Information), Content as FrameworkElement);
         };
         #endregion
@@ -446,26 +465,25 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         #region [Superfluous]
         _ = Task.Run(async () =>
         {
-            PredicateTesting.BasicTest();
+            Debug.WriteLine($"–= Superfluous Testing Zone =–");
+            //PredicateTesting.BasicTest();
             //PredicateTesting.ActionTest();
             //LazyStopwatchTest.Run();
             //LazyCacheTest.RunAsync();
             //CachHelperTest.Run();
         });
+
+        var regex1 = RegexHelpers.WhitespaceAtLeastOnce().Replace($"–= Superfluous  Testing  Zone #1 =–", " ");
+        var regex2 = RegexHelpers.SpaceSplit().Split($"–= Superfluous  Testing  Zone #2 =–");
+        foreach (var split in regex2) { Debug.WriteLine($"{split}"); }
+        var regex3 = RegexHelpers.DriveLetter().Match("D:");
+        if (regex3.Success)
+            Debug.WriteLine($"DriveLetter() is true");
+
+        var mt = MachineHelper.GetDllMachineType(Path.Combine(Directory.GetCurrentDirectory(), $"{AppDomain.CurrentDomain.FriendlyName}.dll"));
         #endregion
     }
 
-    /// <summary>
-    /// Runs math op for <paramref name="seconds"/>.
-    /// </summary>
-    public void RunCPU(double seconds)
-    {
-        DateTime start = DateTime.Now;
-        while (DateTime.Now.Subtract(start).TotalSeconds < seconds)
-        {
-            var d = Math.Pow(Math.Sqrt(Math.PI), Math.PI);
-        }
-    }
 
     #region [Events]
     void OnWatcherEvent(object? sender, FileSystemEventArgs e)
@@ -587,8 +605,24 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             _ = Task.Run(async () =>
             {
-                //foreach (var item in await ImageDeepSearchFuncAsync())
-                //    Debug.WriteLine($"[DEEP] {item}");
+                if (App.IsPackaged)
+                    WorkingFolder = ApplicationData.Current.LocalFolder;
+                else
+                {
+                    WorkingFolder = await StorageFolder.GetFolderFromPathAsync(AppContext.BaseDirectory);
+                    
+                    // NOTE: Any IAsyncOperation can be converted to Task by adding .AsTask() to the end:
+                    //WorkingFolder = await StorageFolder.GetFolderFromPathAsync(AppContext.BaseDirectory).AsTask().ConfigureAwait(false);
+                    
+                    // Or if not async then you can wait on the task to complete:
+                    //var tr = StorageFolder.GetFolderFromPathAsync(AppContext.BaseDirectory).AsTask();
+                    //tr.Wait();
+                    //WorkingFolder = tr.Result;
+                }
+
+                UpdateInfoBar($"Current directory is '{WorkingFolder.Path}' on '{WorkingFolder.Provider.DisplayName}'.");
+
+                //foreach (var item in await ImageDeepSearchFuncAsync()) { Debug.WriteLine($"[DEEP] {item}"); }
 
                 int size = 0;
                 while (!App.IsClosing)
@@ -600,12 +634,17 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                     Size = size++;
                 }
             });
+
+            Binding pdfBinding = new Binding { Mode = BindingMode.OneWay, Source = PdfPages };
+            BindingOperations.SetBinding(PdfFlipper, FlipView.ItemsSourceProperty, pdfBinding);
         }
         _loaded = true;
     }
 
     void MainPageOnUnloaded(object sender, RoutedEventArgs e)
     {
+        PdfPages.Clear();
+
         _watcher?.Dispose();
 
         if (_pointLightButton != null)
@@ -1246,6 +1285,17 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
                 if (_ctsTask is not null)
                     _ctsTask.Cancel(); // Signal the task cancellation token.
+            }
+            else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionPDF", StringComparison.OrdinalIgnoreCase))
+            {
+                IsBusy = true;
+                var pdf = Path.Combine(System.AppContext.BaseDirectory, "Assets", "Sample.pdf");
+                UpdateInfoBar($"Loading '{pdf}'...", MessageLevel.Information);
+                PdfPages.Clear();
+                var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(pdf);
+                await LoadPdfPages(file);
+                IsBusy = false;
+                PdfFlipper.Focus(FocusState.Keyboard);
             }
             else
             {
@@ -2277,6 +2327,83 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
     #endregion
 
+    #region [PDFs]
+    public async Task LoadPdfPages(StorageFile pdfFile)
+    {
+        if (pdfFile is null)
+            return;
+
+        using var stream = await pdfFile.OpenReadAsync();
+        var pdf = await Windows.Data.Pdf.PdfDocument.LoadFromStreamAsync(stream);
+        if (pdf is not null)
+        {
+            if (await TryLoadPagesAsync(pdf, stream))
+                UpdateInfoBar($"Got PDF page count: {pdf.PageCount}");
+            else
+                UpdateInfoBar($"Could not get PDF page count.");
+        }
+        else
+        {
+            Debug.WriteLine($"[WARNING] 'pdfFile' was null, cannot continue.");
+        }
+    }
+
+    public async Task<bool> TryLoadPagesAsync(Windows.Data.Pdf.PdfDocument pdf, Windows.Storage.Streams.IRandomAccessStream fileStream)
+    {
+        try
+        {
+            await LoadPagesAsync(pdf);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WARNING] {ex.Message}");
+            return false;
+        }
+        finally
+        {
+            fileStream.Dispose();
+        }
+    }
+
+    async Task LoadPagesAsync(Windows.Data.Pdf.PdfDocument pdf, CancellationToken token = default)
+    {
+        int pageCount = 0;
+
+        // Limit how many pages get loaded.
+        var limit = Math.Clamp(pdf.PageCount, 0, 10);
+
+        for (uint i = 0; i < limit; i++)
+        {
+            // Stop loading if the user has canceled
+            if (token.IsCancellationRequested)
+                return;
+
+            Windows.Data.Pdf.PdfPage page = pdf.GetPage(i);
+            await page.PreparePageAsync();
+            using Windows.Storage.Streams.InMemoryRandomAccessStream stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+            await page.RenderToStreamAsync(stream);
+
+            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+            using SoftwareBitmap sw = await decoder.GetSoftwareBitmapAsync();
+
+            await _localDispatcher.EnqueueOrInvokeAsync(async () =>
+            {
+                Microsoft.UI.Xaml.Media.Imaging.BitmapImage src = new();
+                PdfPageModel pageData = new()
+                {
+                    PageBitmapImage = src,
+                    PageNumber = (int)i,
+                    PageSoftwareBitmap = sw,
+                };
+                await src.SetSourceAsync(stream);
+                PdfPages.Add(pageData);
+                ++pageCount;
+            });
+        }
+    }
+    #endregion
+
     #region [IBackgroundTask Experiment]
     /// <summary>
     ///   This method sets registry keys such that COM understands to launch
@@ -2355,3 +2482,5 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
     #endregion
 }
+
+

@@ -25,7 +25,7 @@
             <Flyout.FlyoutPresenterStyle>
                 <Style TargetType="FlyoutPresenter">
                     <Setter Property="CornerRadius" Value="5" />
-                    <Setter Property="Background" Value="#99202020" />
+                    <Setter Property="Background" Value="{StaticResource DialogAcrylicBrush}" />
                     <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled" />
                     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
                     <Setter Property="IsTabStop" Value="True" />
@@ -263,6 +263,15 @@
                             Text="Reset FirstRun">
                             <MenuFlyoutItem.Icon>
                                 <FontIcon Glyph="{StaticResource ActionCenter}" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            Click="MenuFlyoutItemOnClick"
+                            IsEnabled="{x:Bind local:App.Profile.FirstRun.Equals(x:True), Mode=OneWay}"
+                            Tag="ActionPDF"
+                            Text="Load PDF">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="{StaticResource Page}" />
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator Width="200" />
@@ -539,6 +548,60 @@
                 <!--#endregion-->
 
                 <!--#region [General Content]-->
+                <FlipView
+                    x:Name="PdfFlipper"
+                    Grid.Row="1"
+                    Grid.RowSpan="2"
+                    Grid.ColumnSpan="2"
+                    MaxWidth="400"
+                    MaxHeight="500"
+                    Margin="0,20,25,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Background="Transparent">
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                    <FlipView.ItemTemplate>
+                        <DataTemplate x:DataType="local:PdfPageModel">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="32" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0" HorizontalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Margin="0,0,3,0"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource FontSizeLarge}"
+                                        Foreground="{StaticResource PrimaryBrush}"
+                                        Style="{StaticResource TitleTextBlockStyle}"
+                                        Text="Page" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Margin="3,0,0,0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource FontSizeLarge}"
+                                        Foreground="{StaticResource PrimaryBrush}"
+                                        Style="{StaticResource TitleTextBlockStyle}"
+                                        Text="{x:Bind PageNumber, Mode=OneWay}" />
+                                </Grid>
+                                <Image
+                                    Grid.Row="1"
+                                    Source="{x:Bind PageBitmapImage, Mode=OneWay}"
+                                    Stretch="Uniform" />
+                            </Grid>
+                        </DataTemplate>
+                    </FlipView.ItemTemplate>
+                </FlipView>
+
                 <StackPanel
                     Grid.Row="1"
                     Grid.ColumnSpan="2"
@@ -546,6 +609,7 @@
                     VerticalAlignment="Center"
                     Orientation="Vertical"
                     Spacing="20">
+
                     <StackPanel
                         HorizontalAlignment="Center"
                         Orientation="Vertical"
@@ -1171,6 +1235,7 @@
                             </Grid>
                         </StackPanel>
                     </local:GroupBox>
+
                     <StackPanel Orientation="Horizontal" Spacing="20">
                         <TextBox
                             MinWidth="200"

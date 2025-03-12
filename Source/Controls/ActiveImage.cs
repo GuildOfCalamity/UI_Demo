@@ -169,7 +169,11 @@ public sealed partial class ActiveImage : Control
     void SetNewSource(BitmapImage newImage)
     {
         if (_image != null)
+        {
             _image.Source = newImage;
+            if (IsVisible) // Run animation if source changed.
+                _fadeInStoryboard?.Begin();
+        }
         else
             Debug.WriteLine($"[WARNING] The '{nameof(_image)}' is null, cannot set source yet.");
     }

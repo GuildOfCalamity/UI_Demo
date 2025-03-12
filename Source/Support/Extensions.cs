@@ -21,6 +21,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -30,6 +31,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.VisualBasic;
+using Windows.ApplicationModel;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -126,6 +128,127 @@ public static class Extensions
 
         return string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
     }
+
+    /// <summary>
+    /// Can be helpful with XML payloads that contain too many namespaces.
+    /// </summary>
+    /// <param name="xmlDocument"></param>
+    /// <param name="disableFormatting"></param>
+    /// <returns>sanitized XML</returns>
+    public static string RemoveAllNamespaces(string xmlDocument, bool disableFormatting = true)
+    {
+        try
+        {
+            XElement xmlDocumentWithoutNs = RemoveAllNamespaces(XElement.Parse(xmlDocument));
+            if (disableFormatting)
+                return xmlDocumentWithoutNs.ToString(SaveOptions.DisableFormatting);
+            else
+                return xmlDocumentWithoutNs.ToString();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] RemoveAllNamespaces: {ex.Message}");
+            return xmlDocument;
+        }
+
+
+        XElement RemoveAllNamespaces(XElement? e)
+        {
+            return new XElement(e?.Name.LocalName ?? "",
+                (from n in e?.Nodes()
+                 select ((n is XElement) ? RemoveAllNamespaces(n as XElement) : n)),
+                (e != null && e.HasAttributes) ?
+                (from a in e?.Attributes()
+                 where (!a.IsNamespaceDeclaration)
+                 select new XAttribute(a.Name.LocalName, a.Value)) : null);
+        }
+    }
+
+    /// <summary>
+    /// Can be helpful with XML payloads that contain too many namespaces.
+    /// </summary>
+    /// <param name="xmlDocument"></param>
+    /// <param name="disableFormatting"></param>
+    /// <returns>sanitized XML</returns>
+    public static string RemoveAllNamespacesLINQ(string xmlDocument, bool disableFormatting = true)
+    {
+        try
+        {
+            XElement xmlDocumentWithoutNs = RemoveAllNamespacesLINQ(XElement.Parse(xmlDocument));
+            if (disableFormatting)
+                return xmlDocumentWithoutNs.ToString(SaveOptions.DisableFormatting);
+            else
+                return xmlDocumentWithoutNs.ToString();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] RemoveAllNamespacesLINQ: {ex.Message}");
+            return xmlDocument;
+        }
+
+        ///<summary>
+        /// Here's the rewritten method using method syntax without using LINQ query syntax.
+        /// This version utilizes method chaining and lambda expressions in place of LINQ 
+        /// query syntax while maintaining the same functionality as the original method.
+        ///</summary>
+        /// <returns><see cref="XElement"/></returns>
+        XElement RemoveAllNamespacesLINQ(XElement? e)
+        {
+            return new XElement(e?.Name.LocalName ?? "",
+                e?.Nodes().Select(n => n is XElement ? RemoveAllNamespacesLINQ(n as XElement) : n),
+                e?.Attributes().Where(a => !a.IsNamespaceDeclaration)
+                               .Select(a => new XAttribute(a.Name.LocalName, a.Value)));
+        }
+    }
+
+    /// <summary>
+    /// Creates a dictionary using the element name as the key and the node's contents as the values.
+    /// </summary>
+    /// <param name="xml">The XML string to parse.</param>
+    /// <param name="dump">If true, the contents will be output to the console.</param>
+    /// <returns><see cref="Dictionary{string, List{string}}"/></returns>
+    public static Dictionary<string, List<string>> ConvertXmlIntoDictionary(this string xml, bool dump = false)
+    {
+        Dictionary<string, List<string>> dict = new Dictionary<string, List<string>>();
+
+        try
+        {
+            XElement root = XElement.Parse(xml);
+
+            foreach (XElement element in root.DescendantsAndSelf())
+            {
+                if (!dict.ContainsKey(element.Name.LocalName))
+                    dict[element.Name.LocalName] = new List<string>();
+
+                if (!string.IsNullOrEmpty(element.Value.Trim()))
+                    dict[element.Name.LocalName].Add(element.Value.Trim());
+
+                foreach (XAttribute attribute in element.Attributes())
+                {
+                    if (!dict.ContainsKey(attribute.Name.LocalName))
+                        dict[attribute.Name.LocalName] = new List<string>();
+
+                    dict[attribute.Name.LocalName].Add(attribute.Value);
+                }
+            }
+
+            if (dump)
+            {
+                foreach (var pair in dict)
+                {
+                    Console.WriteLine($"Key ⇨ {pair.Key}");
+                    Console.WriteLine($" • {string.Join(", ", pair.Value)}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR] ConvertXmlIntoDictionary: {ex.Message}");
+        }
+
+        return dict;
+    }
+
 
     /// <summary>
     /// Minimum password length is 8 characters.
@@ -1042,6 +1165,60 @@ public static class Extensions
                 timeSpan.Milliseconds, timeSpan.Milliseconds == 1 ? "" : "s");
         }
     }
+
+    public static string ToHoursMinutesSeconds(this TimeSpan ts) => ts.Days > 0 ? (ts.Days * 24 + ts.Hours) + ts.ToString("':'mm':'ss") : ts.ToString("hh':'mm':'ss");
+
+    /// <summary>
+    /// uint max = 4,294,967,295 (4.29 Gbps)
+    /// </summary>
+    /// <returns>formatted bit-rate string</returns>
+    public static string FormatBitrate(this uint amount)
+    {
+        var sizes = new string[]
+        {
+            "bps",
+            "Kbps", // kilo
+            "Mbps", // mega
+            "Gbps", // giga
+            "Tbps", // tera
+        };
+        var order = amount.OrderOfMagnitude();
+        var speed = amount / Math.Pow(1000, order);
+        return $"{speed:0.##} {sizes[order]}";
+    }
+
+    /// <summary>
+    /// ulong max = 18,446,744,073,709,551,615 (18.45 Ebps)
+    /// </summary>
+    /// <returns>formatted bit-rate string</returns>
+    public static string FormatBitrate(this ulong amount)
+    {
+        var sizes = new string[] 
+        { 
+            "bps", 
+            "Kbps", // kilo
+            "Mbps", // mega
+            "Gbps", // giga
+            "Tbps", // tera
+            "Pbps", // peta
+            "Ebps", // exa
+            "Zbps", // zetta
+            "Ybps"  // yotta
+        }; 
+        var order = amount.OrderOfMagnitude();
+        var speed = amount / Math.Pow(1000, order);
+        return $"{speed:0.##} {sizes[order]}";
+    }
+
+    /// <summary>
+    /// Returns the order of magnitude (10^3)
+    /// </summary>
+    public static int OrderOfMagnitude(this ulong amount) => (int)Math.Floor(Math.Log(amount, 1000));
+
+    /// <summary>
+    /// Returns the order of magnitude (10^3)
+    /// </summary>
+    public static int OrderOfMagnitude(this uint amount) => (int)Math.Floor(Math.Log(amount, 1000));
 
     /// <summary>
     /// Determines if the date is a working day, weekend, or determine the next workday coming up.
@@ -3749,7 +3926,6 @@ public static class Extensions
         return compositor.CreateGeometricClip(pathGeometry);
     }
 
-
     public static async Task LaunchUrlFromTextBox(Microsoft.UI.Xaml.Controls.TextBox textBox)
     {
         string text = "";
@@ -4795,15 +4971,8 @@ public static class Extensions
         return text;
     }
 
-#if COMMUNITY_TOOLKIT
     /// <summary>
-    /// <para>
     /// Gets the image data from a Uri.
-    /// </para>
-    /// <para>
-    /// The issue with many of the CommunityToolkit file access routines is that they do not
-    /// handle unpackaged apps, so you will see I added logic switches for most of these methods.
-    /// </para>
     /// </summary>
     /// <param name="uri">Image Uri</param>
     /// <returns>Image Stream as <see cref="Windows.Storage.Streams.IRandomAccessStream"/></returns>
@@ -4816,26 +4985,16 @@ public static class Extensions
         else
             localPath = $"{uri.Host}/{uri.LocalPath}".Replace("//", "/");
 
-        // If we don't have internet, then try to see if we have a packaged copy
+        // If we don't have Internet, then try to see if we have a packaged copy.
         try
         {
             if (App.IsPackaged)
             {
-                /*
-                    "StreamHelper.GetPackagedFileStreamAsync" contains the following...
-                    StorageFolder workingFolder = Package.Current.InstalledLocation;
-                    return GetFileStreamAsync(fileName, accessMode, workingFolder);
-                */
-                imageStream = await CommunityToolkit.WinUI.Helpers.StreamHelper.GetPackagedFileStreamAsync(localPath);
+                imageStream = await GetPackagedFileStreamAsync(localPath);
             }
             else
             {
-                /*
-                    "StreamHelper.GetLocalFileStreamAsync" contains the following...
-                    StorageFolder workingFolder = ApplicationData.Current.LocalFolder;
-                    return GetFileStreamAsync(fileName, accessMode, workingFolder);
-                */
-                imageStream = await CommunityToolkit.WinUI.Helpers.StreamHelper.GetLocalFileStreamAsync(localPath);
+                imageStream = await GetLocalFileStreamAsync(localPath);
             }
         }
         catch (Exception ex)
@@ -4846,7 +5005,48 @@ public static class Extensions
 
         return imageStream;
     }
-#endif
+
+    /// <summary>
+    /// Gets a stream to a specified file from the installation folder.
+    /// </summary>
+    /// <param name="fileName">Relative name of the file to open. Can contains subfolders.</param>
+    /// <param name="accessMode">File access mode. Default is read.</param>
+    /// <returns>The file stream</returns>
+    public static Task<IRandomAccessStream> GetPackagedFileStreamAsync(string fileName, FileAccessMode accessMode = FileAccessMode.Read)
+    {
+        StorageFolder workingFolder = Package.Current.InstalledLocation;
+        return GetFileStreamAsync(fileName, accessMode, workingFolder);
+    }
+
+    /// <summary>
+    /// Gets a stream to a specified file from the application local folder.
+    /// </summary>
+    /// <param name="fileName">Relative name of the file to open. Can contains subfolders.</param>
+    /// <param name="accessMode">File access mode. Default is read.</param>
+    /// <returns>The file stream</returns>
+    public static Task<IRandomAccessStream> GetLocalFileStreamAsync(string fileName, FileAccessMode accessMode = FileAccessMode.Read)
+    {
+        StorageFolder workingFolder = ApplicationData.Current.LocalFolder;
+        return GetFileStreamAsync(fileName, accessMode, workingFolder);
+    }
+
+    static async Task<IRandomAccessStream> GetFileStreamAsync(string fullFileName, FileAccessMode accessMode, StorageFolder workingFolder)
+    {
+        var fileName = Path.GetFileName(fullFileName);
+        workingFolder = await GetSubFolderAsync(fullFileName, workingFolder);
+        var file = await workingFolder.GetFileAsync(fileName);
+        return await file.OpenAsync(accessMode);
+    }
+
+    static async Task<StorageFolder> GetSubFolderAsync(string fullFileName, StorageFolder workingFolder)
+    {
+        var folderName = Path.GetDirectoryName(fullFileName);
+        if (!string.IsNullOrEmpty(folderName) && folderName != @"\")
+        {
+            return await workingFolder.GetFolderAsync(folderName);
+        }
+        return workingFolder;
+    }
 
     #endregion
 }

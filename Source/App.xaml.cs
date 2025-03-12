@@ -44,6 +44,7 @@ public partial class App : Application
     public static int m_width { get; set; } = 1200;
     public static int m_height { get; set; } = 860;
     public static bool IsClosing { get; set; } = false;
+    public static string BaseFolder { get; private set; }
     public static FrameworkElement? MainRoot { get; set; }
     public static IntPtr WindowHandle { get; set; }
     public static AppSettings? Profile { get; set; }
@@ -153,6 +154,7 @@ public partial class App : Application
         #endregion
 
         StopWatch = ValueStopwatch.StartNew();
+        BaseFolder = AppDomain.CurrentDomain.BaseDirectory;
 
         // Is there more than one of us?
         InstanceMutex = new Mutex(true, GetCurrentAssemblyName(), out bool isNew);
@@ -168,11 +170,6 @@ public partial class App : Application
         
         GatherEnvironment();
 
-        #region [System.Threading.Channels example]
-        CoreMessageChannel = Channel.CreateUnbounded<ChannelMessageType>();
-        CoreChannelToken = new CancellationTokenSource();
-        #endregion
-
         this.InitializeComponent();
 
         // https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.application.focusvisualkind?view=windows-app-sdk-1.3
@@ -181,6 +178,11 @@ public partial class App : Application
         AssemblyReferences = Extensions.GatherReferenceAssemblies(true);
 
         bool areWeTheRealDeal = ApiInformation.IsPropertyPresent("Microsoft.UI.Dispatching.DispatcherQueue", "HasThreadAccess");
+
+        #region [System.Threading.Channels example]
+        CoreMessageChannel = Channel.CreateUnbounded<ChannelMessageType>();
+        CoreChannelToken = new CancellationTokenSource();
+        #endregion
 
         /** System.Threading.Channels test **/
         //_ = Task.Run(() => ChannelProducerAsync(CoreChannelToken.Token));
