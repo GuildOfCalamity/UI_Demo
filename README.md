@@ -8,7 +8,7 @@
 | Assembly | Version |
 | ---- | ---- |
 | .NET Core | 8.0.11 |
-| Microsoft.WindowsAppSDK | 1.6.250205002 |
+| Microsoft.WindowsAppSDK | 1.6.250228001 |
 | Microsoft.Windows.SDK.BuildTools | 10.0.26100.1742 |
 
 ## 🎛️ Description
