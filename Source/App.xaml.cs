@@ -513,6 +513,8 @@ public partial class App : Application
         Debug.WriteLine($"[DEBUG] Span.Median={snums.Median()}");
 
         Debug.WriteLine($"••••••••••••••••••••••••••••••••••••••••••••\r\n   Startup took {StopWatch.GetElapsedTime().ToReadableString()} \r\n••••••••••••••••••••••••••••••••••••••••••••");
+        StopWatch = ValueStopwatch.StartNew();
+        Debug.WriteLine($"ToHumanFriendlyString => {StopWatch.GetElapsedTime().ToHumanFriendlyString()}");
     }
 
     #region [Window Helpers]

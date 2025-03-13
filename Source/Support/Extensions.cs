@@ -1169,6 +1169,59 @@ public static class Extensions
     public static string ToHoursMinutesSeconds(this TimeSpan ts) => ts.Days > 0 ? (ts.Days * 24 + ts.Hours) + ts.ToString("':'mm':'ss") : ts.ToString("hh':'mm':'ss");
 
     /// <summary>
+    /// Converts a TimeSpan into a human-friendly readable string.
+    /// </summary>
+    /// <param name="timeSpan">The TimeSpan to convert.</param>
+    /// <returns>A human-friendly string representation of the TimeSpan.</returns>
+    public static string ToHumanFriendlyString(this TimeSpan timeSpan)
+    {
+        if (timeSpan == TimeSpan.Zero)
+            return "0 seconds"; // No time
+
+        // Use a list to build the output string more efficiently
+        var parts = new List<string>();
+
+        // Check for negative TimeSpan
+        if (timeSpan < TimeSpan.Zero)
+        {
+            parts.Add("Negative "); // Or some other indication that it's negative
+            timeSpan = timeSpan.Negate(); // Make it positive for the calculations
+        }
+
+        if (timeSpan.Days > 0)
+            parts.Add($"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")}");
+        if (timeSpan.Hours > 0)
+            parts.Add($"{timeSpan.Hours} hour{(timeSpan.Hours > 1 ? "s" : "")}");
+        if (timeSpan.Minutes > 0)
+            parts.Add($"{timeSpan.Minutes} minute{(timeSpan.Minutes > 1 ? "s" : "")}");
+        if (timeSpan.Seconds > 0)
+            parts.Add($"{timeSpan.Seconds} second{(timeSpan.Seconds > 1 ? "s" : "")}");
+
+        // If nothing else, use milliseconds
+        if (parts.Count == 0 && timeSpan.Milliseconds > 0)
+            parts.Add($"{timeSpan.Milliseconds} millisecond{(timeSpan.Milliseconds > 1 ? "s" : "")}");
+
+        // If no milliseconds, use ticks (nanoseconds)
+        if (parts.Count == 0 && timeSpan.Ticks > 0)
+        {
+            // TimeSpan.TicksPerSecond = 1/10000000th of a second, or 0.0000001 seconds
+            parts.Add($"{(timeSpan.Ticks * 10)} microsecond{((timeSpan.Ticks * 10) > 1 ? "s" : "")}");
+        }
+
+        // Join the parts with commas and "and" for the last one
+        if (parts.Count == 1)
+            return parts[0];
+        else if (parts.Count == 2)
+            return string.Join(" and ", parts);
+        else
+        {
+            string lastPart = parts[parts.Count - 1];
+            parts.RemoveAt(parts.Count - 1);
+            return string.Join(", ", parts) + " and " + lastPart;
+        }
+    }
+
+    /// <summary>
     /// uint max = 4,294,967,295 (4.29 Gbps)
     /// </summary>
     /// <returns>formatted bit-rate string</returns>

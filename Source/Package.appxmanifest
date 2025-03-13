@@ -45,6 +45,15 @@
     </Application>
   </Applications>
 
+  <!-- for SecondaryTile pinning -->
+  <Extensions>
+  	<Extension Category="windows.appExecutionAlias" Executable="UI_Demo\UI_Demo.exe" EntryPoint="Windows.FullTrustApplication">
+  		<AppExecutionAlias>
+  			<ExecutionAlias Alias="UIDemoAppAlias" />
+  		</AppExecutionAlias>
+  	</Extension>
+  </Extensions>
+	
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>

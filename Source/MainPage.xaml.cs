@@ -39,6 +39,7 @@ using Windows.Storage;
 
 using WinRT.Interop;
 
+
 namespace UI_Demo;
 
 /// <summary>
@@ -473,14 +474,14 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             //CachHelperTest.Run();
         });
 
-        var regex1 = RegexHelpers.WhitespaceAtLeastOnce().Replace($"–= Superfluous  Testing  Zone #1 =–", " ");
-        var regex2 = RegexHelpers.SpaceSplit().Split($"–= Superfluous  Testing  Zone #2 =–");
-        foreach (var split in regex2) { Debug.WriteLine($"{split}"); }
-        var regex3 = RegexHelpers.DriveLetter().Match("D:");
-        if (regex3.Success)
-            Debug.WriteLine($"DriveLetter() is true");
+        //var regex1 = RegexHelpers.WhitespaceAtLeastOnce().Replace($"–= Superfluous  Testing  Zone #2 =–", " ");
+        //var regex2 = RegexHelpers.SpaceSplit().Split($"–= Superfluous  Testing  Zone #2 =–");
+        //foreach (var split in regex2) { Debug.WriteLine($"{split}"); }
+        //var regex3 = RegexHelpers.DriveLetter().Match("D:");
+        //if (regex3.Success) { Debug.WriteLine($"DriveLetter() is true"); }
 
         var mt = MachineHelper.GetDllMachineType(Path.Combine(Directory.GetCurrentDirectory(), $"{AppDomain.CurrentDomain.FriendlyName}.dll"));
+        Debug.WriteLine($"[INFO] MachineType is {mt}");
         #endregion
     }
 
@@ -1160,20 +1161,18 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             string tag = App.GetCurrentNamespace() ?? "WinUI Demo";
 
             Windows.UI.StartScreen.SecondaryTile secondaryTile = new Windows.UI.StartScreen.SecondaryTile($"WinUI_{tag}");
-            secondaryTile.DisplayName = App.GetCurrentNamespace() ?? "WinUI Demo";
+            secondaryTile.DisplayName = App.GetCurrentNamespace() ?? "WinUI_Demo";
             secondaryTile.Arguments = $"SecondaryTile {tag}";
-
             secondaryTile.VisualElements.BackgroundColor = Colors.Transparent;
             secondaryTile.VisualElements.Square150x150Logo = new Uri("ms-appx:///Assets/Square150x150Logo.scale-200.png");
             secondaryTile.VisualElements.Square71x71Logo = new Uri("ms-appx:///Assets/Square71x71Logo.scale-200.png");
             secondaryTile.VisualElements.Square44x44Logo = new Uri("ms-appx:///Assets/Square44x44Logo.scale-200.png");
-
             secondaryTile.VisualElements.ShowNameOnSquare150x150Logo = true;
 
-            var ip = (IntPtr)App.AppWin.Id.Value;
-            if (ip != IntPtr.Zero)
+            var hwnd = (IntPtr)App.AppWin.Id.Value;
+            if (hwnd != IntPtr.Zero)
             {
-                InitializeWithWindow.Initialize(secondaryTile, (IntPtr)App.AppWin.Id.Value);
+                InitializeWithWindow.Initialize(secondaryTile, hwnd);
                 isPinnedSuccessfully = await secondaryTile.RequestCreateAsync();
                 UpdateInfoBar("App was pinned successfully", MessageLevel.Important);
             }
@@ -1288,14 +1287,24 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             }
             else if (!string.IsNullOrEmpty(tag) && tag.Equals("ActionPDF", StringComparison.OrdinalIgnoreCase))
             {
-                IsBusy = true;
-                var pdf = Path.Combine(System.AppContext.BaseDirectory, "Assets", "Sample.pdf");
-                UpdateInfoBar($"Loading '{pdf}'...", MessageLevel.Information);
-                PdfPages.Clear();
-                var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(pdf);
-                await LoadPdfPages(file);
-                IsBusy = false;
-                PdfFlipper.Focus(FocusState.Keyboard);
+                try
+                {
+                    IsBusy = true;
+                    var pdf = Path.Combine(System.AppContext.BaseDirectory, "Assets", "Sample.pdf");
+                    UpdateInfoBar($"Loading '{pdf}'...", MessageLevel.Information);
+                    PdfPages.Clear();
+                    var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(pdf);
+                    await LoadPdfPages(file);
+                    PdfFlipper.Focus(FocusState.Keyboard);
+                }
+                catch (Exception ex)
+                {
+                    UpdateInfoBar($"Failed to load: {ex.Message}", MessageLevel.Error);
+                }
+                finally
+                {
+                    IsBusy = false;
+                }
             }
             else
             {
