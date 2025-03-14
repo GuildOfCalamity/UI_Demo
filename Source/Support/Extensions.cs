@@ -695,7 +695,9 @@ public static class Extensions
         return DateTime.Now;
     }
 
-    public const double Epsilon = 0.000000000001;
+    public const double RootTwo = 1.414213562373;
+    public const double GoldenRatio = 1.618033988749;
+    public const double Epsilon     = 0.000000000001;
     /// <summary>
     /// Determine if one number is greater than another.
     /// </summary>
@@ -1169,23 +1171,23 @@ public static class Extensions
     public static string ToHoursMinutesSeconds(this TimeSpan ts) => ts.Days > 0 ? (ts.Days * 24 + ts.Hours) + ts.ToString("':'mm':'ss") : ts.ToString("hh':'mm':'ss");
 
     /// <summary>
-    /// Converts a TimeSpan into a human-friendly readable string.
+    /// Converts a <see cref="TimeSpan"/> into a human-friendly readable string.
     /// </summary>
-    /// <param name="timeSpan">The TimeSpan to convert.</param>
-    /// <returns>A human-friendly string representation of the TimeSpan.</returns>
+    /// <param name="timeSpan"><see cref="TimeSpan"/> to convert (can be negative)</param>
+    /// <returns>human-friendly string representation of the given <see cref="TimeSpan"/></returns>
     public static string ToHumanFriendlyString(this TimeSpan timeSpan)
     {
         if (timeSpan == TimeSpan.Zero)
-            return "0 seconds"; // No time
+            return "0 seconds";
 
-        // Use a list to build the output string more efficiently
-        var parts = new List<string>();
+        bool isNegative = false;
+        List<string> parts = new();
 
-        // Check for negative TimeSpan
+        // Check for negative TimeSpan.
         if (timeSpan < TimeSpan.Zero)
         {
-            parts.Add("Negative "); // Or some other indication that it's negative
-            timeSpan = timeSpan.Negate(); // Make it positive for the calculations
+            isNegative = true;
+            timeSpan = timeSpan.Negate(); // Make it positive for the calculations.
         }
 
         if (timeSpan.Days > 0)
@@ -1197,27 +1199,32 @@ public static class Extensions
         if (timeSpan.Seconds > 0)
             parts.Add($"{timeSpan.Seconds} second{(timeSpan.Seconds > 1 ? "s" : "")}");
 
-        // If nothing else, use milliseconds
+        // If no large amounts so far, try milliseconds.
         if (parts.Count == 0 && timeSpan.Milliseconds > 0)
             parts.Add($"{timeSpan.Milliseconds} millisecond{(timeSpan.Milliseconds > 1 ? "s" : "")}");
 
-        // If no milliseconds, use ticks (nanoseconds)
+        // If no milliseconds, use ticks (nanoseconds).
         if (parts.Count == 0 && timeSpan.Ticks > 0)
         {
-            // TimeSpan.TicksPerSecond = 1/10000000th of a second, or 0.0000001 seconds
-            parts.Add($"{(timeSpan.Ticks * 10)} microsecond{((timeSpan.Ticks * 10) > 1 ? "s" : "")}");
+            // A tick is equal to 100 nanoseconds. While this maps well into units of time
+            // such as hours and days, any periods longer than that aren't representable in
+            // a succinct fashion, e.g. a month can be between 28 and 31 days, while a year
+            // can contain 365 or 366 days. A decade can have between 1 and 3 leap-years,
+            // depending on when you map the TimeSpan into the calendar. This is why TimeSpan
+            // does not provide a "Years" property or a "Months" property.
+            parts.Add($"{(timeSpan.Ticks * TimeSpan.TicksPerMicrosecond)} microsecond{((timeSpan.Ticks * TimeSpan.TicksPerMicrosecond) > 1 ? "s" : "")}");
         }
 
-        // Join the parts with commas and "and" for the last one
+        // Join the sections with commas and "and" for the last one.
         if (parts.Count == 1)
-            return parts[0];
+            return isNegative ? $"Negative {parts[0]}" : parts[0];
         else if (parts.Count == 2)
-            return string.Join(" and ", parts);
+            return isNegative ? $"Negative {string.Join(" and ", parts)}" : string.Join(" and ", parts);
         else
         {
             string lastPart = parts[parts.Count - 1];
             parts.RemoveAt(parts.Count - 1);
-            return string.Join(", ", parts) + " and " + lastPart;
+            return isNegative ? $"Negative " + string.Join(", ", parts) + " and " + lastPart : string.Join(", ", parts) + " and " + lastPart;
         }
     }
 

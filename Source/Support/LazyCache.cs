@@ -9,7 +9,7 @@ public class LazyCache<T>
 {
     Lazy<T> _cache;
     readonly Func<T> _valueFactory;
-    readonly object _lock = new(); // Thread-safety
+    readonly object _lock = new(); // for thread safety
 
     public LazyCache(Func<T> valueFactory)
     {

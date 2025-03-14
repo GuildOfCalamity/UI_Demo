@@ -454,6 +454,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         _watcher.ItemDeleted += OnWatcherEvent;
         #endregion
 
+        #region [WindowsXamlManager]
         // WindowsXamlManager is part of the Windows App SDK XAML hosting API. This API enables non-WinAppSDK
         // desktop applications to host any control that derives from Microsoft.UI.Xaml.UIElement in a UI element
         // that is associated with a window handle (HWND). This API can be used by desktop applications built
@@ -462,6 +463,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         // This event succeeds the AppWindow.Destroying() event.
         Microsoft.UI.Xaml.Hosting.WindowsXamlManager? wxm = Microsoft.UI.Xaml.Hosting.WindowsXamlManager.GetForCurrentThread();
         wxm.XamlShutdownCompletedOnThread += (s, e) => { Debug.WriteLine($"[INFO] XamlShutdownCompleted"); };
+        #endregion
 
         #region [Superfluous]
         _ = Task.Run(async () =>
@@ -472,16 +474,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             //LazyStopwatchTest.Run();
             //LazyCacheTest.RunAsync();
             //CachHelperTest.Run();
+
+            Miscellaneous.SpanTesting();
+            Miscellaneous.TimeZoneHoursCompare();
+            Miscellaneous.PEHeaderTesting();
+
         });
-
-        //var regex1 = RegexHelpers.WhitespaceAtLeastOnce().Replace($"–= Superfluous  Testing  Zone #2 =–", " ");
-        //var regex2 = RegexHelpers.SpaceSplit().Split($"–= Superfluous  Testing  Zone #2 =–");
-        //foreach (var split in regex2) { Debug.WriteLine($"{split}"); }
-        //var regex3 = RegexHelpers.DriveLetter().Match("D:");
-        //if (regex3.Success) { Debug.WriteLine($"DriveLetter() is true"); }
-
-        var mt = MachineHelper.GetDllMachineType(Path.Combine(Directory.GetCurrentDirectory(), $"{AppDomain.CurrentDomain.FriendlyName}.dll"));
-        Debug.WriteLine($"[INFO] MachineType is {mt}");
         #endregion
     }
 
@@ -1148,9 +1146,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Test for pinning app via <see cref="SecondaryTile"/>.
-    /// Maybe this only works with packaged apps?
+    ///   Test for pinning app via <see cref="Windows.UI.StartScreen.SecondaryTile"/>.
     /// </summary>
+    /// <remarks>
+    ///   Couldn't get this to work with an unpackaged app.
+    /// </remarks>
     async void ToolbarButtonOnClick(object sender, RoutedEventArgs e)
     {
         bool isPinnedSuccessfully = false;

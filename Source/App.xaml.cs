@@ -499,22 +499,11 @@ public partial class App : Application
 
         InitializeJumpList(Windows.UI.StartScreen.JumpListSystemGroupKind.None);
 
-
-
-        // Allocate a span on the stack.
-        Span<int> snums = stackalloc int[5000];
-        
-        for (int i = 0; i < 5000; i++) 
-            snums[i] = i + i + i;
-
-        snums.Split(snums.Length / 2, out var left, out var right);
-        
-        Debug.WriteLine($"[DEBUG] Span.FindLast={snums.FindLastIndexOf(200)}");
-        Debug.WriteLine($"[DEBUG] Span.Median={snums.Median()}");
-
-        Debug.WriteLine($"••••••••••••••••••••••••••••••••••••••••••••\r\n   Startup took {StopWatch.GetElapsedTime().ToReadableString()} \r\n••••••••••••••••••••••••••••••••••••••••••••");
+        Debug.WriteLine($"••••••••••••••••••••••••••••••••••••••••••••");
+        Debug.WriteLine($"   Startup took {StopWatch.GetElapsedFriendly()} ");
+        Debug.WriteLine($"••••••••••••••••••••••••••••••••••••••••••••");
         StopWatch = ValueStopwatch.StartNew();
-        Debug.WriteLine($"ToHumanFriendlyString => {StopWatch.GetElapsedTime().ToHumanFriendlyString()}");
+        Debug.WriteLine($"   Next instruction time {StopWatch.GetElapsedFriendly()} ");
     }
 
     #region [Window Helpers]
@@ -600,10 +589,9 @@ public partial class App : Application
     {
         try
         {
-            System.IntPtr hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            IntPtr hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
             Microsoft.UI.WindowId windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
-            var da = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest);
-            return da;
+            return Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest);
         }
         catch (Exception ex)
         {
