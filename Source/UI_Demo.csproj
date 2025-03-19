@@ -105,6 +105,7 @@
     <None Remove="FadeTooltip.xaml" />
     <None Remove="GridSplitter.xaml" />
     <None Remove="MainPage.xaml" />
+    <None Remove="PlotPage.xaml" />
     <None Remove="ProgressButton.xaml" />
     <None Remove="SeparatorLine.xaml" />
     <None Remove="Widget\Templates\CountingWidgetTemplate.json" />
@@ -218,6 +219,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\GraphIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Measure1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Measure2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Measure3.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Sample.pdf">
@@ -472,6 +482,11 @@
     <Content Update="Assets\WinUI3.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="PlotPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="FadeTooltip.xaml">

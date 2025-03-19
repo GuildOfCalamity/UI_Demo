@@ -169,6 +169,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         AssetCache.ItemUpdated += OnAssetItemUpdated;
         PopulateAssets();
 
+        uint[] fromStr = "1dfef46029f6edfef4e029f6edfef4f029f6".HexStringToUIntArray();
+        string toStr = fromStr.UIntArrayToHexString();
+
         _localDispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         _syncContext = new Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(_localDispatcher);
         SynchronizationContext.SetSynchronizationContext(_syncContext);
@@ -469,14 +472,15 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         _ = Task.Run(async () =>
         {
             Debug.WriteLine($"–= Superfluous Testing Zone =–");
+
             //PredicateTesting.BasicTest();
             //PredicateTesting.ActionTest();
             //LazyStopwatchTest.Run();
             //LazyCacheTest.RunAsync();
             //CachHelperTest.Run();
 
-            Miscellaneous.SpanTesting();
             Miscellaneous.TimeZoneHoursCompare();
+            Miscellaneous.SpanTesting();
             Miscellaneous.PEHeaderTesting();
 
         });

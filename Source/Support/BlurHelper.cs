@@ -201,6 +201,44 @@ public static class BlurHelper
         }
         return softwareBitmap;
     }
+
+    public static async Task<SoftwareBitmap?> LoadSoftwareBitmapFromUriAsync(Uri uri)
+    {
+        try
+        {
+            StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(uri);
+            using (IRandomAccessStream stream = await file.OpenReadAsync())
+            {
+                BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+                SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync();
+                return softwareBitmap;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSoftwareBitmapFromUriAsync: {ex.Message}");
+            return null;
+        }
+    }
+
+    public static async Task<SoftwareBitmap?> LoadSoftwareBitmapFromPathAsync(string path)
+    {
+        try
+        {
+            StorageFile file = await StorageFile.GetFileFromPathAsync(path);
+            using (IRandomAccessStream stream = await file.OpenReadAsync())
+            {
+                BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+                SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync();
+                return softwareBitmap;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSoftwareBitmapFromPathAsync: {ex.Message}");
+            return null;
+        }
+    }
 }
 
 /// <summary>

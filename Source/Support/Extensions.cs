@@ -379,6 +379,121 @@ public static class Extensions
         return $"{length}{mu[0]}";
     }
 
+    public static uint[] HexStringToUIntArray(this string hexString, int groupSize = 2)
+    {
+        if (string.IsNullOrEmpty(hexString))
+            return new uint[0];
+
+        if (hexString.Length % 2 != 0 || groupSize % 2 != 0)
+            throw new Exception($"HexStringToUIntArray: The input string or group size cannot be odd.");
+
+        uint[] data = new uint[hexString.Length / groupSize];
+        for (int index = 0; index < data.Length; index++)
+        {
+            try
+            {
+                string byteValue = hexString.Substring(index * groupSize, groupSize);
+                data[index] = uint.Parse(byteValue, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch (Exception) { data[index] = 0; }
+        }
+
+        return data;
+    }
+
+    public static string UIntArrayToHexString(this uint[] array, int groupSize = 2)
+    {
+        if (array.Length == 0)
+            return string.Empty;
+
+        var hex = new StringBuilder(array.Length * groupSize);
+
+        foreach (uint i in array)
+            hex.AppendFormat("{0:X" + groupSize + "}", i);
+
+        return hex.ToString();
+    }
+
+    public static byte[] HexStringToByteArray(this string hexString)
+    {
+        if (string.IsNullOrEmpty(hexString) || hexString.Length % 2 != 0)
+            throw new Exception($"HexStringToByteArray: The input string cannot empty or an odd amount.");
+
+        byte[] data = new byte[hexString.Length / 2];
+        for (int index = 0; index < data.Length; index++)
+        {
+            try
+            {
+                string byteValue = hexString.Substring(index * 2, 2);
+                data[index] = byte.Parse(byteValue, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch (Exception) { data[index] = 0; }
+        }
+
+        return data;
+    }
+
+    public static byte[] HexStringToByteArrayEnumerable(this string hexString)
+    {
+        if (string.IsNullOrEmpty(hexString))
+            return new byte[0];
+
+        return Enumerable.Range(0, hexString.Length)
+                         .Where(x => x % 2 == 0)
+                         .Select(x => Convert.ToByte(hexString.Substring(x, 2), 16))
+                         .ToArray();
+    }
+
+    public static string ByteArrayToHexString(this byte[] array)
+    {
+        if (array.Length == 0)
+            return string.Empty;
+        
+        var hex = new StringBuilder(array.Length * 2);
+
+        foreach (byte b in array)
+            hex.AppendFormat("{0:X2}", b);
+
+        return hex.ToString();
+    }
+
+    public static UInt16 ReverseBytes(this UInt16 value)
+    {
+        return (UInt16)((value & 0xFFU) << 8 | (value & 0xFF00U) >> 8);
+    }
+
+    public static UInt32 ReverseBytes(this UInt32 value)
+    {
+        return (value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+               (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24;
+    }
+
+    public static UInt64 ReverseBytes(this UInt64 value)
+    {
+        return (value & 0x00000000000000FFUL) << 56 | (value & 0x000000000000FF00UL) << 40 |
+               (value & 0x0000000000FF0000UL) << 24 | (value & 0x00000000FF000000UL) << 8 |
+               (value & 0x000000FF00000000UL) >> 8 | (value & 0x0000FF0000000000UL) >> 24 |
+               (value & 0x00FF000000000000UL) >> 40 | (value & 0xFF00000000000000UL) >> 56;
+    }
+
+    /// <summary>
+    /// Shifting by 63 gives the sign bit, either 64 1's or 64 0's.
+    /// </summary>
+    /// <returns>+1 if positive, -1 if negative</returns>
+    public static long GetSign(this long value) => (value >> 63) == 0 ? (long)1 : (long)-1;
+
+    /// <summary>
+    /// Shifting by 31 gives the sign bit, either 32 1's or 32 0's.
+    /// </summary>
+    /// <returns>+1 if positive, -1 if negative</returns>
+    public static int GetSign(this int value) => (value >> 31) == 0 ? (int)1 : (int)-1;
+
+    /// <summary>
+    /// Shifting by 15 gives the sign bit, either 16 1's or 16 0's.
+    /// </summary>
+    /// <returns>+1 if positive, -1 if negative</returns>
+    public static short GetSign(this short value) => (value >> 15) == 0 ? (short)1 : (short)-1;
+
 
 #pragma warning disable 8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
     /// <summary>
@@ -695,84 +810,6 @@ public static class Extensions
         return DateTime.Now;
     }
 
-    public const double RootTwo = 1.414213562373;
-    public const double GoldenRatio = 1.618033988749;
-    public const double Epsilon     = 0.000000000001;
-    /// <summary>
-    /// Determine if one number is greater than another.
-    /// </summary>
-    /// <param name="left">First <see cref="double"/></param>
-    /// <param name="right">Second <see cref="double"/></param>
-    /// <returns>
-    /// True if the first number is greater than the second, false otherwise.
-    /// </returns>
-    public static bool IsGreaterThan(double left, double right)
-    {
-        return (left > right) && !AreClose(left, right);
-    }
-
-    /// <summary>
-    /// Determine if one number is less than or close to another.
-    /// </summary>
-    /// <param name="left">First <see cref="double"/></param>
-    /// <param name="right">Second <see cref="double"/></param>
-    /// <returns>
-    /// True if the first number is less than or close to the second, false otherwise.
-    /// </returns>
-    public static bool IsLessThanOrClose(double left, double right)
-    {
-        return (left < right) || AreClose(left, right);
-    }
-
-    /// <summary>
-    /// Determine if two numbers are close in value.
-    /// </summary>
-    /// <param name="left">First <see cref="double"/></param>
-    /// <param name="right">Second <see cref="double"/></param>
-    /// <returns>
-    /// True if the first number is close in value to the second, false otherwise.
-    /// </returns>
-    public static bool AreClose(double left, double right)
-    {
-        if (left == right)
-        {
-            return true;
-        }
-
-        double a = (Math.Abs(left) + Math.Abs(right) + 10.0) * Epsilon;
-        double b = left - right;
-        return (-a < b) && (a > b);
-    }
-
-    /// <summary>
-    /// Consider anything within an order of magnitude of epsilon to be zero.
-    /// </summary>
-    /// <param name="value">The <see cref="double"/> to check</param>
-    /// <returns>
-    /// True if the number is zero, false otherwise.
-    /// </returns>
-    public static bool IsZero(this double value)
-    {
-        return Math.Abs(value) < Epsilon;
-    }
-
-    public static bool IsInvalid(this double value)
-    {
-        if (value == double.NaN || value == double.NegativeInfinity || value == double.PositiveInfinity)
-            return true;
-
-        return false;
-    }
-
-    public static double Mod(this double number, double divider)
-    {
-        var result = number % divider;
-        if (double.IsNaN(result))
-            return 0;
-        result = result < 0 ? result + divider : result;
-        return result;
-    }
-
     /// <summary>
     /// Compares two currency amounts formatted as <see cref="string"/>s.
     /// </summary>
@@ -873,11 +910,50 @@ public static class Extensions
         return middleAverage;
     }
 
+    /// <summary>
+    /// Checks to see if a date is between <paramref name="begin"/> and <paramref name="end"/>.
+    /// </summary>
+    /// <returns>
+    /// <c>true</c> if <paramref name="dt"/> is between <paramref name="begin"/> and <paramref name="end"/>, otherwise <c>false</c>
+    /// </returns>
+    public static bool IsBetween(this DateTime dt, DateTime begin, DateTime end) => dt.Ticks >= begin.Ticks && dt.Ticks <= end.Ticks;
 
     /// <summary>
-    /// Checks to see if a date is between two dates.
+    /// Determine if the current time is between two <see cref="TimeSpan"/>s.
     /// </summary>
-    public static bool Between(this DateTime dt, DateTime rangeBeg, DateTime rangeEnd) => dt.Ticks >= rangeBeg.Ticks && dt.Ticks <= rangeEnd.Ticks;
+    /// <param name="ts">DateTime.Now.TimeOfDay</param>
+    /// <param name="start">TimeSpan.Parse("23:00:00")</param>
+    /// <param name="end">TimeSpan.Parse("02:30:00")</param>
+    /// <returns><c>true</c> if between start and end, <c>false</c> otherwise</returns>
+    public static bool IsBetween(this TimeSpan ts, TimeSpan start, TimeSpan end)
+    {
+        // Are we in the same day.
+        if (start <= end)
+            return ts >= start && ts <= end;
+
+        // Are we on different days.
+        return ts >= start || ts <= end;
+    }
+
+    /// <summary>
+    /// Compares the current <see cref="DateTime.Now.TimeOfDay"/> to the given <paramref name="start"/> and <paramref name="end"/> times.
+    /// </summary>
+    /// <returns><c>true</c> if between start and end, <c>false</c> otherwise</returns>
+    public static bool IsNowBetween(string start = "10:00:00", string end = "14:00:00")
+    {
+        try
+        {
+            var tsNow = DateTime.Now.TimeOfDay;
+            var tsStart = TimeSpan.Parse(start);
+            var tsEnd = TimeSpan.Parse(end);
+            if (tsStart <= tsEnd)
+                return tsNow >= tsStart && tsNow <= tsEnd;
+
+            return tsNow >= tsStart || tsNow <= tsEnd;
+        }
+        catch (Exception ex) { Debug.WriteLine($"[ERROR] IsNowBetween: {ex.Message}"); }
+        return false;
+    }
 
     /// <summary>
     /// Compares two <see cref="DateTime"/>s ignoring the hours, minutes and seconds.
@@ -1170,6 +1246,21 @@ public static class Extensions
 
     public static string ToHoursMinutesSeconds(this TimeSpan ts) => ts.Days > 0 ? (ts.Days * 24 + ts.Hours) + ts.ToString("':'mm':'ss") : ts.ToString("hh':'mm':'ss");
 
+    public static long TimeToTicks(int hour, int minute, int second)
+    {
+        long MaxSeconds = long.MaxValue / 10000000; // => MaxValue / TimeSpan.TicksPerSecond
+        long MinSeconds = long.MinValue / 10000000; // => MinValue / TimeSpan.TicksPerSecond
+
+        // "totalSeconds" is bounded by 2^31 * 2^12 + 2^31 * 2^8 + 2^31,
+        // which is less than 2^44, meaning we won't overflow totalSeconds.
+        long totalSeconds = (long)hour * 3600 + (long)minute * 60 + (long)second;
+
+        if (totalSeconds > MaxSeconds || totalSeconds < MinSeconds)
+            throw new Exception("Argument out of range: TimeSpan too long.");
+
+        return totalSeconds * 10000000; // => totalSeconds * TimeSpan.TicksPerSecond
+    }
+
     /// <summary>
     /// Converts a <see cref="TimeSpan"/> into a human-friendly readable string.
     /// </summary>
@@ -1212,6 +1303,9 @@ public static class Extensions
             // can contain 365 or 366 days. A decade can have between 1 and 3 leap-years,
             // depending on when you map the TimeSpan into the calendar. This is why TimeSpan
             // does not provide a "Years" property or a "Months" property.
+            // Internally TimeSpan uses long (Int64) for its values, so:
+            //  - TimeSpan.MaxValue = long.MaxValue
+            //  - TimeSpan.MinValue = long.MinValue
             parts.Add($"{(timeSpan.Ticks * TimeSpan.TicksPerMicrosecond)} microsecond{((timeSpan.Ticks * TimeSpan.TicksPerMicrosecond) > 1 ? "s" : "")}");
         }
 
@@ -1227,6 +1321,7 @@ public static class Extensions
             return isNegative ? $"Negative " + string.Join(", ", parts) + " and " + lastPart : string.Join(", ", parts) + " and " + lastPart;
         }
     }
+
 
     /// <summary>
     /// uint max = 4,294,967,295 (4.29 Gbps)
@@ -1525,6 +1620,77 @@ public static class Extensions
         return String.Compare(pi1.Name, pi2.Name);
     }
 
+    public const double Epsilon     = 0.000000000001;
+    public const double RMS         = 0.707106781186; // 1 ÷ √2
+    public const double RootTwo     = 1.414213562373;
+    public const double GoldenRatio = 1.618033988749;
+    public const double Pi          = 3.141592653589;
+    public const double Tau         = 6.283185307179; // 2 x Pi
+
+    /// <summary>
+    /// Determine if one number is greater than another.
+    /// </summary>
+    /// <param name="left">First <see cref="double"/></param>
+    /// <param name="right">Second <see cref="double"/></param>
+    /// <returns>
+    /// True if the first number is greater than the second, false otherwise.
+    /// </returns>
+    public static bool IsGreaterThan(double left, double right) => (left > right) && !AreClose(left, right);
+
+    /// <summary>
+    /// Determine if one number is less than or close to another.
+    /// </summary>
+    /// <param name="left">First <see cref="double"/></param>
+    /// <param name="right">Second <see cref="double"/></param>
+    /// <returns>
+    /// True if the first number is less than or close to the second, false otherwise.
+    /// </returns>
+    public static bool IsLessThanOrClose(double left, double right) => (left < right) || AreClose(left, right);
+
+    /// <summary>
+    /// Determine if two numbers are close in value.
+    /// </summary>
+    /// <param name="left">First <see cref="double"/></param>
+    /// <param name="right">Second <see cref="double"/></param>
+    /// <returns>
+    /// True if the first number is close in value to the second, false otherwise.
+    /// </returns>
+    public static bool AreClose(double left, double right)
+    {
+        if (left == right)
+            return true;
+
+        double a = (Math.Abs(left) + Math.Abs(right) + 10.0) * Epsilon;
+        double b = left - right;
+        return (-a < b) && (a > b);
+    }
+
+    /// <summary>
+    /// Consider anything within an order of magnitude of epsilon to be zero.
+    /// </summary>
+    /// <param name="value">The <see cref="double"/> to check</param>
+    /// <returns>
+    /// True if the number is zero, false otherwise.
+    /// </returns>
+    public static bool IsZero(this double value) => Math.Abs(value) < Epsilon;
+
+    public static bool IsInvalid(this double value)
+    {
+        if (value == double.NaN || value == double.NegativeInfinity || value == double.PositiveInfinity)
+            return true;
+
+        return false;
+    }
+
+    public static double Mod(this double number, double divider)
+    {
+        var result = number % divider;
+        if (double.IsNaN(result))
+            return 0;
+        result = result < 0 ? result + divider : result;
+        return result;
+    }
+
     /// <summary>
     /// Clamping function for any value of type <see cref="IComparable{T}"/>.
     /// </summary>
@@ -1532,10 +1698,7 @@ public static class Extensions
     /// <param name="min">lowest range</param>
     /// <param name="max">highest range</param>
     /// <returns>clamped value</returns>
-    public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
-    {
-        return val.CompareTo(min) < 0 ? min : (val.CompareTo(max) > 0 ? max : val);
-    }
+    public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T> => val.CompareTo(min) < 0 ? min : (val.CompareTo(max) > 0 ? max : val);
 
     /// <summary>
     /// Linear interpolation for a range of floats.
@@ -1635,13 +1798,13 @@ public static class Extensions
     /// </summary>
     public static string GetStackTrace(StackTrace st)
     {
-        string result = string.Empty;
+        StringBuilder sb = new();
         for (int i = 0; i < st.FrameCount; i++)
         {
             StackFrame? sf = st.GetFrame(i);
-            result += sf?.GetMethod() + " <== ";
+            sb.AppendLine(sf?.GetMethod() + " <== ");
         }
-        return result;
+        return $"{sb}";
     }
 
     public static string Flatten(this Exception? exception)
@@ -1653,7 +1816,7 @@ public static class Extensions
             sb.AppendLine(exception.StackTrace);
             exception = exception.InnerException;
         }
-        return sb.ToString();
+        return $"{sb}";
     }
 
     public static string DumpFrames(this Exception exception)
@@ -1674,7 +1837,23 @@ public static class Extensions
                   .Append($"{Environment.NewLine}");
             }
         }
-        return sb.ToString();
+        return $"{sb}";
+    }
+
+    /// <summary>
+    /// Removes any non-hex chars from the <paramref name="input"/>.
+    /// </summary>
+    public static string FilterNonHex(this string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        //var preFilter = Regex.Replace(input, @"[\p{C}-[\t\r\n]]+", "");
+
+        // ? = allow zero or one occurrence of the "0x" prefix
+        string pattern = @"(0x)?[0-9A-Fa-f]+";
+        MatchCollection matches = Regex.Matches(input, pattern);
+        return string.Join("", matches.Cast<Match>().Select(m => m.Value));
     }
 
     /// <summary>
@@ -1785,11 +1964,13 @@ public static class Extensions
     /// <summary>
     /// Formatter for time stamping, e.g. "20250123074401943"
     /// </summary>
-    /// <returns>formatted time string</returns>
+    /// <returns>yyyyMMddhhmmssff</returns>
     public static string GetTimeStamp() => string.Format(
         System.Globalization.CultureInfo.InvariantCulture,
         "{0:D4}{1:D2}{2:D2}{3:D2}{4:D2}{5:D2}{6:D3}",
         DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second, DateTime.Now.Millisecond);
+    public static string GetTimeStamp12() => $"{DateTime.Now:yyyy-MM-dd hh:mm:ss.fff tt}";
+    public static string GetTimeStamp24() => $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}";
 
     /// <summary>
     /// var collection = new[] { 10, 20, 30 };
@@ -3608,6 +3789,22 @@ public static class Extensions
         {
             StartPoint = new Windows.Foundation.Point(0, 0),
             EndPoint = new Windows.Foundation.Point(0, 1),
+            GradientStops = gsc
+        };
+        return lgb;
+    }
+
+    public static LinearGradientBrush CreateDiagonalGradientBrush(Windows.UI.Color c1, Windows.UI.Color c2, Windows.UI.Color c3)
+    {
+        var gs1 = new GradientStop(); gs1.Color = c1; gs1.Offset = 0.0;
+        var gs2 = new GradientStop(); gs2.Color = c2; gs2.Offset = 0.3;
+        var gs3 = new GradientStop(); gs3.Color = c3; gs3.Offset = 1.0;
+        var gsc = new GradientStopCollection();
+        gsc.Add(gs1); gsc.Add(gs2); gsc.Add(gs3);
+        var lgb = new LinearGradientBrush
+        {
+            StartPoint = new Windows.Foundation.Point(0.25, 0.25),
+            EndPoint = new Windows.Foundation.Point(1, 1),
             GradientStops = gsc
         };
         return lgb;

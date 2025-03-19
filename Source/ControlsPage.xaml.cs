@@ -12,4 +12,5 @@ public sealed partial class ControlsPage : Page
     {
         this.InitializeComponent();
     }
+
 }
