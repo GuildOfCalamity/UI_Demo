@@ -395,8 +395,7 @@
                                 Style="{StaticResource RotatedButton}"
                                 Tag="Option1"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
-                                <FontIcon FontSize="16" Glyph="{StaticResource Wifi}" />
-
+                                <FontIcon FontSize="16" Glyph="{StaticResource AreaChart}" />
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"
@@ -431,7 +430,7 @@
                                 Style="{StaticResource RotatedButton}"
                                 Tag="Option6"
                                 ToolTipService.ToolTip="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Tag, Mode=OneWay}">
-                                <FontIcon FontSize="16" Glyph="{StaticResource AreaChart}" />
+                                <FontIcon FontSize="16" Glyph="{StaticResource Wifi}" />
                             </Button>
                             <Button
                                 Click="ExpanderMenuButtonClick"

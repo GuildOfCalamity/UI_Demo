@@ -55,6 +55,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     DispatcherTimer? _flyoutTimer;
     CancellationTokenSource? _ctsTask;
     FileWatcher? _watcher;
+    
+    PlotWindow? plotWin;
 
     bool useSpringInsteadOfScalar = true;
     float _springMultiplier = 1.05f;
@@ -489,6 +491,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
 
     #region [Events]
+
     void OnWatcherEvent(object? sender, FileSystemEventArgs e)
     {
         if (_loaded)
@@ -1239,7 +1242,24 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     void TextBoxOnKeyUp(object sender, KeyRoutedEventArgs e) => UpdateInfoBar($"Key press: '{e.Key}'", MessageLevel.Information);
-    void ExpanderMenuButtonClick(object sender, RoutedEventArgs e) => UpdateInfoBar($"Expander menu item '{(sender as Button)?.Tag}' was clicked", MessageLevel.Information);
+    void ExpanderMenuButtonClick(object sender, RoutedEventArgs e)
+    {
+        UpdateInfoBar($"Expander menu item '{(sender as Button)?.Tag}' was clicked", MessageLevel.Information);
+        if (plotWin is null)
+        {
+            //plotWin = new(new List<int> { 6, 10, 12, 18, 28, 39, 50, 60, 75, 85, 100, 98, 84, 74, 59, 49, 38, 27, 11, 9, 5 });
+            plotWin = new();
+            plotWin?.Activate();
+            plotWin?.BeginStoryboard();
+        }
+        else
+        {
+            plotWin?.Close();
+            plotWin = new();
+            plotWin?.Activate();
+            plotWin?.BeginStoryboard();
+        }
+    }
 
     /// <summary>
     /// Communal event for <see cref="MenuFlyoutItem"/> clicks.
