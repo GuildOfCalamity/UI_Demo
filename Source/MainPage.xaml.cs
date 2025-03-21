@@ -1242,9 +1242,10 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     }
 
     void TextBoxOnKeyUp(object sender, KeyRoutedEventArgs e) => UpdateInfoBar($"Key press: '{e.Key}'", MessageLevel.Information);
-    void ExpanderMenuButtonClick(object sender, RoutedEventArgs e)
+
+    void btnGraphOnClick(object sender, RoutedEventArgs e)
     {
-        UpdateInfoBar($"Expander menu item '{(sender as Button)?.Tag}' was clicked", MessageLevel.Information);
+        UpdateInfoBar($"Opening plotter window", MessageLevel.Information);
         if (plotWin is null)
         {
             //plotWin = new(new List<int> { 6, 10, 12, 18, 28, 39, 50, 60, 75, 85, 100, 98, 84, 74, 59, 49, 38, 27, 11, 9, 5 });
@@ -1260,6 +1261,8 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
             plotWin?.BeginStoryboard();
         }
     }
+
+    void ExpanderMenuButtonClick(object sender, RoutedEventArgs e) => UpdateInfoBar($"Expander menu item '{(sender as Button)?.Tag}' was clicked", MessageLevel.Information);
 
     /// <summary>
     /// Communal event for <see cref="MenuFlyoutItem"/> clicks.

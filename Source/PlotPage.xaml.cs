@@ -43,19 +43,23 @@ public sealed partial class PlotPage : Page
     TimeSpan _duration = TimeSpan.FromMilliseconds(600);
     
     List<int> _dataPoints = new List<int>();
-    List<string> _types = new List<string>() 
+    List<string> _sizes = new List<string>()
+    {
+        "4", "6", "8", "10", "12", "16", "20", "24", "30", "50"
+    };
+    List<string> _delays = new List<string>()
+    {
+        "2", "10", "20", "40", "60", "80"
+    };
+    List<string> _types = new List<string>()
     {
         "Linear (slope 1)", "Linear (slope 2)",
-        "Bell Curve (deviation 1)", "Bell Curve (deviation 2)",
-        "Quadratic", "ReverseQuadratic",
-        "Cubic", 
-        "Quartic", 
-        "Quintic", 
-        "Sinusoidal", 
-        "Logarithmic (base 1)", "Logarithmic (base 2)" 
+        "Bell Curve (deviation 1)", "Bell Curve (deviation 2)", "Bell Curve (range alt)",
+        "Quadratic", "Quadratic (reverse)",
+        "Cubic", "Quartic", "Quintic",
+        "Sinusoidal", "SawTooth Wave", "Square Wave", "Square Wave (rounded)",
+        "Logarithmic (base 1)", "Logarithmic (base 2)"
     };
-    List<string> _sizes = new List<string>() { "4", "6", "8", "10", "12", "16", "20", "24", "30", "60" };
-    List<string> _delays = new List<string>() { "2", "10", "15", "20", "30", "50", "80" };
     #endregion
 
     public PlotPage()
@@ -69,11 +73,11 @@ public sealed partial class PlotPage : Page
         cmbTypes.SelectionChanged += TypesOnSelectionChanged;
 
         cmbSizes.ItemsSource = _sizes;
-        cmbSizes.SelectedItem = _sizes[4];
+        cmbSizes.SelectedItem = _sizes[5];
         cmbSizes.SelectionChanged += SizesOnSelectionChanged;
 
         cmbDelay.ItemsSource = _delays;
-        cmbDelay.SelectedItem = _delays[2];
+        cmbDelay.SelectedItem = _delays[1];
         cmbDelay.SelectionChanged += DelayOnSelectionChanged;
         
         this.Loaded += PlotPageOnLoaded;
@@ -86,7 +90,7 @@ public sealed partial class PlotPage : Page
             return;
 
         cvsPlot.Width = e.NewSize.Width - 80;
-        cvsPlot.Height = e.NewSize.Height - 120;
+        cvsPlot.Height = e.NewSize.Height - (120 + _circleRadius);
     }
 
     public PlotPage(List<int> points) : this()
@@ -103,7 +107,7 @@ public sealed partial class PlotPage : Page
                 {
                     for (int i = 1; i < 101; i++)
                     {
-                        _dataPoints.Add(Math.Min((int)LinearFunction(i, 3, 5), _maxCeiling));
+                        _dataPoints.Add(Math.Min((int)PlotFunctionHelper.LinearFunction(i, 3, 5), _maxCeiling));
                         if (_dataPoints[i - 1] == _maxCeiling) // If we've hit the ceiling then stop plotting.
                             break;
                     }
@@ -113,7 +117,7 @@ public sealed partial class PlotPage : Page
                 {
                     for (int i = 1; i < 101; i++)
                     {
-                        _dataPoints.Add(Math.Min((int)LinearFunction(i, 5, 5), _maxCeiling));
+                        _dataPoints.Add(Math.Min((int)PlotFunctionHelper.LinearFunction(i, 5, 5), _maxCeiling));
                         if (_dataPoints[i - 1] == _maxCeiling) // If we've hit the ceiling then stop plotting.
                             break;
                     }
@@ -123,7 +127,7 @@ public sealed partial class PlotPage : Page
             case "Bell Curve (deviation 1)":
                 {
                     double upShift = 2500; // for graph offset since values will be tiny
-                    var bcPoints = BellCurveFunction(5, 1.725, 100, 5);
+                    var bcPoints = PlotFunctionHelper.BellCurveFunction(5, 1.725, 100, 5);
                     foreach (var point in bcPoints)
                     {
                         _dataPoints.Add(Math.Min((int)(point * upShift), _maxCeiling));
@@ -134,12 +138,53 @@ public sealed partial class PlotPage : Page
             case "Bell Curve (deviation 2)":
                 {
                     double upShift = 2500; // for graph offset since values will be tiny
-                    var bcPoints = BellCurveFunction(5, 3.125, 100, 5);
+                    var bcPoints = PlotFunctionHelper.BellCurveFunction(5, 3.125, 100, 5);
                     foreach (var point in bcPoints)
                     {
                         _dataPoints.Add(Math.Min((int)(point * upShift), _maxCeiling));
                     }
                     DrawCirclePlotDelayed(_dataPoints, cmbTypes, 600);
+                }
+                break;
+            case "Bell Curve (range alt)":
+                {
+                    double upShift = 2500; // for graph offset since values will be tiny
+                    var bcPoints = PlotFunctionHelper.BellCurveFunction(5, 2.25, 100, 14);
+                    foreach (var point in bcPoints)
+                    {
+                        _dataPoints.Add(Math.Min((int)(point * upShift), _maxCeiling));
+                    }
+                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, 600);
+                }
+                break;
+            case "SawTooth Wave":
+                {
+                    var stPoints = PlotFunctionHelper.SawtoothWaveFunction(2.5, 150, 100, 2, 150);
+                    foreach (var point in stPoints)
+                    {
+                        _dataPoints.Add(Math.Min((int)point, _maxCeiling));
+                    }
+                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, 600);
+                }
+                break;
+            case "Square Wave":
+                {
+                    var swPoints = PlotFunctionHelper.SquareWaveFunction(3, 250, 100, 2, 350);
+                    foreach (var point in swPoints)
+                    {
+                        _dataPoints.Add(Math.Min((int)point, _maxCeiling));
+                    }
+                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, 2000);
+                }
+                break;
+            case "Square Wave (rounded)":
+                {
+                    var swPoints = PlotFunctionHelper.SquareWaveRoundedFunction(2, 250, 100, 2, 3, 350);
+                    foreach (var point in swPoints)
+                    {
+                        _dataPoints.Add(Math.Min((int)point, _maxCeiling));
+                    }
+                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, 2000);
                 }
                 break;
             case "Quadratic":
@@ -152,7 +197,7 @@ public sealed partial class PlotPage : Page
                     }
                     DrawCirclePlotDelayed(_dataPoints, cmbTypes, 0);
                 } break;
-            case "ReverseQuadratic":
+            case "Quadratic (reverse)":
                 {
                     for (int i = 101; i > 0; i--)
                     {
@@ -227,39 +272,6 @@ public sealed partial class PlotPage : Page
 
 
   
-    }
-
-    /// <summary>
-    /// Standard Linear Function, e.g. y = 2x + 3
-    /// </summary>
-    /// <param name="x">the value to operate on</param>
-    /// <param name="m">the slope</param>
-    /// <param name="b">the y-intercept</param>
-    double LinearFunction(double x, double m, double b) => m * x + b;
-
-    /// <summary>
-    /// A normal distribution curve function.
-    /// </summary>
-    /// <param name="mean">The center of the bell curve.</param>
-    /// <param name="standardDeviation">Controls the width of the curve.</param>
-    /// <param name="numPoints">The number of points to generate for the curve.</param>
-    /// <param name="range">The range of x-values to cover (centered around the mean).</param>
-    double[] BellCurveFunction(double mean, double standardDeviation, int numPoints, double range)
-    {
-        // Calculate the range for the x-axis
-        double minX = mean - range;
-        double maxX = mean + range;
-        // Create an array to store the y-values (bell curve points)
-        double[] yValues = new double[numPoints];
-        // Generate points for the bell curve
-        for (int i = 0; i < numPoints; i++)
-        {
-            // Calculate x-value for each point
-            double x = minX + (maxX - minX) * i / (numPoints - 1);
-            // Calculate y-value using the normal distribution formula
-            yValues[i] = (1 / (standardDeviation * Math.Sqrt(Extensions.Tau))) * Math.Exp(-Math.Pow(x - mean, 2) / (2 * Math.Pow(standardDeviation, 2)));
-        }
-        return yValues;
     }
 
     /// <summary>

@@ -1047,6 +1047,7 @@
                                         TranslateY="-2" />
                                 </FontIcon.RenderTransform>
                             </FontIcon>-->
+
                             <Button
                                 Width="40"
                                 Height="40"
@@ -1207,6 +1208,7 @@
                                 Width="70"
                                 Height="34"
                                 Margin="5,10,5,10"
+                                Click="btnGraphOnClick"
                                 Content="Test"
                                 FontSize="{StaticResource FontSizeMedium}"
                                 Foreground="Black"
@@ -1223,6 +1225,7 @@
                                     Width="70"
                                     Height="34"
                                     BorderThickness="2"
+                                    Click="btnGraphOnClick"
                                     ColorFrom="{StaticResource ColorFrom}"
                                     ColorTo="{StaticResource ColorTo}"
                                     Content="Test"

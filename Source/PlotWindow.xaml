@@ -18,6 +18,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+
         <!--#region [Animation]-->
         <Grid.Resources>
             <Storyboard x:Name="OpacityStoryboard">
@@ -27,10 +28,21 @@
                     Storyboard.TargetProperty="Opacity"
                     From="0"
                     To="1"
-                    Duration="0:0:0.8" />
+                    Duration="0:0:0.75" />
             </Storyboard>
         </Grid.Resources>
         <!--#endregion-->
+
+        <Image
+            Grid.RowSpan="3"
+            Grid.ColumnSpan="3"
+            Margin="120"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Opacity="0.1"
+            Source="ms-appx:///Assets/GraphIcon2.png"
+            Stretch="Uniform" />
+
 
         <!--#region [Custom TitleBar]-->
         <Grid
@@ -43,7 +55,7 @@
                     Width="25"
                     Height="25"
                     Margin="4,1"
-                    Source="ms-appx:///Assets/GraphIcon.png" />
+                    Source="ms-appx:///Assets/GraphIcon2.png" />
                 <TextBlock
                     Margin="2,0"
                     VerticalAlignment="Center"
@@ -155,7 +167,7 @@
                             <Image
                                 Width="40"
                                 Height="40"
-                                Source="ms-appx:///Assets/Measure9.png" />
+                                Source="ms-appx:///Assets/Measure2b.png" />
                             <TextBlock
                                 x:Name="ttValue"
                                 Margin="2,0,18,0"
