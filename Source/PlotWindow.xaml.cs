@@ -84,6 +84,7 @@ public sealed partial class PlotWindow : Window
         cmbTypes.ItemsSource = _types;
         cmbTypes.SelectedItem = _types[0];
         cmbTypes.SelectionChanged += TypesOnSelectionChanged;
+        cmbTypes.KeyUp += TypesOnKeyUp;
 
         cmbSizes.ItemsSource = _sizes;
         cmbSizes.SelectedItem = _sizes[5];
@@ -129,6 +130,12 @@ public sealed partial class PlotWindow : Window
             return;
 
         if (sender is not null)
+            RunSelection(((ComboBox)sender).SelectedValue as string ?? "");
+    }
+
+    void TypesOnKeyUp(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter)
             RunSelection(((ComboBox)sender).SelectedValue as string ?? "");
     }
 
@@ -191,6 +198,7 @@ public sealed partial class PlotWindow : Window
             }
         }
     }
+    
     void PlotWindowOnClosed(object sender, WindowEventArgs args)
     {
         Debug.WriteLine("[INFO] PlotWindow closed");
@@ -348,7 +356,7 @@ public sealed partial class PlotWindow : Window
                 break;
             case "SawTooth Wave":
                 {
-                    var points = PlotFunctionHelper.SawtoothWaveFunction(2.5, 150, 100, 2, 150);
+                    var points = PlotFunctionHelper.SawtoothWaveFunction(2.0 + Random.Shared.NextDouble(), 150, 100, 2, 150);
                     foreach (var point in points)
                     {
                         _dataPoints.Add(Math.Min((int)point, _maxCeiling));
@@ -358,12 +366,12 @@ public sealed partial class PlotWindow : Window
                 break;
             case "Square Wave":
                 {
-                    var points = PlotFunctionHelper.SquareWaveFunction(3, 250, 100, 2, 350);
+                    var points = PlotFunctionHelper.SquareWaveFunction(2.0 + Random.Shared.NextDouble(), 250, 100, 2, 350);
                     foreach (var point in points)
                     {
                         _dataPoints.Add(Math.Min((int)point, _maxCeiling));
                     }
-                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, 2000);
+                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, 1000);
                 }
                 break;
             case "Square Wave (rounded)":
@@ -432,7 +440,7 @@ public sealed partial class PlotWindow : Window
             case "Sine Wave":
                 {
                     double upShift = 250; // for graph offset since sine values will run negative
-                    var points = PlotFunctionHelper.SineWaveFunction(0.225, 145, 21);
+                    var points = PlotFunctionHelper.SineWaveFunction(0.01 + Math.Min(Random.Shared.NextDouble(), 0.21), 145, 21);
                     foreach (var point in points)
                     {
                         _dataPoints.Add(Math.Min((int)(point + upShift), _maxCeiling));
@@ -443,7 +451,7 @@ public sealed partial class PlotWindow : Window
             case "Cosine Wave":
                 {
                     double upShift = 250; // for graph offset since cosine values will run negative
-                    var points = PlotFunctionHelper.CosineWaveFunction(0.225, 145, 21);
+                    var points = PlotFunctionHelper.CosineWaveFunction(0.01 + Math.Min(Random.Shared.NextDouble(), 0.21), 145, 21);
                     foreach (var point in points)
                     {
                         _dataPoints.Add(Math.Min((int)(point + upShift), _maxCeiling));
@@ -453,19 +461,19 @@ public sealed partial class PlotWindow : Window
                 break;
             case "Tangent Wave":
                 {
-                    double upShift = 250; // for graph offset since cosine values will run negative
-                    var points = PlotFunctionHelper.TangentWaveFunction(0.225, 145, 21);
+                    double upShift = 400; // for graph offset since cosine values will run negative
+                    var points = PlotFunctionHelper.TangentWaveFunction(0.21, 145, 21);
                     foreach (var point in points)
                     {
                         _dataPoints.Add(Math.Min((int)(point + upShift), _maxCeiling));
                     }
-                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, (int)(upShift * 9));
+                    DrawCirclePlotDelayed(_dataPoints, cmbTypes, (int)(upShift * 3));
                 }
                 break;
             case "Gradient Mapping":
                 {
                     double upShift = 200;
-                    var points = PlotFunctionHelper.GradientMappingFunction(0.225, 600, 11);
+                    var points = PlotFunctionHelper.GradientMappingFunction(0.211, 600, 11);
                     foreach (var point in points)
                     {
                         _dataPoints.Add(Math.Min((int)(point + upShift), _maxCeiling));
@@ -705,7 +713,11 @@ public sealed partial class PlotWindow : Window
             }
             _isDrawing = false;
 
-            sender.DispatcherQueue.TryEnqueue(() => sender.IsEnabled = true);
+            sender.DispatcherQueue.TryEnqueue(() =>
+            {
+                sender.IsEnabled = true;
+                sender.Focus(FocusState.Programmatic);
+            });
         });
     }
 

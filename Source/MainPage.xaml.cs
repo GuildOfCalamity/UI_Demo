@@ -651,6 +651,12 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         PdfPages.Clear();
 
+        if (plotWin is not null)
+        {
+            plotWin?.Close();
+            plotWin = null;
+        }
+
         _watcher?.Dispose();
 
         if (_pointLightButton != null)

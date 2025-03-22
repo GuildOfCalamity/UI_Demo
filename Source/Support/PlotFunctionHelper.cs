@@ -175,8 +175,11 @@ public class PlotFunctionHelper
     }
 
     /// <summary>
-    /// Experimental gradient function. sin(x)+cos(y)
+    /// Experimental color gradient mapping function. 
     /// </summary>
+    /// <remarks>
+    /// Basic formula is "sin(x) + cos(y)".
+    /// </remarks>
     public static double[] GradientMappingFunction(double frequency, double amplitude, int numPoints, double phaseShift = 0)
     {
         List<double> yValues = new();
@@ -251,8 +254,10 @@ public class PlotFunctionHelper
     /// <param name="delta">phase shift of the x-component</param>
     /// <param name="numPoints">the number of points to generate for the curve</param>
     /// <returns></returns>
-    public static (double[] xValues, double[] yValues) GenerateLissajousCurve(double A = 200, double B = 80, double a = 2, double b = 3, double delta = 1.125, int numPoints = 100)
+    public static (double[] xValues, double[] yValues) GenerateLissajousCurve(double A = 200, double B = 80, double a = 2, double b = 3, double delta = 0.85, int numPoints = 100)
     {
+        delta += Random.Shared.NextDouble(); // Randomize the phase shift a bit.
+
         double[] xValues = new double[numPoints];
         double[] yValues = new double[numPoints];
         for (int i = 0; i < numPoints; i++)
