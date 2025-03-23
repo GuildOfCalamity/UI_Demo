@@ -702,12 +702,9 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     void SettingsFlyout_Opened(object sender, object e)
     {
         Points.Clear();
-        int pointCount = 0;
-        while (++pointCount < 101)
-        {
-            Points.Add((int)Extensions.EaseInQuadratic(pointCount));
-        }
-        UpdateInfoBar($"Generated {Points.Count} points");
+        var generated = PlotFunctionHelper.GenerateIncreasingPoints();
+        foreach (var pnt in generated)
+            Points.Add((int)pnt);
     }
 
     /// <summary>

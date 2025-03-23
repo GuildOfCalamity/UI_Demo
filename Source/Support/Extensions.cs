@@ -1682,6 +1682,14 @@ public static class Extensions
         return false;
     }
 
+    public static bool IsInvalidOrZero(this double value)
+    {
+        if (value == double.NaN || value == double.NegativeInfinity || value == double.PositiveInfinity || value <= 0)
+            return true;
+
+        return false;
+    }
+
     public static double Mod(this double number, double divider)
     {
         var result = number % divider;

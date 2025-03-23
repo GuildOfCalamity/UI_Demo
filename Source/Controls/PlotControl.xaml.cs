@@ -33,11 +33,10 @@ public sealed partial class PlotControl : UserControl
     bool _isDrawing = false;
     bool _sizeSet = false;
 
+    int _msDelay = 4;
     double _restingOpacity = 0.7;
-    double _circleRadius = 10;
+    double _circleRadius = 8;
     
-    int _msDelay = 8;
-    int _maxCeiling = 110000;
     
     Storyboard? _opacityInStoryboard;
     Storyboard? _opacityOutStoryboard;
@@ -46,6 +45,7 @@ public sealed partial class PlotControl : UserControl
     List<int> _dataPoints = new List<int>();
     #endregion
 
+    #region [Dependency Properties]
     /// <summary>
     ///   This is the property that triggers the plot graph for the <see cref="PlotControl"/>.
     /// </summary>
@@ -106,12 +106,7 @@ public sealed partial class PlotControl : UserControl
 
         tbTitle.Text = title;
     }
-
-    //protected override Size MeasureOverride(Size availableSize)
-    //{
-    //    Debug.WriteLine($"[EVENT] Layout cycle: {availableSize}");
-    //    return base.MeasureOverride(availableSize);
-    //}
+    #endregion
 
     public PlotControl()
     {
@@ -126,6 +121,17 @@ public sealed partial class PlotControl : UserControl
         this.LostFocus += PlotControlOnLostFocus;
     }
 
+    public PlotControl(List<int> points) : this()
+    {
+        _dataPoints = points;
+    }
+
+    //protected override Size MeasureOverride(Size availableSize)
+    //{
+    //    Debug.WriteLine($"[EVENT] Layout cycle: {availableSize}");
+    //    return base.MeasureOverride(availableSize);
+    //}
+
     void PlotControlOnLostFocus(object sender, RoutedEventArgs e)
     {
         Debug.WriteLine($"[EVENT] PlotControl lost focus.");
@@ -137,25 +143,21 @@ public sealed partial class PlotControl : UserControl
     }
 
     /// <summary>
-    /// This will be our "Activated" event.
+    /// This can be called many time on first render, so avoid setting the 
+    /// control sizes multiple times or it may cause a layout cycle exception.
     /// </summary>
     void PlotControlOnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (e.NewSize.Width.IsInvalid() || e.NewSize.Height.IsInvalid())
+        if (e.NewSize.Width.IsInvalidOrZero() || e.NewSize.Height.IsInvalidOrZero())
             return;
 
         //Debug.WriteLine($"[EVENT] PlotControl got size change: {e.NewSize.Width},{e.NewSize.Height}");
 
-        if (cvsPlot.Width.IsInvalid() && cvsPlot.Height.IsInvalid())
+        if (cvsPlot.Width.IsInvalidOrZero() && cvsPlot.Height.IsInvalidOrZero())
         {
             cvsPlot.Width = e.NewSize.Width - 60;
             cvsPlot.Height = e.NewSize.Height - (100 + _circleRadius);
         }
-    }
-
-    public PlotControl(List<int> points) : this()
-    {
-        _dataPoints = points;
     }
 
     /// <summary>
@@ -185,7 +187,7 @@ public sealed partial class PlotControl : UserControl
         double canvasHeight = cvsPlot.Height;
 
         // Check for invalid Canvas size
-        if (canvasWidth.IsInvalid() || canvasWidth <= 0 || canvasHeight.IsInvalid() || canvasHeight <= 0)
+        if (canvasWidth.IsInvalidOrZero() || canvasHeight.IsInvalidOrZero())
         {
             Debug.WriteLine("[WARNING] Invalid canvas size.");
             return;
@@ -273,7 +275,7 @@ public sealed partial class PlotControl : UserControl
         double canvasHeight = cvsPlot.Height;
 
         // Check for invalid Canvas size
-        if (canvasWidth.IsInvalid() || canvasWidth <= 0 || canvasHeight.IsInvalid() || canvasHeight <= 0)
+        if (canvasWidth.IsInvalidOrZero() || canvasHeight.IsInvalidOrZero())
         {
             Debug.WriteLine("[WARNING] Invalid canvas size.");
             return;
@@ -351,12 +353,11 @@ public sealed partial class PlotControl : UserControl
         {
             _loaded = true;
             cvsPlot.Margin = new Thickness(20);
-
             // If we received data during constructor then plot it.
             if (_dataPoints.Count > 0)
             {
                 // Allow some time for the control to render before plotting.
-                Task.Run(async () => { await Task.Delay(500); }).ContinueWith(t =>
+                Task.Run(async () => { await Task.Delay(350); }).ContinueWith(t =>
                 {
                     host.DispatcherQueue.TryEnqueue(() => DrawCirclePlotDelayed(_dataPoints, 0));
                 });

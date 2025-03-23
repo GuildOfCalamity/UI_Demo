@@ -270,4 +270,51 @@ public class PlotFunctionHelper
         }
         return (xValues, yValues);
     }
+
+    /// <summary>
+    /// Generates a list of plot points with a generally increasing trend, but with random fluctuations.
+    /// </summary>
+    /// <param name="count">The number of plot points to generate.</param>
+    /// <param name="startValue">The starting value for the plot points.</param>
+    /// <param name="incrementMean">The average increment between plot points.</param>
+    /// <param name="incrementVariance">The standard deviation of the increment. A larger value results in more randomness.</param>
+    /// <param name="minValue">The minimum allowed value for a plot point. Points below this will be set to it.</param>
+    /// <param name="maxValue">The maximum allowed value for a plot point. Points above this will be set to it.</param>
+    /// <returns>A list of doubles representing the plot points.</returns>
+    public static List<double> GenerateIncreasingPoints(int count = 100, double startValue = 10, double incrementMean = 1, double incrementVariance = 5.5, double minValue = 0, double maxValue = 1000000)
+    {
+        if (count <= 0)
+            return new List<double>();
+
+        List<double> plotPoints = new List<double>(count);
+        for (int i = 0; i < count; i++)
+        {
+            // Generate a random increment using a Gaussian (Normal) distribution to ensure the values cluster around the mean.
+            double increment = GenerateGaussianRandom(incrementMean, incrementVariance);
+            startValue += increment;
+            // Clamp the value within the specified range
+            startValue = Math.Max(minValue, Math.Min(maxValue, startValue));
+            plotPoints.Add(startValue);
+        }
+        return plotPoints;
+    }
+
+    /// <summary>
+    /// Generates a random number from a Gaussian (Normal) distribution.
+    /// </summary>
+    /// <param name="mean">The mean of the distribution.</param>
+    /// <param name="standardDeviation">The standard deviation of the distribution.</param>
+    /// <returns>A random number drawn from the distribution.</returns>
+    /// <remarks>
+    /// This uses the Box-Muller transform.
+    /// </remarks>
+    static double GenerateGaussianRandom(double mean, double standardDeviation)
+    {
+        // Box-Muller transform for generating standard normal random numbers (mean 0, std dev 1)
+        double u1 = 1.0 - Random.Shared.NextDouble(); //uniform(0,1] random doubles
+        double u2 = 1.0 - Random.Shared.NextDouble();
+        double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(Extensions.Tau * u2);
+        // Transform to desired mean and standard deviation
+        return mean + standardDeviation * randStdNormal;
+    }
 }
