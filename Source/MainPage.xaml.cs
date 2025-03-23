@@ -56,8 +56,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     CancellationTokenSource? _ctsTask;
     FileWatcher? _watcher;
     
-    PlotWindow? plotWin;
-
     bool useSpringInsteadOfScalar = true;
     float _springMultiplier = 1.05f;
     SpringVector3NaturalMotionAnimation? _springVectorAnimation;
@@ -75,42 +73,57 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     public Action? ProgressButtonClickEvent { get; set; }
     public Action? ActiveImageTapEvent { get; set; }
     public event PropertyChangedEventHandler? PropertyChanged;
+
     bool _isBusy = false;
     public bool IsBusy
     {
         get => _isBusy;
         set { _isBusy = value; NotifyPropertyChanged(nameof(IsBusy)); }
     }
+
     double _amount = 0;
     public double Amount
     {
         get => _amount;
         set { _amount = value; NotifyPropertyChanged(nameof(Amount)); }
     }
+
     double _size = 0;
     public double Size
     {
         get => _size;
         set { _size = value; NotifyPropertyChanged(nameof(Size)); }
     }
+
     string _status = string.Empty;
     public string Status
     {
         get => _status;
         set { _status = value; NotifyPropertyChanged(nameof(Status)); }
     }
-    DelayTime _delay = DelayTime.Medium;
+
+    DelayTime _delay = DelayTime.Short;
     public DelayTime Delay
     {
         get => _delay;
         set { _delay = value; NotifyPropertyChanged(nameof(Delay)); }
     }
+
     StorageFolder? _workingFolder = null;
     public StorageFolder? WorkingFolder
     {
         get => _workingFolder;
         set { _workingFolder = value; NotifyPropertyChanged(nameof(WorkingFolder)); }
     }
+
+    List<int> _points = new();
+    public List<int> Points
+    {
+        get => _points;
+        set { _points = value; NotifyPropertyChanged(nameof(Points)); }
+    }
+    PlotWindow? plotWin;
+
     public int ProcessorCount
     {
         get
@@ -369,6 +382,11 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
                 IAsyncOperationWithProgress<ulong, ulong>? iaop = PerformDownloadAsync(_delay, _ctsTask == null ? new CancellationTokenSource().Token : _ctsTask.Token);
                 iaop.Progress = (result, prog) =>
                 {
+                    if (App.IsClosing) 
+                    { 
+                        iaop.Cancel();
+                        return;
+                    }
                     if (iaop.Status != AsyncStatus.Completed)
                         DispatcherQueue.TryEnqueue(() => { tbVersion.Text = $"Progress: {prog}%"; });
                     else
@@ -674,6 +692,22 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
 
         if (_coreMessages.Count > 1)
             App.MessageLog?.SaveData(_coreMessages?.ToList());
+    }
+
+    void SettingsFlyout_Opening(object sender, object e)
+    {
+        UpdateInfoBar($"SettingsFlyout is opening");
+    }
+
+    void SettingsFlyout_Opened(object sender, object e)
+    {
+        Points.Clear();
+        int pointCount = 0;
+        while (++pointCount < 101)
+        {
+            Points.Add((int)Extensions.EaseInQuadratic(pointCount));
+        }
+        UpdateInfoBar($"Generated {Points.Count} points");
     }
 
     /// <summary>

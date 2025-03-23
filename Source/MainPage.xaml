@@ -20,11 +20,15 @@
         <Flyout
             x:Key="SettingsFlyout"
             x:Name="SettingsFlyout"
+            LightDismissOverlayMode="Off"
+            Opened="SettingsFlyout_Opened"
+            Opening="SettingsFlyout_Opening"
             OverlayInputPassThroughElement="{x:Bind SettingsBar}"
             Placement="LeftEdgeAlignedBottom">
             <Flyout.FlyoutPresenterStyle>
                 <Style TargetType="FlyoutPresenter">
-                    <Setter Property="CornerRadius" Value="5" />
+                    <Setter Property="CornerRadius" Value="6" />
+                    <Setter Property="MinWidth" Value="710" />
                     <Setter Property="Background" Value="{StaticResource DialogAcrylicBrush}" />
                     <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled" />
                     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
@@ -32,7 +36,8 @@
                     <Setter Property="TabNavigation" Value="Cycle" />
                 </Style>
             </Flyout.FlyoutPresenterStyle>
-            <StackPanel
+            <local:PlotControl Title="Plot Sample" PointSource="{x:Bind Points, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <!--<StackPanel
                 Padding="20,14,20,14"
                 Background="Transparent"
                 BorderBrush="Transparent"
@@ -47,7 +52,6 @@
                     FontWeight="Medium"
                     Foreground="#FF76B9ED"
                     Text="Execution Delay Time" />
-                <!--#region[DividerBar]-->
                 <Grid
                     Margin="0,0,0,6"
                     ColumnSpacing="0"
@@ -76,7 +80,6 @@
                         RadiusX="4"
                         RadiusY="4" />
                 </Grid>
-                <!--#endregion-->
                 <StackPanel Orientation="Vertical" Spacing="2">
                     <RadioButton
                         Command="{x:Bind SwitchDelayCommand}"
@@ -109,7 +112,7 @@
                         </RadioButton.CommandParameter>
                     </RadioButton>
                 </StackPanel>
-            </StackPanel>
+            </StackPanel>-->
         </Flyout>
         <!--#endregion-->
     </Page.Resources>
