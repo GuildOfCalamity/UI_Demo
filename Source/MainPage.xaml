@@ -20,6 +20,7 @@
         <Flyout
             x:Key="SettingsFlyout"
             x:Name="SettingsFlyout"
+            AreOpenCloseAnimationsEnabled="True"
             LightDismissOverlayMode="Off"
             Opened="SettingsFlyout_Opened"
             Opening="SettingsFlyout_Opening"
@@ -36,7 +37,15 @@
                     <Setter Property="TabNavigation" Value="Cycle" />
                 </Style>
             </Flyout.FlyoutPresenterStyle>
-            <local:PlotControl Title="Plot Sample" PointSource="{x:Bind Points, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <local:PlotControl
+                Title="Plot Control Sample"
+                PointBorderBrush="{StaticResource GradientButtonDisabledBrush}"
+                PointBrush="{StaticResource GradientPointBrush}"
+                PointGround="True"
+                PointRadius="7"
+                PointSource="{x:Bind Points, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                PointStrokeThickness="2"
+                ShowTitleDivider="False" />
             <!--<StackPanel
                 Padding="20,14,20,14"
                 Background="Transparent"
@@ -663,8 +672,8 @@
                             Margin="0"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Opacity="1.0"
-                            Source="ms-appx:///Assets/Spinner2.png"
+                            Opacity="0.85"
+                            Source="ms-appx:///Assets/Spinner40.png"
                             Visibility="Collapsed">
                             <Image.Resources>
                                 <Storyboard

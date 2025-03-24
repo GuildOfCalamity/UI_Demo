@@ -96,6 +96,13 @@
             <SolidColorBrush x:Key="FABrush" Color="#1c1c1c" />
             <SolidColorBrush x:Key="F2Brush" Color="#111111" />
 
+            <LinearGradientBrush x:Key="GradientPointBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Offset="0.0" Color="#FFF0F0F0" />
+                <GradientStop Offset="0.3" Color="#FF4399DB" />
+                <GradientStop Offset="0.7" Color="#FF0026A3" />
+                <GradientStop Offset="1.0" Color="#FF000E3F" />
+            </LinearGradientBrush>
+
             <LinearGradientBrush x:Key="GradientBarBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Offset="0.0" Color="{StaticResource LinearBorder4}" />
                 <GradientStop Offset="0.2" Color="{StaticResource LinearBorder3}" />

@@ -40,7 +40,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Opacity="0.1"
-            Source="ms-appx:///Assets/GraphIcon2.png"
+            Source="ms-appx:///Assets/GraphIcon4.png"
             Stretch="Uniform" />
 
 
@@ -55,7 +55,7 @@
                     Width="25"
                     Height="25"
                     Margin="4,1"
-                    Source="ms-appx:///Assets/GraphIcon2.png" />
+                    Source="ms-appx:///Assets/GraphIcon4.png" />
                 <TextBlock
                     Margin="2,0"
                     VerticalAlignment="Center"

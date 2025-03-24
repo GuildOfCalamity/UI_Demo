@@ -104,7 +104,7 @@ public class PlotFunctionHelper
     }
 
     /// <summary>
-    /// 
+    /// Method to generate points for a sinusoidal square wave hybrid.
     /// </summary>
     /// <param name="frequency">the frequency of the square wave (in Hz)</param>
     /// <param name="amplitude">the height of the wave</param>
@@ -281,7 +281,7 @@ public class PlotFunctionHelper
     /// <param name="minValue">The minimum allowed value for a plot point. Points below this will be set to it.</param>
     /// <param name="maxValue">The maximum allowed value for a plot point. Points above this will be set to it.</param>
     /// <returns>A list of doubles representing the plot points.</returns>
-    public static List<double> GenerateIncreasingPoints(int count = 100, double startValue = 10, double incrementMean = 1, double incrementVariance = 5.5, double minValue = 0, double maxValue = 1000000)
+    public static List<double> GenerateIncreasingPoints(int count = 100, double startValue = 10, double incrementMean = 1, double incrementVariance = 4.5, double minValue = 1, double maxValue = 100000)
     {
         if (count <= 0)
             return new List<double>();
@@ -289,7 +289,8 @@ public class PlotFunctionHelper
         List<double> plotPoints = new List<double>(count);
         for (int i = 0; i < count; i++)
         {
-            // Generate a random increment using a Gaussian (Normal) distribution to ensure the values cluster around the mean.
+            // Generate random increment using a Gaussian/Normal distribution
+            // to ensure the values cluster around the mean.
             double increment = GenerateGaussianRandom(incrementMean, incrementVariance);
             startValue += increment;
             // Clamp the value within the specified range

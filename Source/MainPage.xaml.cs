@@ -507,7 +507,6 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
         #endregion
     }
 
-
     #region [Events]
 
     void OnWatcherEvent(object? sender, FileSystemEventArgs e)
@@ -702,7 +701,7 @@ public sealed partial class MainPage : Page, INotifyPropertyChanged
     void SettingsFlyout_Opened(object sender, object e)
     {
         Points.Clear();
-        var generated = PlotFunctionHelper.GenerateIncreasingPoints();
+        var generated = PlotFunctionHelper.GenerateIncreasingPoints(count: 50);
         foreach (var pnt in generated)
             Points.Add((int)pnt);
     }

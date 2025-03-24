@@ -1,46 +1,46 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
-
-using Windows.Foundation;
 
 namespace UI_Demo;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+/// <para>
+///   The goal of this graphing control was to keep it as simple as possible 
+///   for the user, the only requirement is a list of integer values.
+/// </para>
+/// <para>
+///   This originally started off using an <see cref="Ellipse"/> shape, but
+///   I've changed it to a <see cref="Rectangle"/> shape to allow for full 
+///   length rendering of the data points.
+/// </para>
 /// </summary>
 public sealed partial class PlotControl : UserControl
 {
-    #region [Props]
+    #region [Backing Members]
     //ToolTip? _tooltip;
-
+    int _msDelay = 5;
     bool _loaded = false;
     bool _isDrawing = false;
     bool _sizeSet = false;
-
-    int _msDelay = 4;
+    bool _measureOccurred = false;
     double _restingOpacity = 0.7;
-    double _circleRadius = 8;
-    
-    
+    double _canvasMargin = 50;
+
     Storyboard? _opacityInStoryboard;
     Storyboard? _opacityOutStoryboard;
-    TimeSpan _duration = TimeSpan.FromMilliseconds(600);
+    TimeSpan _opacityDuration = TimeSpan.FromMilliseconds(600);
     
     List<int> _dataPoints = new List<int>();
     #endregion
@@ -54,7 +54,6 @@ public sealed partial class PlotControl : UserControl
         typeof(List<int>),
         typeof(PlotControl),
         new PropertyMetadata(null, OnPointsPropertyChanged));
-
     public List<int> PointSource
     {
         get => (List<int>)GetValue(PointSourceProperty);
@@ -76,7 +75,7 @@ public sealed partial class PlotControl : UserControl
         else if (!_loaded || points is null)
             return;
 
-        DrawCirclePlotDelayed(points, 0);
+        DrawRectanglePlotDelayed(points, 0);
     }
 
     /// <summary>
@@ -87,7 +86,6 @@ public sealed partial class PlotControl : UserControl
         typeof(string),
         typeof(PlotControl),
         new PropertyMetadata(string.Empty, OnTitlePropertyChanged));
-
     public string Title
     {
         get => (string)GetValue(TitleProperty);
@@ -106,156 +104,123 @@ public sealed partial class PlotControl : UserControl
 
         tbTitle.Text = title;
     }
+
+    /// <summary>
+    ///   This is the property that determines if the points are drawn to the bottom instead of floating.
+    /// </summary>
+    public static readonly DependencyProperty PointGroundProperty = DependencyProperty.Register(
+        nameof(PointGround),
+        typeof(bool),
+        typeof(PlotControl),
+        new PropertyMetadata(false));
+    public bool PointGround
+    {
+        get => (bool)GetValue(PointGroundProperty);
+        set => SetValue(PointGroundProperty, value);
+    }
+
+    /// <summary>
+    ///   This is the property that determines the fill brush color.
+    /// </summary>
+    public static readonly DependencyProperty PointBrushProperty = DependencyProperty.Register(
+        nameof(PointBrush),
+        typeof(Brush),
+        typeof(PlotControl),
+     new PropertyMetadata(null));
+    public Brush PointBrush
+    {
+        get { return (Brush)GetValue(PointBrushProperty); }
+        set { SetValue(PointBrushProperty, value); }
+    }
+
+    /// <summary>
+    ///   This is the property that determines the fill brush color.
+    /// </summary>
+    public static readonly DependencyProperty PointBorderBrushProperty = DependencyProperty.Register(
+        nameof(PointBorderBrush),
+        typeof(Brush),
+        typeof(PlotControl),
+     new PropertyMetadata(null));
+    public Brush PointBorderBrush
+    {
+        get { return (Brush)GetValue(PointBorderBrushProperty); }
+        set { SetValue(PointBorderBrushProperty, value); }
+    }
+
+    /// <summary>
+    ///   This is the property that determines the point size.
+    /// </summary>
+    public static readonly DependencyProperty PointRadiusProperty = DependencyProperty.Register(
+        nameof(PointRadius),
+        typeof(double),
+        typeof(PlotControl),
+        new PropertyMetadata(8d));
+    public double PointRadius
+    {
+        get => (double)GetValue(PointRadiusProperty);
+        set => SetValue(PointRadiusProperty, value);
+    }
+
+    /// <summary>
+    ///   This is the property that determines the point size.
+    /// </summary>
+    public static readonly DependencyProperty PointStrokeThicknessProperty = DependencyProperty.Register(
+        nameof(PointStrokeThickness),
+        typeof(double),
+        typeof(PlotControl),
+        new PropertyMetadata(2d));
+    public double PointStrokeThickness
+    {
+        get => (double)GetValue(PointStrokeThicknessProperty);
+        set => SetValue(PointStrokeThicknessProperty, value);
+    }
+
+    /// <summary>
+    ///   This is the property that determines if the points are drawn to the bottom instead of floating.
+    /// </summary>
+    public static readonly DependencyProperty ShowTitleDividerProperty = DependencyProperty.Register(
+        nameof(ShowTitleDivider),
+        typeof(bool),
+        typeof(PlotControl),
+        new PropertyMetadata(false));
+    public bool ShowTitleDivider
+    {
+        get => (bool)GetValue(ShowTitleDividerProperty);
+        set => SetValue(ShowTitleDividerProperty, value);
+    }
     #endregion
 
+    #region [Constructors]
     public PlotControl()
     {
         this.InitializeComponent();
 
         //_tooltip = new ToolTip();
-        
         this.Loaded += PlotControlOnLoaded;
         this.Unloaded += PlotControlOnUnloaded;
         this.SizeChanged += PlotControlOnSizeChanged;
-        this.GotFocus += PlotControlOnGotFocus;
-        this.LostFocus += PlotControlOnLostFocus;
     }
 
     public PlotControl(List<int> points) : this()
     {
         _dataPoints = points;
     }
+    #endregion
 
-    //protected override Size MeasureOverride(Size availableSize)
-    //{
-    //    Debug.WriteLine($"[EVENT] Layout cycle: {availableSize}");
-    //    return base.MeasureOverride(availableSize);
-    //}
-
-    void PlotControlOnLostFocus(object sender, RoutedEventArgs e)
+    protected override Windows.Foundation.Size MeasureOverride(Windows.Foundation.Size availableSize)
     {
-        Debug.WriteLine($"[EVENT] PlotControl lost focus.");
-    }
-
-    void PlotControlOnGotFocus(object sender, RoutedEventArgs e)
-    {
-        Debug.WriteLine($"[EVENT] PlotControl got focus.");
+        _measureOccurred = true;
+        return base.MeasureOverride(availableSize);
     }
 
     /// <summary>
-    /// This can be called many time on first render, so avoid setting the 
-    /// control sizes multiple times or it may cause a layout cycle exception.
-    /// </summary>
-    void PlotControlOnSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (e.NewSize.Width.IsInvalidOrZero() || e.NewSize.Height.IsInvalidOrZero())
-            return;
-
-        //Debug.WriteLine($"[EVENT] PlotControl got size change: {e.NewSize.Width},{e.NewSize.Height}");
-
-        if (cvsPlot.Width.IsInvalidOrZero() && cvsPlot.Height.IsInvalidOrZero())
-        {
-            cvsPlot.Width = e.NewSize.Width - 60;
-            cvsPlot.Height = e.NewSize.Height - (100 + _circleRadius);
-        }
-    }
-
-    /// <summary>
-    /// Draws circle plot points on the canvas.
+    /// Draws rectangle plot points on the canvas with a small delay between each render for effect.
     /// </summary>
     /// <remarks>
     /// If zero is given for the <paramref name="maxValue"/> the it will be calculated during 
     /// this method as the normalized graph offset.
     /// </remarks>
-    public void DrawCirclePlot(List<int> dataPoints, int maxValue = 0)
-    {
-        // Clear any previous canvas plots
-        cvsPlot.Children.Clear();
-
-        if (dataPoints == null || dataPoints.Count == 0)
-            return;
-
-        if (!_sizeSet)
-        {
-            _sizeSet = true;
-            cvsPlot.Width = this.ActualWidth - 60;
-            cvsPlot.Height = this.ActualHeight - (100 + _circleRadius);
-        }
-
-        // Define Canvas size (you can also get this from the actual Canvas dimensions)
-        double canvasWidth = cvsPlot.Width;
-        double canvasHeight = cvsPlot.Height;
-
-        // Check for invalid Canvas size
-        if (canvasWidth.IsInvalidOrZero() || canvasHeight.IsInvalidOrZero())
-        {
-            Debug.WriteLine("[WARNING] Invalid canvas size.");
-            return;
-        }
-
-        // If no max was defined, find the maximum value in the data to normalize the y-axis
-        if (maxValue <= 0)
-            maxValue = dataPoints.Max();
-
-        // Colored brush appearance
-        var circleFill = Extensions.CreateLinearGradientBrush(Colors.WhiteSmoke, Colors.DodgerBlue, Colors.MidnightBlue);
-        SolidColorBrush circleStroke = new SolidColorBrush(Colors.Gray);
-        double circleStrokeThickness = 2;
-
-        // Calculate spacing between points on the x-axis
-        double xSpacing = canvasWidth / (dataPoints.Count + 1); // Add 1 to count for space on left and right of chart
-
-        _isDrawing = true;
-
-        // Draw the circles
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            if (!_loaded)
-                break;
-
-            // Calculate X position based on index and spacing
-            double x = (i + 1) * xSpacing; // Start plotting with an offset for readability
-            if (x.IsInvalid())
-                x = 0;
-
-            // Calculate Y position based on value, maximum value and canvas height
-            // Invert y axis so that higher values are at the top.
-            double y = canvasHeight - (dataPoints[i] / (double)maxValue) * canvasHeight;
-            if (y.IsInvalid())
-                y = 0;
-
-            // Create the circle
-            Ellipse circle = new Ellipse();
-            circle.Width = _circleRadius * 2;
-            circle.Height = _circleRadius * 2;
-            circle.Fill = circleFill;
-            circle.Stroke = circleStroke;
-            circle.StrokeThickness = circleStrokeThickness;
-            circle.Opacity = _restingOpacity;
-
-            // Position the circle on the canvas
-            Canvas.SetLeft(circle, x - _circleRadius); // Center circle horizontally
-            Canvas.SetTop(circle, y - _circleRadius);   // Center circle vertically
-
-            // Attach tooltip data value
-            circle.Tag = dataPoints[i]; // Store the data value in the circle's Tag property
-            circle.PointerEntered += CircleOnPointerEntered;
-            circle.PointerExited += CircleOnPointerExited;
-
-            // Add the circle to the canvas
-            cvsPlot.Children.Add(circle);
-        }
-        _isDrawing = false;
-    }
-
-    /// <summary>
-    /// Draws circle plot points on the canvas with a small delay between each render for effect.
-    /// </summary>
-    /// <remarks>
-    /// If zero is given for the <paramref name="maxValue"/> the it will be calculated during 
-    /// this method as the normalized graph offset.
-    /// </remarks>
-    public void DrawCirclePlotDelayed(List<int> dataPoints, int maxValue)
+    public void DrawRectanglePlotDelayed(List<int> dataPoints, int maxValue)
     {
         // Clear and previous canvas plots
         cvsPlot.Children.Clear();
@@ -266,8 +231,8 @@ public sealed partial class PlotControl : UserControl
         if (!_sizeSet)
         {
             _sizeSet = true;
-            cvsPlot.Width = this.ActualWidth - 60;
-            cvsPlot.Height = this.ActualHeight - (100 + _circleRadius);
+            cvsPlot.Width = this.ActualWidth - _canvasMargin;
+            cvsPlot.Height = this.ActualHeight - (_canvasMargin + PointRadius);
         }
 
         // Define Canvas size (you can also get this from the actual Canvas dimensions)
@@ -276,19 +241,26 @@ public sealed partial class PlotControl : UserControl
 
         // Check for invalid Canvas size
         if (canvasWidth.IsInvalidOrZero() || canvasHeight.IsInvalidOrZero())
-        {
-            Debug.WriteLine("[WARNING] Invalid canvas size.");
-            return;
-        }
+            throw new Exception("Invalid canvas size for plot control.");
 
         // If no max was defined, find the maximum value in the data to normalize the y-axis
         if (maxValue <= 0)
             maxValue = dataPoints.Max();
 
-        // Colored brush appearance
-        var circleFill = Extensions.CreateLinearGradientBrush(Colors.WhiteSmoke, Colors.DodgerBlue, Colors.MidnightBlue);
-        SolidColorBrush circleStroke = new SolidColorBrush(Colors.Gray);
-        double circleStrokeThickness = 2;
+        #region [Brush Colors]
+        Brush? pointFill = null;
+        Brush? pointStroke = null;
+
+        if (PointBrush is null)
+            pointFill = Extensions.CreateLinearGradientBrush(Colors.MidnightBlue, Colors.WhiteSmoke, Colors.DodgerBlue);
+        else
+            pointFill = PointBrush;
+
+        if (PointBorderBrush is null)
+            pointStroke = new SolidColorBrush(Colors.Gray);
+        else
+            pointStroke = PointBorderBrush;
+        #endregion
 
         // Calculate spacing between points on the x-axis
         double xSpacing = canvasWidth / (dataPoints.Count + 1); // Add 1 to count for space on left and right of chart
@@ -315,18 +287,220 @@ public sealed partial class PlotControl : UserControl
                 // Any access to a Microsoft.UI.Xaml.Controls element must be done on the dispatcher.
                 cvsPlot.DispatcherQueue.TryEnqueue(() =>
                 {
-                    // Create the circle
+                    // Create the Microsoft.UI.Xaml.Shapes
+                    Rectangle rect = new();
+                    rect.Width = PointRadius * 2;
+                    if (PointGround)
+                        rect.Height = canvasHeight - y;
+                    else
+                        rect.Height = PointRadius * 5;
+                    rect.RadiusX = PointRadius / 3;
+                    rect.RadiusY = PointRadius / 3;
+                    rect.Fill = pointFill;
+                    rect.Stroke = pointStroke;
+                    rect.StrokeThickness = PointStrokeThickness;
+                    rect.Opacity = _restingOpacity;
+                    rect.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5);
+
+                    // Position the rect on the canvas
+                    Canvas.SetLeft(rect, x - PointRadius); // Center rect horizontally
+
+                    // If the rectangle height is zero, adjust the height to the
+                    // stroke thickness instead of zero so the shape will be visible.
+                    var rectHeight = y - PointRadius;
+                    if (rectHeight >= (canvasHeight - PointRadius))
+                    {
+                        Debug.WriteLine($"[DEBUG] Point[{i}] Y coord is {rectHeight}");
+                        rect.Height = PointStrokeThickness;
+                        Canvas.SetTop(rect, canvasHeight - PointRadius - (PointStrokeThickness + 1)); // Center rect vertically
+                    }
+                    else
+                        Canvas.SetTop(rect, rectHeight);   // Center rect vertically
+
+                    // Attach tooltip data value
+                    if (i < dataPoints.Count)
+                        rect.Tag = dataPoints[i]; // Store the data value in the rect's Tag property
+                    rect.PointerEntered += RectangleOnPointerEntered;
+                    rect.PointerExited += RectangleOnPointerExited;
+
+                    //rect.Shadow = Extensions.GetResource<ThemeShadow>("CommandBarFlyoutOverflowShadow");
+                    //rect.Translation = new System.Numerics.Vector3(0, 0, 32);
+
+                    // Add the shape to the canvas
+                    cvsPlot.Children.Add(rect);
+                });
+                
+                // Add small delay for effect
+                await Task.Delay(_msDelay);
+            }
+            _isDrawing = false;
+        });
+    }
+    /// <summary>
+    /// Draws circle plot points on the canvas.
+    /// </summary>
+    /// <remarks>
+    /// If zero is given for the <paramref name="maxValue"/> the it will be calculated during 
+    /// this method as the normalized graph offset.
+    /// </remarks>
+    public void DrawCirclePlot(List<int> dataPoints, int maxValue = 0)
+    {
+        // Clear any previous canvas plots
+        cvsPlot.Children.Clear();
+
+        if (dataPoints == null || dataPoints.Count == 0)
+            return;
+
+        if (!_sizeSet)
+        {
+            _sizeSet = true;
+            cvsPlot.Width = this.ActualWidth - _canvasMargin;
+            cvsPlot.Height = this.ActualHeight - (_canvasMargin + PointRadius);
+        }
+
+        // Define Canvas size (you can also get this from the actual Canvas dimensions)
+        double canvasWidth = cvsPlot.Width;
+        double canvasHeight = cvsPlot.Height;
+
+        // Check for invalid Canvas size
+        if (canvasWidth.IsInvalidOrZero() || canvasHeight.IsInvalidOrZero())
+        {
+            Debug.WriteLine("[WARNING] Invalid canvas size.");
+            return;
+        }
+
+        // If no max was defined, find the maximum value in the data to normalize the y-axis
+        if (maxValue <= 0)
+            maxValue = dataPoints.Max();
+
+        // Colored brush appearance
+        var circleFill = Extensions.CreateLinearGradientBrush(Colors.WhiteSmoke, Colors.DodgerBlue, Colors.MidnightBlue);
+        SolidColorBrush circleStroke = new SolidColorBrush(Colors.Gray);
+
+        // Calculate spacing between points on the x-axis
+        double xSpacing = canvasWidth / (dataPoints.Count + 1); // Add 1 to count for space on left and right of chart
+
+        _isDrawing = true;
+
+        // Draw the circles
+        for (int i = 0; i < dataPoints.Count; i++)
+        {
+            if (!_loaded)
+                break;
+
+            // Calculate X position based on index and spacing
+            double x = (i + 1) * xSpacing; // Start plotting with an offset for readability
+            if (x.IsInvalid())
+                x = 0;
+
+            // Calculate Y position based on value, maximum value and canvas height
+            // Invert y axis so that higher values are at the top.
+            double y = canvasHeight - (dataPoints[i] / (double)maxValue) * canvasHeight;
+            if (y.IsInvalid())
+                y = 0;
+
+            // Create the Microsoft.UI.Xaml.Shapes
+            Ellipse circle = new Ellipse();
+            circle.Width = PointRadius * 2;
+            circle.Height = PointRadius * 2;
+            circle.Fill = circleFill;
+            circle.Stroke = circleStroke;
+            circle.StrokeThickness = PointStrokeThickness;
+            circle.Opacity = _restingOpacity;
+
+            // Position the circle on the canvas
+            Canvas.SetLeft(circle, x - PointRadius); // Center circle horizontally
+            Canvas.SetTop(circle, y - PointRadius);   // Center circle vertically
+
+            // Attach tooltip data value
+            circle.Tag = dataPoints[i]; // Store the data value in the circle's Tag property
+            circle.PointerEntered += CircleOnPointerEntered;
+            circle.PointerExited += CircleOnPointerExited;
+
+            // Add the shape to the canvas
+            cvsPlot.Children.Add(circle);
+        }
+        _isDrawing = false;
+    }
+
+    /// <summary>
+    /// Draws circle plot points on the canvas with a small delay between each render for effect.
+    /// </summary>
+    /// <remarks>
+    /// If zero is given for the <paramref name="maxValue"/> the it will be calculated during 
+    /// this method as the normalized graph offset.
+    /// </remarks>
+    public void DrawCirclePlotDelayed(List<int> dataPoints, int maxValue)
+    {
+        // Clear and previous canvas plots
+        cvsPlot.Children.Clear();
+
+        if (dataPoints == null || dataPoints.Count == 0)
+            return;
+
+        if (!_sizeSet)
+        {
+            _sizeSet = true;
+            cvsPlot.Width = this.ActualWidth - _canvasMargin;
+            cvsPlot.Height = this.ActualHeight - (_canvasMargin + PointRadius);
+        }
+
+        // Define Canvas size (you can also get this from the actual Canvas dimensions)
+        double canvasWidth = cvsPlot.Width;
+        double canvasHeight = cvsPlot.Height;
+
+        // Check for invalid Canvas size
+        if (canvasWidth.IsInvalidOrZero() || canvasHeight.IsInvalidOrZero())
+        {
+            Debug.WriteLine("[WARNING] Invalid canvas size.");
+            return;
+        }
+
+        // If no max was defined, find the maximum value in the data to normalize the y-axis
+        if (maxValue <= 0)
+            maxValue = dataPoints.Max();
+
+        // Colored brush appearance
+        var circleFill = Extensions.CreateLinearGradientBrush(Colors.WhiteSmoke, Colors.DodgerBlue, Colors.MidnightBlue);
+        SolidColorBrush circleStroke = new SolidColorBrush(Colors.Gray);
+
+        // Calculate spacing between points on the x-axis
+        double xSpacing = canvasWidth / (dataPoints.Count + 1); // Add 1 to count for space on left and right of chart
+
+        Task.Run(async () =>
+        {
+            _isDrawing = true;
+            for (int i = 0; i < dataPoints.Count; i++)
+            {
+                if (!_loaded)
+                    break;
+
+                // Calculate X position based on index and spacing
+                double x = (i + 1) * xSpacing; // Start plotting with an offset for readability
+                if (x.IsInvalid())
+                    x = 0;
+
+                // Calculate Y position based on value, maximum value and canvas height
+                // Invert y axis so that higher values are at the top.
+                double y = canvasHeight - (dataPoints[i] / (double)maxValue) * canvasHeight;
+                if (y.IsInvalid())
+                    y = 0;
+
+                // Any access to a Microsoft.UI.Xaml.Controls element must be done on the dispatcher.
+                cvsPlot.DispatcherQueue.TryEnqueue(() =>
+                {
+                    // Create the Microsoft.UI.Xaml.Shapes
                     Ellipse circle = new Ellipse();
-                    circle.Width = _circleRadius * 2;
-                    circle.Height = _circleRadius * 2;
+                    circle.Width = PointRadius * 2;
+                    circle.Height = PointRadius * 2;
                     circle.Fill = circleFill;
                     circle.Stroke = circleStroke;
-                    circle.StrokeThickness = circleStrokeThickness;
+                    circle.StrokeThickness = PointStrokeThickness;
                     circle.Opacity = _restingOpacity;
 
                     // Position the circle on the canvas
-                    Canvas.SetLeft(circle, x - _circleRadius); // Center circle horizontally
-                    Canvas.SetTop(circle, y - _circleRadius);   // Center circle vertically
+                    Canvas.SetLeft(circle, x - PointRadius); // Center circle horizontally
+                    Canvas.SetTop(circle, y - PointRadius);   // Center circle vertically
 
                     // Attach tooltip data value
                     circle.Tag = dataPoints[i]; // Store the data value in the circle's Tag property
@@ -336,7 +510,7 @@ public sealed partial class PlotControl : UserControl
                     //circle.Shadow = Extensions.GetResource<ThemeShadow>("CommandBarFlyoutOverflowShadow");
                     //circle.Translation = new System.Numerics.Vector3(0, 0, 32);
 
-                    // Add the circle to the canvas
+                    // Add the shape to the canvas
                     cvsPlot.Children.Add(circle);
                 });
                 
@@ -347,28 +521,53 @@ public sealed partial class PlotControl : UserControl
     }
 
     #region [Events]
+    /// <summary>
+    /// This can be called many time on first render, so avoid setting the 
+    /// control sizes multiple times or it may cause a layout cycle exception.
+    /// </summary>
+    void PlotControlOnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (e.NewSize.Width.IsInvalidOrZero() || e.NewSize.Height.IsInvalidOrZero())
+            return;
+
+        //Debug.WriteLine($"[EVENT] PlotControl got size change: {e.NewSize.Width},{e.NewSize.Height}");
+
+        if (cvsPlot.Width.IsInvalidOrZero() && cvsPlot.Height.IsInvalidOrZero())
+        {
+            cvsPlot.Width = e.NewSize.Width - _canvasMargin;
+            cvsPlot.Height = e.NewSize.Height - (_canvasMargin + PointRadius);
+        }
+    }
+
     void PlotControlOnLoaded(object sender, RoutedEventArgs e)
     {
         if (!_loaded)
         {
             _loaded = true;
             cvsPlot.Margin = new Thickness(20);
+            dividerBar.Visibility = ShowTitleDivider ? Visibility.Visible : Visibility.Collapsed;
+
+            Debug.WriteLine($"[DEBUG] Measurement override occurred: {_measureOccurred}");
+
             // If we received data during constructor then plot it.
             if (_dataPoints.Count > 0)
             {
                 // Allow some time for the control to render before plotting.
                 Task.Run(async () => { await Task.Delay(350); }).ContinueWith(t =>
                 {
-                    host.DispatcherQueue.TryEnqueue(() => DrawCirclePlotDelayed(_dataPoints, 0));
+                    host.DispatcherQueue.TryEnqueue(() => DrawRectanglePlotDelayed(_dataPoints, 0));
                 });
             }
         }
     }
 
-    void PlotControlOnUnloaded(object sender, RoutedEventArgs e) => _loaded = false;
+    void PlotControlOnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _loaded = false;
+    }
 
-     /// <summary>
-    /// TODO: Add opacity animation to the tooltip.
+    /// <summary>
+    /// Runs opacity animation and shows tooltip when pointer enters.
     /// </summary>
     void CircleOnPointerEntered(object sender, PointerRoutedEventArgs e)
     {
@@ -379,7 +578,7 @@ public sealed partial class PlotControl : UserControl
         int dataValue = (int)circle.Tag; // Retrieve the data value from the Tag
 
         GeneralTransform transform = circle.TransformToVisual(this); // "cvsPlot", or "root" grid, or "this" if it's a Page/UserControl
-        Point position = transform.TransformPoint(new Point(circle.Width / 2, circle.Height / 2)); // Center of the circle
+        Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(circle.Width / 2, circle.Height / 2)); // Center of the circle
         Debug.WriteLine($"[INFO] Position data is X={position.X:N1}, Y={position.Y:N1}");
 
         #region [Didn't work properly]
@@ -398,10 +597,10 @@ public sealed partial class PlotControl : UserControl
         ttValue.Text= $"Value: {dataValue}";
         ttPlot.PlacementTarget = circle;
         // Setting the placement rectangle is important when using code-behind
-        ttPlot.PlacementRect = new Rect(position.X, position.Y, 100, 40);
+        ttPlot.PlacementRect = new Windows.Foundation.Rect(position.X, position.Y, 100, 40);
         ttPlot.Placement = PlacementMode.Mouse;   // this behaves abnormally when not set to mouse
-        ttPlot.HorizontalOffset = _circleRadius <= 10 ? _circleRadius : _circleRadius / 2; // X offset from mouse
-        ttPlot.VerticalOffset = _circleRadius <= 10 ? _circleRadius : _circleRadius / 2;   // Y offset from mouse
+        ttPlot.HorizontalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2; // X offset from mouse
+        ttPlot.VerticalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2;   // Y offset from mouse
         ttPlot.Visibility = Visibility.Visible;
 
         #region [Animation]
@@ -415,7 +614,7 @@ public sealed partial class PlotControl : UserControl
                 To = 1.0,
                 EnableDependentAnimation = true,
                 EasingFunction = new QuadraticEase(),
-                Duration = new Duration(_duration),
+                Duration = new Duration(_opacityDuration),
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,
             };
@@ -452,7 +651,7 @@ public sealed partial class PlotControl : UserControl
                 To = _restingOpacity,
                 EnableDependentAnimation = true,
                 EasingFunction = new QuadraticEase(),
-                Duration = new Duration(_duration),
+                Duration = new Duration(_opacityDuration),
                 //RepeatBehavior = RepeatBehavior.Forever,
             };
 
@@ -464,6 +663,107 @@ public sealed partial class PlotControl : UserControl
             _opacityOutStoryboard.Stop(); // Stop any previous animation
         }
         Storyboard.SetTarget(_opacityOutStoryboard.Children[0], (Ellipse)sender); // Set the new target
+        _opacityOutStoryboard.Begin();
+        #endregion
+    }
+
+    /// <summary>
+    /// Runs opacity animation and shows tooltip when pointer enters.
+    /// </summary>
+    void RectangleOnPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (_isDrawing || !_loaded)
+            return;
+
+        Rectangle circle = (Rectangle)sender;
+        int dataValue = (int)circle.Tag; // Retrieve the data value from the Tag
+
+        GeneralTransform transform = circle.TransformToVisual(this); // "cvsPlot", or "root" grid, or "this" if it's a Page/UserControl
+        Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(circle.Width / 2, circle.Height / 2)); // Center of the circle
+        Debug.WriteLine($"[INFO] Position data is X={position.X:N1}, Y={position.Y:N1}");
+
+        #region [Didn't work properly]
+        //var tooltipExample = ToolTipService.GetToolTip(circle) as ToolTip;
+        //_tooltip.Content = $"Value: {dataValue}";
+        //_tooltip.PlacementTarget = circle;
+        //_tooltip.PlacementRect = new Rect(position.X, position.Y, 100, 40);
+        //_tooltip.Placement = PlacementMode.Mouse;
+        //_tooltip.HorizontalOffset = _circleRadius + 1;  // X offset from mouse
+        //_tooltip.VerticalOffset = _circleRadius + 1;    // Y offset from mouse
+        //ToolTipService.SetToolTip(circle, _tooltip);
+        //_tooltip.IsOpen = true;
+        //_tooltip.IsEnabled = true;
+        #endregion
+
+        ttValue.Text = $"Value: {dataValue}";
+        ttPlot.PlacementTarget = circle;
+        // Setting the placement rectangle is important when using code-behind
+        ttPlot.PlacementRect = new Windows.Foundation.Rect(position.X, position.Y, 100, 40);
+        ttPlot.Placement = PlacementMode.Mouse;   // this behaves abnormally when not set to mouse
+        ttPlot.HorizontalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2; // X offset from mouse
+        ttPlot.VerticalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2;   // Y offset from mouse
+        ttPlot.Visibility = Visibility.Visible;
+
+        #region [Animation]
+        if (_opacityInStoryboard == null)
+        {
+            // Create the storyboard and animation only once
+            _opacityInStoryboard = new Storyboard();
+            DoubleAnimation opacityAnimation = new DoubleAnimation
+            {
+                From = _restingOpacity,
+                To = 1.0,
+                EnableDependentAnimation = true,
+                EasingFunction = new QuadraticEase(),
+                Duration = new Duration(_opacityDuration),
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+            };
+            Storyboard.SetTargetProperty(opacityAnimation, "Opacity");
+            _opacityInStoryboard.Children.Add(opacityAnimation);
+        }
+        else
+        {
+            _opacityInStoryboard.Stop(); // Stop any previous animation
+        }
+        Storyboard.SetTarget(_opacityInStoryboard.Children[0], (Rectangle)sender); // Set the new target
+        _opacityInStoryboard.Begin();
+        #endregion
+    }
+
+    /// <summary>
+    /// Hide the tooltip when the pointer exits the plot point.
+    /// </summary>
+    void RectangleOnPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        if (_isDrawing || !_loaded)
+            return;
+
+        ttPlot.Visibility = Visibility.Collapsed;
+
+        #region [Animation]
+        if (_opacityOutStoryboard == null)
+        {
+            // Create the storyboard and animation only once
+            _opacityOutStoryboard = new Storyboard();
+            DoubleAnimation opacityAnimation = new DoubleAnimation
+            {
+                From = 1.0, // From = ((Rectangle)sender).Opacity,
+                To = _restingOpacity,
+                EnableDependentAnimation = true,
+                EasingFunction = new QuadraticEase(),
+                Duration = new Duration(_opacityDuration),
+                //RepeatBehavior = RepeatBehavior.Forever,
+            };
+
+            Storyboard.SetTargetProperty(opacityAnimation, "Opacity");
+            _opacityOutStoryboard.Children.Add(opacityAnimation);
+        }
+        else
+        {
+            _opacityOutStoryboard.Stop(); // Stop any previous animation
+        }
+        Storyboard.SetTarget(_opacityOutStoryboard.Children[0], (Rectangle)sender); // Set the new target
         _opacityOutStoryboard.Begin();
         #endregion
     }

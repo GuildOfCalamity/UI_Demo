@@ -19,26 +19,50 @@
         <StackPanel
             Grid.Row="0"
             Margin="10"
-            HorizontalAlignment="Center"
-            Orientation="Horizontal"
+            HorizontalAlignment="Stretch"
+            Orientation="Vertical"
             Spacing="8">
 
-            <TextBlock
-                x:Name="tbTitle"
-                FontSize="{StaticResource FontSizeMedium}"
-                Foreground="{StaticResource PrimaryBrush}"
-                Text="Title Here"
-                TextWrapping="Wrap" />
+            <local:CompositionShadow
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BlurRadius="1"
+                OffsetX="1.7"
+                OffsetY="1.7"
+                ShadowOpacity="1"
+                Color="#0A1033">
+                <TextBlock
+                    x:Name="tbTitle"
+                    FontSize="{StaticResource FontSizeLarge}"
+                    Foreground="{StaticResource PrimaryBrush}"
+                    Text="Title Here"
+                    TextWrapping="Wrap" />
+            </local:CompositionShadow>
 
-            <!--
-            <Button
-                x:Name="btnPlot"
-                Grid.Row="0"
-                Click="btnPlotOnClick"
-                Content="Draw Plot"
-                Style="{StaticResource EnhancedButton}" />
-            -->
-
+            <!--  [divider bar]  -->
+            <Grid
+                x:Name="dividerBar"
+                Margin="0,0,0,2"
+                ColumnSpacing="0"
+                RowSpacing="0"
+                Visibility="Collapsed">
+                <Rectangle
+                    Height="2"
+                    MinWidth="50"
+                    Margin="1,2,0,0"
+                    HorizontalAlignment="Stretch"
+                    Fill="#707070"
+                    RadiusX="4"
+                    RadiusY="4" />
+                <Rectangle
+                    Height="2"
+                    MinWidth="50"
+                    Margin="0,-1,0,0"
+                    HorizontalAlignment="Stretch"
+                    Fill="#151515"
+                    RadiusX="4"
+                    RadiusY="4" />
+            </Grid>
         </StackPanel>
 
         <Canvas
