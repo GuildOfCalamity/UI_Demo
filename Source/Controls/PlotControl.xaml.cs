@@ -30,7 +30,7 @@ public sealed partial class PlotControl : UserControl
 {
     #region [Backing Members]
     //ToolTip? _tooltip;
-    int _msDelay = 5;
+    int _msDelay = 4;
     bool _loaded = false;
     bool _isDrawing = false;
     bool _sizeSet = false;
@@ -75,7 +75,10 @@ public sealed partial class PlotControl : UserControl
         else if (!_loaded || points is null)
             return;
 
-        DrawRectanglePlotDelayed(points, 0);
+        if (_msDelay > 0)
+            DrawRectanglePlotDelayed(points, 0);
+        else
+            DrawRectanglePlot(points, 0);
     }
 
     /// <summary>
@@ -117,6 +120,33 @@ public sealed partial class PlotControl : UserControl
     {
         get => (bool)GetValue(PointGroundProperty);
         set => SetValue(PointGroundProperty, value);
+    }
+
+    /// <summary>
+    ///   This is the property that determines if the points are drawn to the bottom instead of floating.
+    /// </summary>
+    public static readonly DependencyProperty PointDelayMSProperty = DependencyProperty.Register(
+        nameof(PointDelayMS),
+        typeof(int),
+        typeof(PlotControl),
+        new PropertyMetadata(1, OnPointsDelayPropertyChanged));
+    public int PointDelayMS
+    {
+        get => (int)GetValue(PointDelayMSProperty);
+        set => SetValue(PointDelayMSProperty, value);
+    }
+    static void OnPointsDelayPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (PlotControl)d;
+        if (e.NewValue is int delay)
+            control.DelayChanged(delay);
+    }
+    void DelayChanged(int delay)
+    {
+        if (delay < 0)
+            return;
+
+        _msDelay = delay;
     }
 
     /// <summary>
@@ -173,6 +203,33 @@ public sealed partial class PlotControl : UserControl
     {
         get => (double)GetValue(PointStrokeThicknessProperty);
         set => SetValue(PointStrokeThicknessProperty, value);
+    }
+
+    /// <summary>
+    ///   This is the property that determines the point size.
+    /// </summary>
+    public static readonly DependencyProperty PointCanvasMarginProperty = DependencyProperty.Register(
+        nameof(PointCanvasMargin),
+        typeof(double),
+        typeof(PlotControl),
+        new PropertyMetadata(50d, OnCanvasMarginPropertyChanged));
+    public double PointCanvasMargin
+    {
+        get => (double)GetValue(PointCanvasMarginProperty);
+        set => SetValue(PointCanvasMarginProperty, value);
+    }
+    static void OnCanvasMarginPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (PlotControl)d;
+        if (e.NewValue is double margin)
+            control.CanvasMarginChanged(margin);
+    }
+    void CanvasMarginChanged(double margin)
+    {
+        if (margin < 0)
+            return;
+
+        _canvasMargin = margin;
     }
 
     /// <summary>
@@ -293,7 +350,7 @@ public sealed partial class PlotControl : UserControl
                     if (PointGround)
                         rect.Height = canvasHeight - y;
                     else
-                        rect.Height = PointRadius * 5;
+                        rect.Height = PointRadius * 4;
                     rect.RadiusX = PointRadius / 3;
                     rect.RadiusY = PointRadius / 3;
                     rect.Fill = pointFill;
@@ -336,6 +393,124 @@ public sealed partial class PlotControl : UserControl
             _isDrawing = false;
         });
     }
+
+    /// <summary>
+    /// Draws rectangle plot points on the canvas with no delay between each render.
+    /// </summary>
+    /// <remarks>
+    /// If zero is given for the <paramref name="maxValue"/> the it will be calculated during 
+    /// this method as the normalized graph offset.
+    /// </remarks>
+    public void DrawRectanglePlot(List<int> dataPoints, double maxValue)
+    {
+        // Clear and previous canvas plots
+        cvsPlot.Children.Clear();
+
+        if (dataPoints == null || dataPoints.Count == 0)
+            return;
+
+        if (!_sizeSet)
+        {
+            _sizeSet = true;
+            cvsPlot.Width = this.ActualWidth - _canvasMargin;
+            cvsPlot.Height = this.ActualHeight - (_canvasMargin + PointRadius);
+        }
+
+        // Define Canvas size (you can also get this from the actual Canvas dimensions)
+        double canvasWidth = cvsPlot.Width;
+        double canvasHeight = cvsPlot.Height;
+
+        // Check for invalid Canvas size
+        if (canvasWidth.IsInvalidOrZero() || canvasHeight.IsInvalidOrZero())
+            throw new Exception("Invalid canvas size for plot control.");
+
+        // If no max was defined, find the maximum value in the data to normalize the y-axis
+        if (maxValue <= 0)
+            maxValue = dataPoints.Max();
+
+        #region [Brush Colors]
+        Brush? pointFill = null;
+        Brush? pointStroke = null;
+
+        if (PointBrush is null)
+            pointFill = Extensions.CreateLinearGradientBrush(Colors.MidnightBlue, Colors.WhiteSmoke, Colors.DodgerBlue);
+        else
+            pointFill = PointBrush;
+
+        if (PointBorderBrush is null)
+            pointStroke = new SolidColorBrush(Colors.Gray);
+        else
+            pointStroke = PointBorderBrush;
+        #endregion
+
+        // Calculate spacing between points on the x-axis
+        double xSpacing = canvasWidth / (dataPoints.Count + 1); // Add 1 to count for space on left and right of chart
+
+        _isDrawing = true;
+        for (int i = 0; i < dataPoints.Count; i++)
+        {
+            if (!_loaded)
+                break;
+
+            // Calculate X position based on index and spacing
+            double x = (i + 1) * xSpacing; // Start plotting with an offset for readability
+            if (x.IsInvalid())
+                x = 0;
+
+            // Calculate Y position based on value, maximum value and canvas height
+            // Invert y axis so that higher values are at the top.
+            double y = canvasHeight - (dataPoints[i] / (double)maxValue) * canvasHeight;
+            if (y.IsInvalid())
+                y = 0;
+
+            // Any access to a Microsoft.UI.Xaml.Controls element must be done on the dispatcher.
+            cvsPlot.DispatcherQueue.TryEnqueue(() =>
+            {
+                // Create the Microsoft.UI.Xaml.Shapes
+                Rectangle rect = new();
+                rect.Width = PointRadius * 2;
+                if (PointGround)
+                    rect.Height = canvasHeight - y;
+                else
+                    rect.Height = PointRadius * 4;
+                rect.RadiusX = PointRadius / 3;
+                rect.RadiusY = PointRadius / 3;
+                rect.Fill = pointFill;
+                rect.Stroke = pointStroke;
+                rect.StrokeThickness = PointStrokeThickness;
+                rect.Opacity = _restingOpacity;
+                rect.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5);
+
+                // Position the rect on the canvas
+                Canvas.SetLeft(rect, x - PointRadius); // Center rect horizontally
+
+                // If the rectangle height is zero, adjust the height to the
+                // stroke thickness instead of zero so the shape will be visible.
+                var rectHeight = y - PointRadius;
+                if (rectHeight >= (canvasHeight - PointRadius))
+                {
+                    Debug.WriteLine($"[DEBUG] Point[{i}] Y coord is {rectHeight}");
+                    rect.Height = PointStrokeThickness;
+                    Canvas.SetTop(rect, canvasHeight - PointRadius - (PointStrokeThickness + 1)); // Center rect vertically
+                }
+                else
+                    Canvas.SetTop(rect, rectHeight);   // Center rect vertically
+
+                // Attach tooltip data value
+                if (i < dataPoints.Count)
+                    rect.Tag = dataPoints[i]; // Store the data value in the rect's Tag property
+                rect.PointerEntered += RectangleOnPointerEntered;
+                rect.PointerExited += RectangleOnPointerExited;
+
+                //rect.Shadow = Extensions.GetResource<ThemeShadow>("CommandBarFlyoutOverflowShadow");
+                //rect.Translation = new System.Numerics.Vector3(0, 0, 32);
+
+                // Add the shape to the canvas
+                cvsPlot.Children.Add(rect);
+            });
+        }
+    }
+
     /// <summary>
     /// Draws circle plot points on the canvas.
     /// </summary>
@@ -544,7 +719,7 @@ public sealed partial class PlotControl : UserControl
         if (!_loaded)
         {
             _loaded = true;
-            cvsPlot.Margin = new Thickness(20);
+            cvsPlot.Margin = new Thickness(10);
             dividerBar.Visibility = ShowTitleDivider ? Visibility.Visible : Visibility.Collapsed;
 
             Debug.WriteLine($"[DEBUG] Measurement override occurred: {_measureOccurred}");
@@ -553,81 +728,94 @@ public sealed partial class PlotControl : UserControl
             if (_dataPoints.Count > 0)
             {
                 // Allow some time for the control to render before plotting.
-                Task.Run(async () => { await Task.Delay(350); }).ContinueWith(t =>
+                Task.Run(async () => { await Task.Delay(300); }).ContinueWith(t =>
                 {
-                    host.DispatcherQueue.TryEnqueue(() => DrawRectanglePlotDelayed(_dataPoints, 0));
+                    host.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        if (_msDelay > 0)
+                            DrawRectanglePlotDelayed(_dataPoints, 0);
+                        else
+                            DrawRectanglePlot(_dataPoints, 0);
+                    });
                 });
             }
         }
     }
 
-    void PlotControlOnUnloaded(object sender, RoutedEventArgs e)
-    {
-        _loaded = false;
-    }
+    void PlotControlOnUnloaded(object sender, RoutedEventArgs e) => _loaded = false;
 
     /// <summary>
     /// Runs opacity animation and shows tooltip when pointer enters.
     /// </summary>
     void CircleOnPointerEntered(object sender, PointerRoutedEventArgs e)
     {
-        if (_isDrawing || !_loaded)
+        if (!_loaded)
             return;
 
-        Ellipse circle = (Ellipse)sender;
-        int dataValue = (int)circle.Tag; // Retrieve the data value from the Tag
-
-        GeneralTransform transform = circle.TransformToVisual(this); // "cvsPlot", or "root" grid, or "this" if it's a Page/UserControl
-        Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(circle.Width / 2, circle.Height / 2)); // Center of the circle
-        Debug.WriteLine($"[INFO] Position data is X={position.X:N1}, Y={position.Y:N1}");
-
-        #region [Didn't work properly]
-        //var tooltipExample = ToolTipService.GetToolTip(circle) as ToolTip;
-        //_tooltip.Content = $"Value: {dataValue}";
-        //_tooltip.PlacementTarget = circle;
-        //_tooltip.PlacementRect = new Rect(position.X, position.Y, 100, 40);
-        //_tooltip.Placement = PlacementMode.Mouse;
-        //_tooltip.HorizontalOffset = _circleRadius + 1;  // X offset from mouse
-        //_tooltip.VerticalOffset = _circleRadius + 1;    // Y offset from mouse
-        //ToolTipService.SetToolTip(circle, _tooltip);
-        //_tooltip.IsOpen = true;
-        //_tooltip.IsEnabled = true;
-        #endregion
-
-        ttValue.Text= $"Value: {dataValue}";
-        ttPlot.PlacementTarget = circle;
-        // Setting the placement rectangle is important when using code-behind
-        ttPlot.PlacementRect = new Windows.Foundation.Rect(position.X, position.Y, 100, 40);
-        ttPlot.Placement = PlacementMode.Mouse;   // this behaves abnormally when not set to mouse
-        ttPlot.HorizontalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2; // X offset from mouse
-        ttPlot.VerticalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2;   // Y offset from mouse
-        ttPlot.Visibility = Visibility.Visible;
-
-        #region [Animation]
-        if (_opacityInStoryboard == null)
+        try
         {
-            // Create the storyboard and animation only once
-            _opacityInStoryboard = new Storyboard();
-            DoubleAnimation opacityAnimation = new DoubleAnimation
+            var circle = (Ellipse)sender;
+            if (circle is null)
+                return;
+
+            int dataValue = (int)circle.Tag; // Retrieve the data value from the Tag
+
+            GeneralTransform transform = circle.TransformToVisual(this); // "cvsPlot", or "root" grid, or "this" if it's a Page/UserControl
+            Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(circle.Width / 2, circle.Height / 2)); // Center of the circle
+            Debug.WriteLine($"[INFO] Position data is X={position.X:N1}, Y={position.Y:N1}");
+
+            #region [Didn't work properly]
+            //var tooltipExample = ToolTipService.GetToolTip(circle) as ToolTip;
+            //_tooltip.Content = $"Value: {dataValue}";
+            //_tooltip.PlacementTarget = circle;
+            //_tooltip.PlacementRect = new Rect(position.X, position.Y, 100, 40);
+            //_tooltip.Placement = PlacementMode.Mouse;
+            //_tooltip.HorizontalOffset = _circleRadius + 1;  // X offset from mouse
+            //_tooltip.VerticalOffset = _circleRadius + 1;    // Y offset from mouse
+            //ToolTipService.SetToolTip(circle, _tooltip);
+            //_tooltip.IsOpen = true;
+            //_tooltip.IsEnabled = true;
+            #endregion
+
+            ttValue.Text = $"Value: {dataValue}";
+            ttPlot.PlacementTarget = circle;
+            // Setting the placement rectangle is important when using code-behind
+            ttPlot.PlacementRect = new Windows.Foundation.Rect(position.X, position.Y, 100, 40);
+            ttPlot.Placement = PlacementMode.Mouse;   // this behaves abnormally when not set to mouse
+            ttPlot.HorizontalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2; // X offset from mouse
+            ttPlot.VerticalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2;   // Y offset from mouse
+            ttPlot.Visibility = Visibility.Visible;
+
+            #region [Animation]
+            if (_opacityInStoryboard == null)
             {
-                From = _restingOpacity,
-                To = 1.0,
-                EnableDependentAnimation = true,
-                EasingFunction = new QuadraticEase(),
-                Duration = new Duration(_opacityDuration),
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-            };
-            Storyboard.SetTargetProperty(opacityAnimation, "Opacity");
-            _opacityInStoryboard.Children.Add(opacityAnimation);
+                // Create the storyboard and animation only once
+                _opacityInStoryboard = new Storyboard();
+                DoubleAnimation opacityAnimation = new DoubleAnimation
+                {
+                    From = _restingOpacity,
+                    To = 1.0,
+                    EnableDependentAnimation = true,
+                    EasingFunction = new QuadraticEase(),
+                    Duration = new Duration(_opacityDuration),
+                    AutoReverse = true,
+                    RepeatBehavior = RepeatBehavior.Forever,
+                };
+                Storyboard.SetTargetProperty(opacityAnimation, "Opacity");
+                _opacityInStoryboard.Children.Add(opacityAnimation);
+            }
+            else
+            {
+                _opacityInStoryboard.Stop(); // Stop any previous animation
+            }
+            Storyboard.SetTarget(_opacityInStoryboard.Children[0], (Ellipse)sender); // Set the new target
+            _opacityInStoryboard.Begin();
+            #endregion
         }
-        else
+        catch (Exception ex)
         {
-            _opacityInStoryboard.Stop(); // Stop any previous animation
+            Debug.WriteLine($"[ERROR] OnPointerEntered: {ex.Message}");
         }
-        Storyboard.SetTarget(_opacityInStoryboard.Children[0], (Ellipse)sender); // Set the new target
-        _opacityInStoryboard.Begin();
-        #endregion
     }
 
     /// <summary>
@@ -672,63 +860,73 @@ public sealed partial class PlotControl : UserControl
     /// </summary>
     void RectangleOnPointerEntered(object sender, PointerRoutedEventArgs e)
     {
-        if (_isDrawing || !_loaded)
+        if (!_loaded)
             return;
 
-        Rectangle circle = (Rectangle)sender;
-        int dataValue = (int)circle.Tag; // Retrieve the data value from the Tag
-
-        GeneralTransform transform = circle.TransformToVisual(this); // "cvsPlot", or "root" grid, or "this" if it's a Page/UserControl
-        Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(circle.Width / 2, circle.Height / 2)); // Center of the circle
-        Debug.WriteLine($"[INFO] Position data is X={position.X:N1}, Y={position.Y:N1}");
-
-        #region [Didn't work properly]
-        //var tooltipExample = ToolTipService.GetToolTip(circle) as ToolTip;
-        //_tooltip.Content = $"Value: {dataValue}";
-        //_tooltip.PlacementTarget = circle;
-        //_tooltip.PlacementRect = new Rect(position.X, position.Y, 100, 40);
-        //_tooltip.Placement = PlacementMode.Mouse;
-        //_tooltip.HorizontalOffset = _circleRadius + 1;  // X offset from mouse
-        //_tooltip.VerticalOffset = _circleRadius + 1;    // Y offset from mouse
-        //ToolTipService.SetToolTip(circle, _tooltip);
-        //_tooltip.IsOpen = true;
-        //_tooltip.IsEnabled = true;
-        #endregion
-
-        ttValue.Text = $"Value: {dataValue}";
-        ttPlot.PlacementTarget = circle;
-        // Setting the placement rectangle is important when using code-behind
-        ttPlot.PlacementRect = new Windows.Foundation.Rect(position.X, position.Y, 100, 40);
-        ttPlot.Placement = PlacementMode.Mouse;   // this behaves abnormally when not set to mouse
-        ttPlot.HorizontalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2; // X offset from mouse
-        ttPlot.VerticalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2;   // Y offset from mouse
-        ttPlot.Visibility = Visibility.Visible;
-
-        #region [Animation]
-        if (_opacityInStoryboard == null)
+        try
         {
-            // Create the storyboard and animation only once
-            _opacityInStoryboard = new Storyboard();
-            DoubleAnimation opacityAnimation = new DoubleAnimation
+            var rect = (Rectangle)sender;
+            if (rect is null)
+                return;
+
+            int dataValue = (int)rect.Tag; // Retrieve the data value from the Tag
+
+            GeneralTransform transform = rect.TransformToVisual(this); // "cvsPlot", or "root" grid, or "this" if it's a Page/UserControl
+            Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(rect.Width / 2, rect.Height / 2)); // Center of the circle
+            Debug.WriteLine($"[INFO] Position data is X={position.X:N1}, Y={position.Y:N1}");
+
+            #region [Didn't work properly]
+            //var tooltipExample = ToolTipService.GetToolTip(rect) as ToolTip;
+            //_tooltip.Content = $"Value: {dataValue}";
+            //_tooltip.PlacementTarget = rect;
+            //_tooltip.PlacementRect = new Rect(position.X, position.Y, 100, 40);
+            //_tooltip.Placement = PlacementMode.Mouse;
+            //_tooltip.HorizontalOffset = _circleRadius + 1;  // X offset from mouse
+            //_tooltip.VerticalOffset = _circleRadius + 1;    // Y offset from mouse
+            //ToolTipService.SetToolTip(circle, _tooltip);
+            //_tooltip.IsOpen = true;
+            //_tooltip.IsEnabled = true;
+            #endregion
+
+            ttValue.Text = $"Value: {dataValue}";
+            ttPlot.PlacementTarget = rect;
+            // Setting the placement rectangle is important when using code-behind
+            ttPlot.PlacementRect = new Windows.Foundation.Rect(position.X, position.Y, 260, 70);
+            ttPlot.Placement = PlacementMode.Mouse;   // this behaves abnormally when not set to mouse
+            ttPlot.HorizontalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2; // X offset from mouse
+            ttPlot.VerticalOffset = PointRadius <= 10 ? PointRadius : PointRadius / 2;   // Y offset from mouse
+            ttPlot.Visibility = Visibility.Visible;
+
+            #region [Animation]
+            if (_opacityInStoryboard == null)
             {
-                From = _restingOpacity,
-                To = 1.0,
-                EnableDependentAnimation = true,
-                EasingFunction = new QuadraticEase(),
-                Duration = new Duration(_opacityDuration),
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-            };
-            Storyboard.SetTargetProperty(opacityAnimation, "Opacity");
-            _opacityInStoryboard.Children.Add(opacityAnimation);
+                // Create the storyboard and animation only once
+                _opacityInStoryboard = new Storyboard();
+                DoubleAnimation opacityAnimation = new DoubleAnimation
+                {
+                    From = _restingOpacity,
+                    To = 1.0,
+                    EnableDependentAnimation = true,
+                    EasingFunction = new QuadraticEase(),
+                    Duration = new Duration(_opacityDuration),
+                    AutoReverse = true,
+                    RepeatBehavior = RepeatBehavior.Forever,
+                };
+                Storyboard.SetTargetProperty(opacityAnimation, "Opacity");
+                _opacityInStoryboard.Children.Add(opacityAnimation);
+            }
+            else
+            {
+                _opacityInStoryboard.Stop(); // Stop any previous animation
+            }
+            Storyboard.SetTarget(_opacityInStoryboard.Children[0], (Rectangle)sender); // Set the new target
+            _opacityInStoryboard.Begin();
+            #endregion
         }
-        else
+        catch (Exception ex)
         {
-            _opacityInStoryboard.Stop(); // Stop any previous animation
+            Debug.WriteLine($"[ERROR] OnPointerEntered: {ex.Message}");
         }
-        Storyboard.SetTarget(_opacityInStoryboard.Children[0], (Rectangle)sender); // Set the new target
-        _opacityInStoryboard.Begin();
-        #endregion
     }
 
     /// <summary>

@@ -41,6 +41,8 @@
                 Title="Plot Control Sample"
                 PointBorderBrush="{StaticResource GradientButtonDisabledBrush}"
                 PointBrush="{StaticResource GradientPointBrush}"
+                PointCanvasMargin="50"
+                PointDelayMS="2"
                 PointGround="True"
                 PointRadius="7"
                 PointSource="{x:Bind Points, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

@@ -18,7 +18,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-
         <!--#region [Animation]-->
         <Grid.Resources>
             <Storyboard x:Name="OpacityStoryboard">
@@ -42,7 +41,6 @@
             Opacity="0.1"
             Source="ms-appx:///Assets/GraphIcon4.png"
             Stretch="Uniform" />
-
 
         <!--#region [Custom TitleBar]-->
         <Grid
@@ -129,12 +127,12 @@
                 </ComboBox>
 
                 <!--
-            <Button
-                x:Name="btnPlot"
-                Grid.Row="0"
-                Click="btnPlotOnClick"
-                Content="Draw Plot"
-                Style="{StaticResource EnhancedButton}" />
+                <Button
+                    x:Name="btnPlot"
+                    Grid.Row="0"
+                    Click="btnPlotOnClick"
+                    Content="Draw Plot"
+                    Style="{StaticResource EnhancedButton}" />
                 -->
 
             </StackPanel>
@@ -147,13 +145,14 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 Background="Transparent">
-                <!--  Circle plots will be drawn here  -->
+
+                <!--  ** plots points will be drawn here **  -->
+
                 <ToolTipService.ToolTip>
                     <ToolTip
                         x:Name="ttPlot"
                         Background="{StaticResource GradientToolTipBrush}"
                         BackgroundSizing="OuterBorderEdge"
-                        Opacity="0.75"
                         Placement="Mouse"
                         Shadow="{ThemeResource CommandBarFlyoutOverflowShadow}"
                         Translation="0,0,32"
@@ -167,6 +166,7 @@
                             <Image
                                 Width="40"
                                 Height="40"
+                                Opacity="0.8"
                                 Source="ms-appx:///Assets/Measure2b.png" />
                             <TextBlock
                                 x:Name="ttValue"
@@ -174,6 +174,7 @@
                                 VerticalAlignment="Center"
                                 FontSize="{StaticResource FontSizeMedium}"
                                 FontWeight="Bold"
+                                Opacity="1.0"
                                 Text="N/A" />
                         </StackPanel>
                     </ToolTip>
